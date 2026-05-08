@@ -86,11 +86,11 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="flow-bar">
     <select id="flow-select">
       <option value="ext">External Model (Anthropic)</option>
-      <option value="inc" disabled>On-Cluster (vLLM) -- coming soon</option>
-      <option value="af" disabled>Auth Failure (401) -- coming soon</option>
+      <option value="inc">On-Cluster (vLLM P/D)</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
@@ -110,7 +110,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Payload Processor</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>IPP Container</div>
+  <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#58a6ff,#3fb950);border-radius:50%"></div>Req / Resp Plugins</div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -120,12 +121,12 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
 let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
-let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopMode = false;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = []; // State snapshot after each step completes
 
 // Logical canvas dimensions
-const LW = 1200, LH = 900;
+const LW = 1200, LH = 1050;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -141,8 +142,8 @@ function toggleTheme() {
 const N = {
   user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  cluster: { x: 120, y: 80, w: 1020, h: 810, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 120, y: 80, w: 1020, h: 960, type: 'boundary' },
+  aigw: { x: 155, y: 115, w: 960, h: 620, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
@@ -150,12 +151,17 @@ const N = {
   auth: { x: 305, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
   rlimit: { x: 305, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 640, y: 260, w: 400, h: 370, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
-  p_bfth: { x: 670, y: 310, w: 345, h: 42, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_mpr:  { x: 670, y: 360, w: 345, h: 42, label: 'model-provider-resolver', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_at:   { x: 670, y: 410, w: 345, h: 42, label: 'api-translation', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:  { x: 670, y: 460, w: 345, h: 42, label: 'apikey-injection', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_guard:{ x: 670, y: 510, w: 345, h: 42, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  ipp: { x: 640, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  // Request plugins
+  p_rguard:  { x: 675, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_mpr:     { x: 675, y: 360, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_bfth:    { x: 675, y: 400, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_at_req:  { x: 675, y: 440, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_aki:     { x: 675, y: 480, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_ims:     { x: 675, y: 518, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  // Response plugins
+  p_at_resp: { x: 675, y: 595, w: 335, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
+  p_resp_guard: { x: 675, y: 633, w: 335, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
 
   // External models — far left, outside cluster
   openai:    { x: 0, y: 310, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
@@ -165,28 +171,36 @@ const N = {
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
   // MaaS API — left side, inside cluster but outside AI Gateway, below Kuadrant
-  maas: { x: 170, y: 680, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
+  maas: { x: 170, y: 750, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
 
-  // llm-d Scheduler — bottom center
-  sched: { x: 450, y: 720, w: 200, h: 55, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 14 },
+  // llm-d Scheduler — right side, same level as MaaS
+  sched: { x: 510, y: 750, w: 200, h: 55, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 14 },
 
-  pool: { x: 380, y: 790, w: 380, h: 80, type: 'boundary', label: 'InferencePool' },
-  vllm:   { x: 400, y: 812, w: 100, h: 42, label: 'vLLM',   color: '#8b949e', fs: 14 },
-  triton: { x: 520, y: 812, w: 100, h: 42, label: 'Triton', color: '#8b949e', fs: 14 },
-  sglang: { x: 640, y: 812, w: 100, h: 42, label: 'SGLang', color: '#8b949e', fs: 14 },
+  pool: { x: 360, y: 815, w: 500, h: 210, type: 'boundary', label: 'InferencePool' },
+  prefill: { x: 405, y: 880, w: 120, h: 45, label: 'vLLM', color: '#d2a8ff', fs: 13 },
+  spc:     { x: 555, y: 865, w: 115, h: 45, label: 'Shared Prefix Cache', sublabel: 'NIXL, DCN', color: '#8b949e', fs: 10 },
+  decode:  { x: 705, y: 880, w: 120, h: 45, label: 'vLLM', color: '#d2a8ff', fs: 13 },
+  ipc:     { x: 380, y: 980, w: 460, h: 35, label: 'Independent Prefix Caching', sublabel: 'LMCache, Host Memory', color: '#8b949e', fs: 10 },
 };
 
 const tips = {
   gw:      'Envoy-based gateway that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filter for payload processing. Routes to upstream providers or on-cluster models.',
-  p_bfth:  'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header. This enables model-based routing without parsing the body in Envoy.',
+  p_rguard:'(Coming soon) NVIDIA NeMo Guardrails — request safety check. Evaluates content policies on the incoming request before any processing. Can block requests that violate safety policies.',
   p_mpr:   'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider (openai, anthropic, etc.), target model ID, and endpoint. Stores results in CycleState for downstream plugins.',
-  p_at:    'Translates between OpenAI Chat Completions format and provider-native APIs. On request: converts OpenAI → Anthropic Messages API (or other formats). On response: converts back to OpenAI format. Handles path rewriting, header mutations, and body transformation.',
+  p_bfth:  'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header. This enables model-based routing without parsing the body in Envoy.',
+  p_at_req:'Request direction: translates OpenAI Chat Completions format to provider-native API (e.g., Anthropic Messages API). Handles path rewriting (/v1/chat/completions → /v1/messages), header mutations, and body transformation.',
   p_aki:   'Reads the provider API key from a Kubernetes Secret (labeled inference.networking.k8s.io/bbr-managed) and injects the appropriate auth header — Authorization: Bearer for OpenAI, x-api-key for Anthropic, api-key for Azure.',
-  p_guard: 'NVIDIA NeMo Guardrails integration. Evaluates safety policies on both request content (before sending to provider) and response content (before returning to client). Can block requests that violate content policies.',
+  p_ims:   '(Coming soon) Intelligent model selection — automatically selects the optimal model based on request characteristics, cost, latency, and availability.',
+  p_at_resp:'Response direction: translates provider-native response back to OpenAI Chat Completions format. Converts Anthropic content array to choices, stop_reason to finish_reason, and normalizes usage tokens.',
+  p_resp_guard:'(Coming soon) NVIDIA NeMo Guardrails — response safety check. Evaluates content policies on the provider response (after api-translation converts it to OpenAI format). Can block responses that violate safety policies.',
   auth:    'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key by calling MaaS API internally at /internal/v1/api-keys/validate. Also resolves subscription info and injects X-MaaS-Username header.',
   rlimit:  'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy. On request: checks if quota allows. On response: reads usage.total_tokens and reports consumed tokens.',
   maas:    'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Stores keys in PostgreSQL. Provides /v1/models and /v1/api-keys endpoints.',
-  sched:   'llm-d Endpoint Picker Proxy (EPP). Selects the optimal vLLM/Triton/SGLang pod based on KV cache utilization, queue depth, and model affinity. Used for on-cluster inference routing.',
+  sched:   'llm-d Endpoint Picker Proxy (EPP). Selects the optimal pod for disaggregated serving — routes to Prefill or Decode variants based on KV cache utilization, queue depth, and model affinity.',
+  prefill: 'Prefill phase (Variant A). Processes the input prompt and generates the initial KV cache. In P/D disaggregated serving, dedicated GPU pods handle prefill to maximize throughput for long prompts.',
+  decode:  'Decode phase (Variant B). Generates output tokens auto-regressively using the KV cache from prefill. Dedicated decode pods optimize for low latency per-token generation.',
+  spc:     'Shared Prefix Caching via NIXL (NVIDIA Inference Xfer Library) or DCN (Data Center Network). Transfers KV cache between prefill and decode pods over high-speed interconnect, enabling disaggregated serving.',
+  ipc:     'Independent Prefix Caching using LMCache or host memory. Each pod caches commonly-used prefixes locally to avoid redundant computation across requests with shared system prompts.',
   anthropic: 'Anthropic Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format (/v1/messages). Response is translated back to OpenAI format by the api-translation plugin.',
   openai:  'OpenAI API endpoint. Requests pass through without format translation (native OpenAI format). Only credential injection is applied.',
   azure:   'Azure OpenAI endpoint. Similar to OpenAI but uses api-key header instead of Authorization: Bearer. Content filter fields are stripped from responses.',
@@ -209,7 +223,7 @@ function resize() {
   H = canvas.height = innerHeight;
   sc = Math.min(W / LW, H / LH) * 0.92;
   ox = (W - LW * sc) / 2;
-  oy = (H - LH * sc) / 2;
+  oy = (H - LH * sc) * 0.12;
   draw();
 }
 addEventListener('resize', resize);
@@ -264,12 +278,25 @@ function drawBox(key) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  if (n.sublabel) {
+  if (n.soon && !n.sublabel) {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(6));
+    ctx.font = `bold ${ts(9)}px system-ui`;
+    ctx.fillStyle = '#f0883e';
+    ctx.fillText('COMING SOON', x + w / 2, y + h / 2 + ts(8));
+  } else if (n.sublabel) {
     ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
     ctx.font = `${ts(Math.max(fs - 3, 11))}px system-ui`;
     ctx.fillStyle = c.dim;
-    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+    if (n.soon) {
+      ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(6));
+      ctx.font = `bold ${ts(8)}px system-ui`;
+      ctx.fillStyle = '#f0883e';
+      ctx.fillText('COMING SOON', x + w / 2, y + h / 2 + ts(16));
+    } else {
+      ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+    }
   } else {
     ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2);
@@ -339,6 +366,41 @@ function drawBounds() {
   // IPP container
   drawContainer('ipp', glowing.has('ipp'));
 
+  // IPP request/response plugin sections
+  if (N.ipp) {
+    ctx.save();
+    // Request plugins section
+    ctx.beginPath();
+    ctx.roundRect(tx(660), ty(300), ts(365), ts(260), ts(8));
+    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Request Plugins →', tx(672), ty(312));
+
+    // Response plugins section
+    ctx.beginPath();
+    ctx.roundRect(tx(660), ty(575), ts(365), ts(105), ts(8));
+    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
+    ctx.textAlign = 'left';
+    ctx.fillText('← Response Plugins', tx(672), ty(587));
+    ctx.restore();
+  }
+
   // InferencePool boundary
   const ip = N.pool;
   ctx.beginPath();
@@ -352,6 +414,58 @@ function drawBounds() {
   ctx.fillStyle = c.dim;
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
+
+  // Variant A (Prefill) sub-boundary
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(tx(380), ty(845), ts(170), ts(120), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(10)}px system-ui`;
+  ctx.fillStyle = '#d2a8ff88';
+  ctx.textAlign = 'left';
+  ctx.fillText('Variant A (Prefill)', tx(390), ty(858));
+
+  // Stacked vLLM pods behind prefill (decorative)
+  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
+  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(405 - j * 8), ty(880 - j * 6), ts(120), ts(45), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Variant B (Decode) sub-boundary
+  ctx.beginPath();
+  ctx.roundRect(tx(685), ty(845), ts(170), ts(120), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(10)}px system-ui`;
+  ctx.fillStyle = '#d2a8ff88';
+  ctx.textAlign = 'right';
+  ctx.fillText('Variant B (Decode)', tx(845), ty(858));
+
+  // Stacked vLLM pods behind decode (decorative)
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(705 - j * 8), ty(880 - j * 6), ts(120), ts(45), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function edgePt(n, targetX, targetY, yOff) {
@@ -700,8 +814,96 @@ function resetStyles() {
   inspCycle.forEach(l => { if (l.s !== 'del') l.s = 'keep'; });
 }
 
+function inspStepInc(stepNum) {
+  switch (stepNum) {
+    case 10:
+      inspStepLabel = '⑩ model-provider-resolver (InferencePool)';
+      inspCycle = [
+        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
+        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 11:
+      inspStepLabel = '⑪ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
+      break;
+    case 12:
+      inspStepLabel = '⑫ intelligent-model-selection (coming soon)';
+      break;
+    case 13: {
+      inspStepLabel = '⑬ IPP → Gateway (request ready)';
+      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
+      if (xm) xm.s = 'highlight';
+      break; }
+    case 14:
+      inspStepLabel = '⑭ Gateway → llm-d Scheduler';
+      break;
+    case 15:
+      inspStepLabel = '⑮ Scheduler selects pods (EPP)';
+      break;
+    case 16:
+      inspStepLabel = '⑯ Scheduler → Prefill pods';
+      break;
+    case 17:
+      inspStepLabel = '⑰ Prefill processing (Variant A)';
+      break;
+    case 18:
+      inspStepLabel = '⑱ Prefill → Shared Prefix Cache';
+      break;
+    case 19:
+      inspStepLabel = '⑲ KV cache → Decode pods (NIXL)';
+      break;
+    case 20:
+      inspStepLabel = '⑳ Decode processing (Variant B)';
+      break;
+    case 21:
+      inspStepLabel = '㉑ Decode → Gateway (response)';
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 22:
+      inspStepLabel = '㉒ Gateway → IPP (response)';
+      break;
+    case 23:
+      inspStepLabel = '㉓ response-guard (coming soon)';
+      break;
+    case 24: {
+      inspStepLabel = '㉔ IPP → Gateway (response)';
+      const ro = inspBody.find(l => l.id === 'r-obj');
+      if (ro) ro.s = 'highlight';
+      break; }
+    case 25: {
+      inspStepLabel = '㉕ Wasm reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 26:
+      inspStepLabel = '㉖ Limitador: report token count';
+      break;
+    case 27: {
+      inspStepLabel = '㉗ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
 function inspStep(stepNum) {
   resetStyles();
+  if (stepNum >= 10 && activeFlow === 'inc') {
+    inspStepInc(stepNum);
+    renderInsp();
+    return;
+  }
   switch (stepNum) {
     case 1:
       inspStepLabel = '① Incoming Request';
@@ -734,8 +936,7 @@ function inspStep(stepNum) {
       inspStepLabel = '⑧ Gateway → ext_proc (IPP)';
       break;
     case 9:
-      inspStepLabel = '⑨ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      inspStepLabel = '⑨ request-guard (coming soon)';
       break;
     case 10:
       inspStepLabel = '⑩ model-provider-resolver';
@@ -745,31 +946,35 @@ function inspStep(stepNum) {
       ];
       break;
     case 11:
-      inspStepLabel = '⑪ api-translation (request)';
+      inspStepLabel = '⑪ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      break;
+    case 12:
+      inspStepLabel = '⑫ api-translation (request)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       inspHeaders.find(l => l.id === 'h-auth').s = 'del';
       break;
-    case 12:
-      inspStepLabel = '⑫ apikey-injection';
+    case 13:
+      inspStepLabel = '⑬ apikey-injection';
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
-    case 13:
-      inspStepLabel = '⑬ guardrail (request check)';
-      break;
     case 14:
-      inspStepLabel = '⑭ IPP → Gateway (mutated request)';
-      { const ph2 = inspHeaders.find(l => l.id === 'h-path2');
+      inspStepLabel = '⑭ intelligent-model-selection (coming soon)';
+      break;
+    case 15: {
+      inspStepLabel = '⑮ IPP → Gateway (mutated request)';
+      const ph2 = inspHeaders.find(l => l.id === 'h-path2');
       if (ph2) ph2.s = 'highlight';
       const xapi = inspHeaders.find(l => l.id === 'h-xapi');
-      if (xapi) xapi.s = 'highlight'; }
-      break;
-    case 15:
-      inspStepLabel = '⑮ Gateway routes to Anthropic';
-      break;
+      if (xapi) xapi.s = 'highlight';
+      break; }
     case 16:
-      inspStepLabel = '⑯ Anthropic responds';
+      inspStepLabel = '⑯ Gateway routes to Anthropic';
+      break;
+    case 17:
+      inspStepLabel = '⑰ Anthropic responds';
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -782,11 +987,8 @@ function inspStep(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 17:
-      inspStepLabel = '⑰ Gateway → IPP (response)';
-      break;
     case 18:
-      inspStepLabel = '⑱ guardrail (response check)';
+      inspStepLabel = '⑱ Gateway → IPP (response)';
       break;
     case 19:
       inspStepLabel = '⑲ api-translation (response)';
@@ -799,23 +1001,26 @@ function inspStep(stepNum) {
       inspBody.find(l => l.id === 'r-usage').s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       break;
-    case 20: {
-      inspStepLabel = '⑳ IPP → Gateway (translated response)';
+    case 20:
+      inspStepLabel = '⑳ response-guard (coming soon)';
+      break;
+    case 21: {
+      inspStepLabel = '㉑ IPP → Gateway (translated response)';
       const robj = inspBody.find(l => l.id === 'r-obj');
       if (robj) robj.s = 'highlight';
       const rch = inspBody.find(l => l.id === 'r-choices');
       if (rch) rch.s = 'highlight';
       break; }
-    case 21: {
-      inspStepLabel = '㉑ Wasm reads usage.total_tokens';
+    case 22: {
+      inspStepLabel = '㉒ Wasm reads usage.total_tokens';
       const u2 = inspBody.find(l => l.id === 'r-usage2');
       if (u2) u2.s = 'highlight';
       break; }
-    case 22:
-      inspStepLabel = '㉒ Limitador: report token count';
+    case 23:
+      inspStepLabel = '㉓ Limitador: report token count';
       break;
-    case 23: {
-      inspStepLabel = '㉓ Response to Client (OpenAI format)';
+    case 24: {
+      inspStepLabel = '㉔ Response to Client (OpenAI format)';
       const robj2 = inspBody.find(l => l.id === 'r-obj');
       if (robj2) robj2.s = 'highlight';
       const rch2 = inspBody.find(l => l.id === 'r-choices');
@@ -826,9 +1031,10 @@ function inspStep(stepNum) {
 }
 
 // ================================================================
-// FLOW DEFINITION — 20 steps
+// FLOW DEFINITIONS
 // ================================================================
-const flow = [
+let activeFlow = 'ext';
+const flowExt = [
   // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
@@ -838,25 +1044,63 @@ const flow = [
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  // IPP plugins — request path
-  { t: '9. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 9 },
-  { t: '10. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
-  { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at', badge: 11 },
-  { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
-  { t: '13. guardrail: safety check on request', mode: 'lightup', target: 'p_guard', badge: 13 },
-  { t: '14. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '15. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15, fromLeft: true, toRight: true, yOff: -10 },
+  // IPP request plugins
+  { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
+  { t: '11. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 11 },
+  { t: '12. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 12 },
+  { t: '13. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 13 },
+  { t: '14. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 14 },
+  { t: '15. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 15, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '16. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 16, fromLeft: true, toRight: true, yOff: -10 },
   // RESPONSE PATH
-  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '17. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 17, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '18. guardrail: safety check on response', mode: 'lightup', target: 'p_guard', badge: 18 },
-  { t: '19. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 19 },
-  { t: '20. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '17. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 17, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '18. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 18, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  // IPP response plugins
+  { t: '19. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 19 },
+  { t: '20. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 20 },
+  { t: '21. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 21, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
   // TOKEN USAGE REPORTING
-  { t: '21. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 21 },
-  { t: '22. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 22 },
-  { t: '23. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '22. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 22 },
+  { t: '23. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 23 },
+  { t: '24. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 24, fromLeft: true, toRight: true, yOff: 10 },
 ];
+
+const flowInc = [
+  // REQUEST PATH (same auth flow)
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  // IPP request plugins (no api-translation, no apikey-injection for on-cluster)
+  { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 10 },
+  { t: '11. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 11 },
+  { t: '12. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 12 },
+  { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  // On-cluster routing
+  { t: '14. Gateway → llm-d Scheduler', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '15. Scheduler selects pods (EPP)', mode: 'lightup', target: 'sched', badge: 15 },
+  { t: '16. Scheduler → Prefill pods', mode: 'arrow', f: 'sched', to: 'prefill', c: '#58a6ff', num: 16, fromBottom: true, toTop: true },
+  { t: '17. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 17 },
+  { t: '18. Prefill → Shared Prefix Cache', mode: 'arrow', f: 'prefill', to: 'spc', c: '#58a6ff', num: 18, fromRight: true, toLeft: true },
+  { t: '19. KV cache → Decode pods', mode: 'arrow', f: 'spc', to: 'decode', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
+  { t: '20. Decode processing (Variant B)', mode: 'lightup', target: 'decode', badge: 20 },
+  // RESPONSE PATH
+  { t: '21. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 21, fromTop: true, toBottom: true, toXOff: 250 },
+  { t: '22. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 22, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '23. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 23 },
+  { t: '24. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 24, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '25. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 25 },
+  { t: '26. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 26 },
+  { t: '27. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 27, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+let flow = flowExt;
 
 // ================================================================
 // RUN / RESET
@@ -873,6 +1117,14 @@ function cycleSpeed() {
   const idx = speeds.indexOf(playbackSpeed);
   playbackSpeed = speeds[(idx + 1) % speeds.length];
   document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function toggleLoop() {
+  loopMode = !loopMode;
+  const btn = document.getElementById('loop-btn');
+  btn.style.background = loopMode ? (isDark ? '#79c0ff22' : '#79c0ff18') : 'transparent';
+  btn.textContent = loopMode ? '⟳ Loop ON' : '⟳ Loop';
+  if (loopMode && !running && !paused) run();
 }
 
 function stepOpts(s) {
@@ -920,7 +1172,18 @@ function run() {
 
 function execStep() {
   if (!running || paused || runStepIndex >= flow.length) {
-    if (runStepIndex >= flow.length) { running = false; paused = false; updatePlayBtn(); }
+    if (runStepIndex >= flow.length) {
+      running = false; paused = false; updatePlayBtn();
+      if (loopMode) {
+        stepTimer = setTimeout(() => {
+          // Cycle to next flow
+          activeFlow = (activeFlow === 'ext') ? 'inc' : 'ext';
+          flow = (activeFlow === 'ext') ? flowExt : flowInc;
+          document.getElementById('flow-select').value = activeFlow;
+          doReset(); run();
+        }, 3000 / playbackSpeed);
+      }
+    }
     return;
   }
   const si = runStepIndex;
@@ -1035,9 +1298,18 @@ function doReset() {
   draw();
 }
 
+document.getElementById('flow-select').addEventListener('change', function() {
+  activeFlow = this.value;
+  flow = (activeFlow === 'ext') ? flowExt : flowInc;
+  doReset();
+});
+
 resize();
 initSteps();
 draw();
+
+// Auto-start loop mode on page load
+setTimeout(() => { toggleLoop(); }, 500);
 </script>
 </body>
 </html>
