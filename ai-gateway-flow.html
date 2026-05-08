@@ -647,59 +647,69 @@ function inspStep(stepNum) {
       inspStepLabel = '① Incoming Request';
       break;
     case 2:
-      inspStepLabel = '② Kuadrant Wasm Shim';
+      inspStepLabel = '② Gateway → Kuadrant Wasm Shim';
       inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
       break;
     case 3:
-      inspStepLabel = '③ Authorino (Auth)';
+      inspStepLabel = '③ Authorino validates API key';
       inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
       break;
     case 4:
-      inspStepLabel = '④ Authorino → MaaS API';
+      inspStepLabel = '④ Kuadrant → MaaS API (key validation)';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
       break;
     case 5:
-      inspStepLabel = '⑤ MaaS API: key valid';
+      inspStepLabel = '⑤ MaaS API responds: key valid';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
       break;
     case 6:
-      inspStepLabel = '⑥ Limitador (Rate Limit)';
+      inspStepLabel = '⑥ Limitador checks token quota';
       break;
     case 7:
-      inspStepLabel = '⑦ Payload Processor (ext_proc)';
-      break;
-    case 8:
-      inspStepLabel = '⑧ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      inspStepLabel = '⑦ Kuadrant → Gateway (auth complete)';
       break;
     case 9:
-      inspStepLabel = '⑨ model-provider-resolver';
+      inspStepLabel = '⑧ Gateway → ext_proc (IPP)';
+      break;
+    case 10:
+      inspStepLabel = '⑨ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      break;
+    case 10:
+      inspStepLabel = '⑩ model-provider-resolver';
       inspCycle = [
         { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
       ];
       break;
-    case 10:
-      inspStepLabel = '⑩ api-translation (request)';
+    case 11:
+      inspStepLabel = '⑪ api-translation (request)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       inspHeaders.find(l => l.id === 'h-auth').s = 'del';
       break;
-    case 11:
-      inspStepLabel = '⑪ apikey-injection';
+    case 12:
+      inspStepLabel = '⑫ apikey-injection';
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
-    case 12:
-      inspStepLabel = '⑫ guardrail (request check)';
-      break;
     case 13:
-      inspStepLabel = '⑬ Route to Anthropic';
-      const ph2 = inspHeaders.find(l => l.id === 'h-path2');
-      if (ph2) ph2.s = 'highlight';
-      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
-      if (xapi) xapi.s = 'highlight';
+      inspStepLabel = '⑬ guardrail (request check)';
       break;
     case 14:
-      inspStepLabel = '⑭ Anthropic Response (raw)';
+      inspStepLabel = '⑭ IPP → Gateway (mutated request)';
+      { const ph2 = inspHeaders.find(l => l.id === 'h-path2');
+      if (ph2) ph2.s = 'highlight';
+      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
+      if (xapi) xapi.s = 'highlight'; }
+      break;
+    case 15:
+      inspStepLabel = '⑮ Gateway routes to Anthropic';
+      break;
+    case 16:
+      inspStepLabel = "⑰ Gateway → IPP (response)";
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -712,13 +722,13 @@ function inspStep(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 15:
-      inspStepLabel = '⑮ Gateway → IPP (response processing)';
-      break;
     case 16:
-      inspStepLabel = '⑯ guardrail (response check)';
+      inspStepLabel = "⑰ Gateway → IPP (response)";
       break;
     case 17:
+      inspStepLabel = '⑯ guardrail (response check)';
+      break;
+    case 18:
       inspStepLabel = '⑰ api-translation (response)';
       inspBody.find(l => l.id === 'r-type').s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
@@ -729,15 +739,15 @@ function inspStep(stepNum) {
       inspBody.find(l => l.id === 'r-usage').s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       break;
-    case 18:
+    case 19:
       inspStepLabel = '⑱ Wasm reads usage.total_tokens';
       const u2 = inspBody.find(l => l.id === 'r-usage2');
       if (u2) u2.s = 'highlight';
       break;
-    case 19:
+    case 20:
       inspStepLabel = '⑲ Limitador: report token count';
       break;
-    case 20:
+    case 21:
       inspStepLabel = '⑳ Response to Client (OpenAI format)';
       const robj = inspBody.find(l => l.id === 'r-obj');
       if (robj) robj.s = 'highlight';
