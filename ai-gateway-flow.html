@@ -1257,13 +1257,36 @@ function restoreSnapshot(stepIdx) {
   glowing = new Set(snap.glowing);
 }
 
+function simulateUpTo(targetStep) {
+  activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+  for (let i = 0; i <= targetStep; i++) {
+    const s = flow[i];
+    if (s.mode === 'arrow') {
+      if (s.f) activeNodes.add(s.f);
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+    } else if (s.mode === 'lightup') {
+      activeNodes.add(s.target);
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
+    }
+    saveSnapshot(i);
+  }
+}
+
 function jumpToStep(targetStep) {
   if (running && !paused) {
     paused = true;
     running = false;
     if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
   }
-  if (!snapshots[targetStep]) return;
+  if (!snapshots[targetStep]) simulateUpTo(targetStep);
   restoreSnapshot(targetStep);
   currentStepDone = targetStep + 1;
   runStepIndex = targetStep + 1;
