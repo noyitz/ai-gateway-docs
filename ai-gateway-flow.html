@@ -135,7 +135,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, isDark = true, animFrame = null, particles = [], activeNodes = new Set();
 let badgeNodes = {}, failNode = null, persistentLines = [], running = false;
-let currentFlowId = null, glowingContainers = new Set(), collapseTimer = null;
+let currentFlowId = null, glowingContainers = new Set(), collapseTimer = null, fadingNodes = {};
 
 function toggleTheme() {
   isDark = !isDark;
@@ -238,9 +238,18 @@ function drawBox(key) {
     return;
   }
 
+  // Fade-in glow for lightup nodes
+  let fadeAlpha = 1;
+  if (fadingNodes[key]) {
+    const elapsed = Date.now() - fadingNodes[key];
+    fadeAlpha = Math.min(elapsed / 500, 1); // 500ms fade-in
+    if (elapsed > 500) delete fadingNodes[key];
+  }
+
   if (isActive || hasBadge) {
     ctx.shadowColor = isFail ? '#f85149' : n.color;
-    ctx.shadowBlur = ts(18);
+    ctx.shadowBlur = ts(18) * fadeAlpha;
+    ctx.globalAlpha = 0.3 + 0.7 * fadeAlpha;
   }
 
   ctx.beginPath();
@@ -598,7 +607,8 @@ const flows = {
           ]
         }
       },
-      { t: 'Rate Limit checks token quota', mode: 'lightup', target: 'limitador', badge: 5,
+      { t: 'MaaS API responds: key valid', mode: 'arrow', f: 'maas_api', to: 'authorino', c: '#3fb950', num: 5 },
+      { t: 'Rate Limit checks token quota', mode: 'lightup', target: 'limitador', badge: 6,
         rq: { plugin: 'Limitador (Rate Limit)',
           headers: [],
           body: [
@@ -606,7 +616,7 @@ const flows = {
           ]
         }
       },
-      { t: 'Gateway invokes ext_proc', mode: 'arrow', f: 'gw', to: 'ipp_boundary', c: '#d2a8ff', num: 6, toLeftEdge: true, glowContainer: 'ipp_boundary',
+      { t: 'Gateway invokes ext_proc', mode: 'arrow', f: 'gw', to: 'ipp_boundary', c: '#d2a8ff', num: 7, toLeftEdge: true, glowContainer: 'ipp_boundary',
         rq: { plugin: 'Payload Processor (ext_proc)',
           headers: [
             { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep' },
@@ -620,7 +630,7 @@ const flows = {
           ]
         }
       },
-      { t: 'body-field-to-header: extract model -> header', mode: 'lightup', target: 'p_bfth', badge: 7,
+      { t: 'body-field-to-header: extract model -> header', mode: 'lightup', target: 'p_bfth', badge: 11,
         rq: { plugin: 'body-field-to-header',
           headers: [
             { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep' },
@@ -632,7 +642,7 @@ const flows = {
           ]
         }
       },
-      { t: 'model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 8,
+      { t: 'model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 11,
         rq: { plugin: 'model-provider-resolver',
           headers: [
             { v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'keep' },
@@ -644,7 +654,7 @@ const flows = {
           ]
         }
       },
-      { t: 'api-translation: OpenAI -> Anthropic format', mode: 'lightup', target: 'p_at', badge: 9,
+      { t: 'api-translation: OpenAI -> Anthropic format', mode: 'lightup', target: 'p_at', badge: 11,
         rq: { plugin: 'api-translation (OpenAI -> Anthropic)',
           headers: [
             { v: ':path /llm/ext-anthropic/v1/chat/completions', s: 'del' },
@@ -660,7 +670,7 @@ const flows = {
           ]
         }
       },
-      { t: 'apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 10,
+      { t: 'apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 11,
         rq: { plugin: 'apikey-injection',
           headers: [
             { v: ':path /v1/messages', s: 'keep' },
@@ -670,7 +680,7 @@ const flows = {
           body: []
         }
       },
-      { t: 'Route to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 11,
+      { t: 'Route to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13,
         rq: { plugin: 'Final Request -> api.anthropic.com',
           headers: [
             { v: 'POST /v1/messages', s: 'highlight' },
@@ -685,7 +695,7 @@ const flows = {
           ]
         }
       },
-      { t: 'Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 12,
+      { t: 'Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 13,
         rq: { plugin: 'Anthropic Response (raw)',
           headers: [
             { v: 'HTTP/1.1 200 OK', s: 'keep' },
@@ -698,7 +708,7 @@ const flows = {
           ]
         }
       },
-      { t: 'response-guard: safety filter + translation', mode: 'lightup', target: 'p_rg', badge: 13,
+      { t: 'response-guard: safety filter + translation', mode: 'lightup', target: 'p_rg', badge: 14,
         rq: { plugin: 'response-guard + response translation',
           headers: [],
           body: [
@@ -712,7 +722,7 @@ const flows = {
           ]
         }
       },
-      { t: 'Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 14,
+      { t: 'Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 15,
         rq: { plugin: 'Final Response -> Client (OpenAI format)',
           headers: [
             { v: 'HTTP/1.1 200 OK', s: 'keep' },
@@ -870,7 +880,8 @@ function run(id) {
         setTimeout(nextStep, 500);
       }, s.toLeftEdge));
     } else if (s.mode === 'lightup') {
-      // Inner component lights up with badge -- no arrow
+      // Inner component lights up with fade-in glow + badge
+      fadingNodes[s.target] = Date.now();
       activeNodes.add(s.target);
       badgeNodes[s.target] = s.badge;
       if (s.fail) {
@@ -880,7 +891,7 @@ function run(id) {
         el.className = 'step done';
       }
       stepIndex++;
-      setTimeout(nextStep, 500);
+      setTimeout(nextStep, 700);
     }
   }
 
