@@ -147,21 +147,21 @@ const N = {
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
-  wasm: { x: 280, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 305, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 305, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  wasm: { x: 220, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 245, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 245, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 640, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 700, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
-  p_rguard:  { x: 675, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
-  p_ims:     { x: 675, y: 360, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
-  p_mpr:     { x: 675, y: 402, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_bfth:    { x: 675, y: 440, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_at_req:  { x: 675, y: 478, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_aki:     { x: 675, y: 518, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_rguard:  { x: 735, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_ims:     { x: 735, y: 360, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  p_mpr:     { x: 735, y: 402, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_bfth:    { x: 735, y: 440, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_at_req:  { x: 735, y: 478, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_aki:     { x: 735, y: 518, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
   // Response plugins
-  p_at_resp: { x: 675, y: 595, w: 335, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
-  p_resp_guard: { x: 675, y: 633, w: 335, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_at_resp: { x: 735, y: 595, w: 335, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
+  p_resp_guard: { x: 735, y: 633, w: 335, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
 
   // External models — far left, outside cluster
   openai:    { x: 0, y: 310, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
@@ -177,11 +177,11 @@ const N = {
   epp: { x: 480, y: 740, w: 260, h: 80, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
   sched: { x: 510, y: 765, w: 200, h: 45, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 13, inner: true },
 
-  pool: { x: 360, y: 850, w: 500, h: 140, type: 'boundary', label: 'InferencePool' },
-  prefill: { x: 405, y: 882, w: 120, h: 40, label: 'vLLM', color: '#d2a8ff', fs: 13 },
-  spc:     { x: 555, y: 875, w: 115, h: 40, label: 'Shared Prefix Cache', sublabel: 'NIXL, DCN', color: '#8b949e', fs: 10 },
-  decode:  { x: 705, y: 882, w: 120, h: 40, label: 'vLLM', color: '#d2a8ff', fs: 13 },
-  ipc:     { x: 380, y: 935, w: 460, h: 30, label: 'Independent Prefix Caching', sublabel: 'LMCache, Host Memory', color: '#8b949e', fs: 9 },
+  pool: { x: 340, y: 850, w: 540, h: 185, type: 'boundary', label: 'InferencePool' },
+  prefill: { x: 375, y: 895, w: 145, h: 55, label: 'Prefill', sublabel: 'vLLM pods', color: '#d2a8ff', fs: 15 },
+  spc:     { x: 540, y: 890, w: 130, h: 50, label: 'Shared Prefix Cache', sublabel: 'NIXL, DCN', color: '#8b949e', fs: 11 },
+  decode:  { x: 700, y: 895, w: 145, h: 55, label: 'Decode', sublabel: 'vLLM pods', color: '#d2a8ff', fs: 15 },
+  ipc:     { x: 365, y: 965, w: 490, h: 35, label: 'Independent Prefix Caching', sublabel: 'LMCache, Host Memory', color: '#8b949e', fs: 10 },
 };
 
 const tips = {
@@ -375,7 +375,7 @@ function drawBounds() {
     ctx.save();
     // Request plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(660), ty(300), ts(365), ts(260), ts(8));
+    ctx.roundRect(tx(720), ty(300), ts(365), ts(260), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -386,11 +386,11 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(672), ty(312));
+    ctx.fillText('Request Plugins →', tx(732), ty(312));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(660), ty(575), ts(365), ts(105), ts(8));
+    ctx.roundRect(tx(720), ty(575), ts(365), ts(105), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -401,7 +401,7 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(672), ty(587));
+    ctx.fillText('← Response Plugins', tx(732), ty(587));
     ctx.restore();
   }
 
@@ -422,23 +422,23 @@ function drawBounds() {
   // Variant A (Prefill) sub-boundary
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(385), ty(865), ts(160), ts(68), ts(8));
+  ctx.roundRect(tx(360), ty(875), ts(185), ts(85), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = `${ts(9)}px system-ui`;
+  ctx.font = `${ts(10)}px system-ui`;
   ctx.fillStyle = '#d2a8ff88';
   ctx.textAlign = 'left';
-  ctx.fillText('Variant A (Prefill)', tx(393), ty(875));
+  ctx.fillText('Variant A (Prefill)', tx(370), ty(888));
 
   // Stacked vLLM pods behind prefill (decorative)
   const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(405 - j * 7), ty(882 - j * 5), ts(120), ts(40), ts(6));
+    ctx.roundRect(tx(375 - j * 8), ty(895 - j * 6), ts(145), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -448,21 +448,21 @@ function drawBounds() {
 
   // Variant B (Decode) sub-boundary
   ctx.beginPath();
-  ctx.roundRect(tx(685), ty(865), ts(160), ts(68), ts(8));
+  ctx.roundRect(tx(680), ty(875), ts(185), ts(85), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = `${ts(9)}px system-ui`;
+  ctx.font = `${ts(10)}px system-ui`;
   ctx.fillStyle = '#d2a8ff88';
   ctx.textAlign = 'right';
-  ctx.fillText('Variant B (Decode)', tx(837), ty(875));
+  ctx.fillText('Variant B (Decode)', tx(855), ty(888));
 
   // Stacked vLLM pods behind decode (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(705 - j * 7), ty(882 - j * 5), ts(120), ts(40), ts(6));
+    ctx.roundRect(tx(700 - j * 8), ty(895 - j * 6), ts(145), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
