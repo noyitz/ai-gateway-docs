@@ -130,41 +130,41 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 560, y: 10, w: 80, h: 50, label: 'User', type: 'icon' },
+  user: { x: 530, y: 10, w: 80, h: 50, label: 'User', type: 'icon' },
 
-  cluster: { x: 120, y: 90, w: 960, h: 790, type: 'boundary' },
-  aigw: { x: 155, y: 110, w: 790, h: 500, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 120, y: 80, w: 1020, h: 810, type: 'boundary' },
+  aigw: { x: 155, y: 100, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 300, y: 130, w: 600, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
+  gw: { x: 250, y: 120, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
-  wasm: { x: 180, y: 230, w: 280, h: 250, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 200, y: 280, w: 240, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 14, inner: true },
-  rlimit: { x: 200, y: 355, w: 240, h: 55, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 14, inner: true },
+  wasm: { x: 170, y: 260, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 195, y: 315, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 195, y: 400, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 530, y: 230, w: 380, h: 340, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
-  p_bfth: { x: 555, y: 280, w: 330, h: 38, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  p_mpr:  { x: 555, y: 324, w: 330, h: 38, label: 'model-provider-resolver', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  p_at:   { x: 555, y: 368, w: 330, h: 38, label: 'api-translation', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  p_aki:  { x: 555, y: 412, w: 330, h: 38, label: 'apikey-injection', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
-  p_guard:{ x: 555, y: 456, w: 330, h: 38, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 13 },
+  ipp: { x: 540, y: 260, w: 400, h: 370, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  p_bfth: { x: 570, y: 310, w: 345, h: 42, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_mpr:  { x: 570, y: 360, w: 345, h: 42, label: 'model-provider-resolver', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_at:   { x: 570, y: 410, w: 345, h: 42, label: 'api-translation', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:  { x: 570, y: 460, w: 345, h: 42, label: 'apikey-injection', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_guard:{ x: 570, y: 510, w: 345, h: 42, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
 
   // External models — far left, outside cluster
-  openai:    { x: 10, y: 260, w: 100, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
-  anthropic: { x: 10, y: 320, w: 100, h: 50, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 12 },
-  azure:     { x: 10, y: 380, w: 100, h: 50, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 11 },
-  bedrock:   { x: 10, y: 440, w: 100, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
-  vertex:    { x: 10, y: 500, w: 100, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
+  openai:    { x: 5, y: 250, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
+  anthropic: { x: 5, y: 310, w: 105, h: 50, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 12 },
+  azure:     { x: 5, y: 370, w: 105, h: 50, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 11 },
+  bedrock:   { x: 5, y: 430, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
+  vertex:    { x: 5, y: 490, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
-  // MaaS API — bottom right, inside cluster but outside AI Gateway
-  maas: { x: 130, y: 630, w: 150, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
+  // MaaS API — left side, inside cluster but outside AI Gateway, below Kuadrant
+  maas: { x: 170, y: 680, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
 
   // llm-d Scheduler — bottom center
-  sched: { x: 350, y: 700, w: 200, h: 55, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 14 },
+  sched: { x: 450, y: 720, w: 200, h: 55, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 14 },
 
-  pool: { x: 280, y: 770, w: 380, h: 80, type: 'boundary', label: 'InferencePool' },
-  vllm:   { x: 300, y: 795, w: 100, h: 40, label: 'vLLM',   color: '#8b949e', fs: 14 },
-  triton: { x: 420, y: 795, w: 100, h: 40, label: 'Triton', color: '#8b949e', fs: 14 },
-  sglang: { x: 540, y: 795, w: 100, h: 40, label: 'SGLang', color: '#8b949e', fs: 14 },
+  pool: { x: 380, y: 790, w: 380, h: 80, type: 'boundary', label: 'InferencePool' },
+  vllm:   { x: 400, y: 812, w: 100, h: 42, label: 'vLLM',   color: '#8b949e', fs: 14 },
+  triton: { x: 520, y: 812, w: 100, h: 42, label: 'Triton', color: '#8b949e', fs: 14 },
+  sglang: { x: 640, y: 812, w: 100, h: 42, label: 'SGLang', color: '#8b949e', fs: 14 },
 };
 
 const tips = {
