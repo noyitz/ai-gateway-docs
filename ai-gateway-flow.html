@@ -1157,6 +1157,7 @@ function run() {
     paused = false;
     running = true;
     updatePlayBtn();
+    if (!animFrame) animate();
     stepTimer = setTimeout(execStep, 300 / playbackSpeed);
     return;
   }
