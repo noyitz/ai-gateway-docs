@@ -184,13 +184,16 @@ const N = {
 
   maas_api: { x: 1160, y: 195, w: 180, h: 55, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
 
-  ipp_boundary: { x: 720, y: 370, w: 380, h: 320, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  ipp_boundary: { x: 720, y: 370, w: 380, h: 310, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   ipp_entry: { x: 710, y: 530, w: 10, h: 10, type: 'hidden' },
-  p_bfth: { x: 750, y: 420, w: 320, h: 38, label: 'body-field-to-header', sublabel: 'extract model -> header', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_mpr: { x: 750, y: 468, w: 320, h: 38, label: 'model-provider-resolver', sublabel: 'lookup ExternalModel', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_at: { x: 750, y: 516, w: 320, h: 38, label: 'api-translation', sublabel: 'OpenAI <-> provider format', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_aki: { x: 750, y: 564, w: 320, h: 38, label: 'apikey-injection', sublabel: 'inject provider credential', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_rg: { x: 750, y: 612, w: 320, h: 38, label: 'response-guard', sublabel: 'safety filter (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
+  // Request plugins (top section)
+  p_bfth: { x: 750, y: 415, w: 320, h: 34, label: 'body-field-to-header', sublabel: 'extract model → header', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_mpr: { x: 750, y: 457, w: 320, h: 34, label: 'model-provider-resolver', sublabel: 'lookup ExternalModel CRD (reconciler)', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_reqg: { x: 750, y: 499, w: 320, h: 34, label: 'request-guard', sublabel: 'safety filter — request (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_at: { x: 750, y: 541, w: 320, h: 34, label: 'api-translation', sublabel: 'request: OpenAI → provider · response: provider → OpenAI', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_aki: { x: 750, y: 583, w: 320, h: 34, label: 'apikey-injection', sublabel: 'inject provider credential from Secret', color: '#d2a8ff', type: 'plugin', inner: true },
+  // Response plugins (bottom section)
+  p_rg: { x: 750, y: 625, w: 320, h: 34, label: 'response-guard', sublabel: 'safety filter — response (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
 
   // Five external model providers -- OUTSIDE cluster boundary
   openai: { x: 80, y: 620, w: 120, h: 55, label: 'OpenAI', sublabel: 'gpt-4o-mini', color: '#3fb950', fs: 12 },
@@ -680,6 +683,14 @@ const flows = {
           body: []
         }
       },
+      { t: 'request-guard: safety filter on request', mode: 'lightup', target: 'p_reqg', badge: 12,
+        rq: { plugin: 'request-guard (nemo)',
+          headers: [],
+          body: [
+            { v: 'Request content scanned — safe', s: 'add' },
+          ]
+        }
+      },
       { t: 'Route to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13,
         rq: { plugin: 'Final Request -> api.anthropic.com',
           headers: [
@@ -708,8 +719,8 @@ const flows = {
           ]
         }
       },
-      { t: 'response-guard: safety filter + translation', mode: 'lightup', target: 'p_rg', badge: 14,
-        rq: { plugin: 'response-guard + response translation',
+      { t: 'api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 15,
+        rq: { plugin: 'api-translation (Anthropic → OpenAI response)',
           headers: [],
           body: [
             { v: '"type": "message"', s: 'del' },
@@ -719,6 +730,14 @@ const flows = {
             { v: '"stop_reason": "end_turn"', s: 'del' },
             { v: '"finish_reason": "stop"', s: 'add' },
             { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add' },
+          ]
+        }
+      },
+      { t: 'response-guard: safety filter on response', mode: 'lightup', target: 'p_rg', badge: 16,
+        rq: { plugin: 'response-guard (nemo)',
+          headers: [],
+          body: [
+            { v: 'Response content scanned — safe', s: 'add' },
           ]
         }
       },
