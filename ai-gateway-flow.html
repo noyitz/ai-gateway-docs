@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Inference Gateway — Flow Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
+body.light{background:#fff;color:#24292f}
+canvas{display:block}
+
+/* Panels */
+.panel{position:fixed;z-index:100;border-radius:10px;font-size:13px;transition:all .3s}
+.panel-bg{background:#161b22;border:1px solid #30363d}
+body.light .panel-bg{background:#f6f8fa;border:1px solid #d0d7de}
+
+/* Controls */
+.ctrl{top:16px;left:16px;width:260px;display:flex;flex-direction:column;gap:6px;padding:14px 16px}
+.ctrl-title{font-size:16px;font-weight:800;margin-bottom:4px;background:linear-gradient(90deg,#58a6ff,#d2a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ctrl button{padding:9px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:12px;text-align:left;font-family:inherit;transition:all .15s}
+body.light .ctrl button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.ctrl button:hover{border-color:#58a6ff;background:#1a2332}
+body.light .ctrl button:hover{background:#ddf4ff}
+.ctrl button.on{border-color:#3fb950;background:#1a2e1a;color:#3fb950}
+.ctrl button.err.on{border-color:#f85149;background:#2d1517;color:#f85149}
+.ctrl .sep{border:none;border-top:1px solid #30363d;margin:3px 0}
+body.light .ctrl .sep{border-color:#d0d7de}
+.ctrl .section-label{font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px}
+.ctrl button.demo-btn{border-color:#d2a8ff;color:#d2a8ff}
+.ctrl button.reset-btn{border-color:#f0883e;color:#f0883e}
+
+/* Theme toggle */
+.theme-toggle{position:fixed;top:16px;right:16px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Legend */
+.legend{bottom:16px;left:16px;padding:10px 14px}
+.legend-title{font-weight:600;margin-bottom:5px;font-size:13px}
+.legend-item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+
+/* Steps sidebar */
+.steps-panel{top:60px;right:16px;width:340px;max-height:45%;overflow-y:auto;padding:14px 16px}
+.steps-title{font-weight:700;margin-bottom:8px;font-size:14px}
+.step{margin:3px 0;color:#8b949e;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.5;transition:all .2s;cursor:pointer;padding:3px 4px;border-radius:4px}
+body.light .step{color:#656d76}
+.step:hover{background:#1a233244}
+body.light .step:hover{background:#ddf4ff44}
+.step-marker{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step.active{color:#58a6ff}.step.active .step-marker::before{content:'\25CF'}
+.step.done{color:#3fb950}.step.done .step-marker::before{content:'\2713'}
+.step.fail{color:#f85149}.step.fail .step-marker::before{content:'\2717'}
+.step .step-marker::before{content:'\25CB'}
+
+/* Request Inspector */
+.inspector{bottom:16px;right:16px;width:440px;max-height:46%;overflow-y:auto;padding:14px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.inspector-title{font-weight:700;font-size:13px;margin-bottom:8px;font-family:-apple-system,sans-serif}
+.inspector-section{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:11px;font-family:-apple-system,sans-serif}
+.inspector-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre;line-height:1.6}
+.inspector-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
+body.light .inspector-line.add{background:#dafbe1;color:#116329}
+.inspector-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
+body.light .inspector-line.del{background:#ffebe9;color:#82071e}
+.inspector-line.keep{color:#8b949e;border-left:3px solid transparent}
+.inspector-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s ease-in-out}
+body.light .inspector-line.highlight{background:#ddf4ff;color:#0969da}
+@keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
+.inspector-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:11px;font-family:-apple-system,sans-serif}
+body.light .inspector-plugin{background:#8250df15;color:#8250df}
+
+/* Title */
+.main-title{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:150;font-size:26px;font-weight:800;background:linear-gradient(90deg,#58a6ff,#d2a8ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.5px;white-space:nowrap}
+
+/* Scrollbar styling */
+.steps-panel::-webkit-scrollbar,.inspector::-webkit-scrollbar{width:6px}
+.steps-panel::-webkit-scrollbar-track,.inspector::-webkit-scrollbar-track{background:transparent}
+.steps-panel::-webkit-scrollbar-thumb,.inspector::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-panel::-webkit-scrollbar-thumb,body.light .inspector::-webkit-scrollbar-thumb{background:#d0d7de}
+</style>
+</head>
+<body>
+
+<!-- Controls Panel -->
+<div class="panel panel-bg ctrl">
+<div class="ctrl-title">Flows</div>
+<button onclick="run('ext')" id="b-ext">External Model (OpenAI / Anthropic)</button>
+<button onclick="run('inc')" id="b-inc">On-Cluster (vLLM / llm-d)</button>
+<hr class="sep"><div class="section-label">Error Scenarios</div>
+<button class="err" onclick="run('af')" id="b-af">Auth Failure (401)</button>
+<button class="err" onclick="run('rl')" id="b-rl">Rate Limit (429)</button>
+<button class="err" onclick="run('pe')" id="b-pe">Provider Error (500)</button>
+<button class="err" onclick="run('mn')" id="b-mn">Model Not Found (404)</button>
+<hr class="sep">
+<button class="demo-btn" onclick="demo()" id="b-demo">&#9654; Demo Mode</button>
+<button class="reset-btn" onclick="reset()">Reset</button>
+</div>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+
+<!-- Legend -->
+<div class="panel panel-bg legend">
+<div class="legend-title">Legend</div>
+<div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
+<div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
+<div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Error</div>
+<div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
+<div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Payload Processor</div>
+</div>
+
+<!-- Steps Panel -->
+<div class="panel panel-bg steps-panel" id="steps-panel">
+<div class="steps-title">Flow Steps</div>
+<div id="steps-container"><div style="color:#8b949e">Select a flow to begin</div></div>
+</div>
+
+<!-- Request Inspector -->
+<div class="panel panel-bg inspector" id="inspector">
+<div class="inspector-title">Request Inspector -- Anthropic Translation</div>
+<div id="inspector-content"><div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:12px">Run "External Model" flow to see request mutations</div></div>
+</div>
+
+<!-- Title -->
+<div class="main-title">AI Inference Gateway</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, isDark = true, animFrame = null, particles = [], activeNodes = new Set(), failNode = null, persistentLines = [], running = false;
+let currentFlowId = null;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  draw();
+}
+
+// Layout constants - 1600x1000 logical canvas
+const LW = 1600, LH = 1000;
+let offsetX = 0, offsetY = 0, scale = 1;
+
+function resize() {
+  W = canvas.width = innerWidth;
+  H = canvas.height = innerHeight;
+  scale = Math.min(W / LW, H / LH, 0.92);
+  offsetX = (W - LW * scale) / 2;
+  offsetY = (H - LH * scale) / 2;
+  draw();
+}
+addEventListener('resize', resize);
+
+function tx(x) { return offsetX + x * scale; }
+function ty(y) { return offsetY + y * scale; }
+function ts(s) { return s * scale; }
+
+// ═══════════════════════════════════════════════════════════════
+// NODE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+const N = {
+  user: { x: 470, y: 20, w: 60, h: 45, label: 'User', type: 'icon' },
+
+  // Cluster boundary - encompasses everything except User and External Model
+  cluster: { x: 60, y: 100, w: 1370, h: 820, type: 'boundary' },
+
+  // AI Inference Gateway boundary - inside cluster, around Istio + Wasm + IPP
+  aigw_boundary: { x: 200, y: 130, w: 950, h: 580, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+
+  // Istio Gateway - center-left
+  gw: { x: 350, y: 280, w: 250, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 16 },
+
+  // Kuadrant Wasm Shim boundary - right side
+  wasm_boundary: { x: 740, y: 130, w: 360, h: 200, type: 'container', label: 'Kuadrant Wasm Shim (inside Envoy)', color: '#f0883e' },
+  wasm_entry: { x: 730, y: 215, w: 20, h: 20, label: '', type: 'hidden', color: '#f0883e' },
+  authorino: { x: 770, y: 175, w: 300, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 13 },
+  limitador: { x: 770, y: 245, w: 300, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13 },
+
+  // MaaS API - outside Wasm box AND outside AI Gateway boundary
+  maas_api: { x: 1180, y: 190, w: 180, h: 55, label: 'MaaS API', sublabel: 'API key validation · subscriptions', color: '#79c0ff', fs: 13 },
+
+  // Payload Processor boundary - right side
+  ipp_boundary: { x: 740, y: 380, w: 360, h: 310, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  ipp_entry: { x: 730, y: 530, w: 20, h: 20, label: '', type: 'hidden', color: '#d2a8ff' },
+  p_bfth: { x: 770, y: 420, w: 300, h: 38, label: '① body-field-to-header', sublabel: 'extract model → header', color: '#d2a8ff', type: 'plugin' },
+  p_mpr: { x: 770, y: 468, w: 300, h: 38, label: '② model-provider-resolver', sublabel: 'lookup ExternalModel CRD', color: '#d2a8ff', type: 'plugin' },
+  p_at: { x: 770, y: 516, w: 300, h: 38, label: '③ api-translation', sublabel: 'OpenAI ↔ provider format', color: '#d2a8ff', type: 'plugin' },
+  p_aki: { x: 770, y: 564, w: 300, h: 38, label: '④ apikey-injection', sublabel: 'inject provider credential', color: '#d2a8ff', type: 'plugin' },
+  p_rg: { x: 770, y: 612, w: 300, h: 38, label: '⑤ response-guard', sublabel: 'safety filter (nemo)', color: '#d2a8ff', type: 'plugin' },
+
+  // External Model - bottom left, outside cluster
+  ext: { x: 100, y: 580, w: 200, h: 70, label: 'External Model', sublabel: 'OpenAI · Anthropic · Azure · Bedrock · Vertex', color: '#3fb950', fs: 14, outside: true },
+
+  // On-cluster components
+  sched: { x: 370, y: 580, w: 180, h: 60, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 13 },
+
+  // InferencePool boundary
+  pool: { x: 300, y: 720, w: 450, h: 100, type: 'boundary', label: 'InferencePool' },
+  vllm: { x: 330, y: 750, w: 110, h: 45, label: 'vLLM', color: '#8b949e', fs: 13 },
+  triton: { x: 470, y: 750, w: 110, h: 45, label: 'Triton', color: '#8b949e', fs: 13 },
+  sglang: { x: 610, y: 750, w: 110, h: 45, label: 'SGLang', color: '#8b949e', fs: 13 },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// COLOR SCHEME
+// ═══════════════════════════════════════════════════════════════
+function colors() {
+  return isDark
+    ? { bg: '#0d1117', box: '#161b22', boxActive: '#1a2332', border: '#30363d', text: '#c9d1d9', dim: '#8b949e', bright: '#fff' }
+    : { bg: '#fff', box: '#f6f8fa', boxActive: '#ddf4ff', border: '#d0d7de', text: '#24292f', dim: '#656d76', bright: '#000' };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DRAWING FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+function drawBox(key) {
+  const n = N[key], c = colors();
+  if (!n || n.type === 'boundary' || n.type === 'container') return;
+  const isActive = activeNodes.has(key), isFail = failNode === key;
+  const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
+  ctx.save();
+
+  if (n.type === 'hidden') { ctx.restore(); return; }
+
+  if (n.type === 'icon') {
+    ctx.font = `${ts(32)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('👤', x + w / 2, y + ts(26));
+    ctx.font = `bold ${ts(14)}px system-ui`;
+    ctx.fillStyle = c.text;
+    ctx.fillText(n.label, x + w / 2, y + ts(44));
+    ctx.restore();
+    return;
+  }
+
+  if (isActive) {
+    ctx.shadowColor = isFail ? '#f85149' : n.color;
+    ctx.shadowBlur = ts(18);
+  }
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, ts(8));
+  ctx.fillStyle = isFail ? '#2d1517' : (isActive ? c.boxActive : c.box);
+  ctx.fill();
+  ctx.strokeStyle = isFail ? '#f85149' : (isActive ? n.color : c.border);
+  ctx.lineWidth = ts(isFail || isActive ? 2.5 : 1.5);
+  if (n.type === 'plugin') { ctx.setLineDash([ts(5), ts(4)]); }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const fontSize = n.fs || 12;
+  ctx.fillStyle = isFail ? '#f85149' : c.text;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (n.sublabel) {
+    ctx.font = `bold ${ts(fontSize)}px system-ui`;
+    const sublabelLines = n.sublabel.split('\n');
+    const totalSubHeight = sublabelLines.length * ts(13);
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
+    ctx.font = `${ts(fontSize - 3)}px system-ui`;
+    ctx.fillStyle = isFail ? '#f8514999' : c.dim;
+    sublabelLines.forEach((s, i) => ctx.fillText(s, x + w / 2, y + h / 2 + ts(6) + i * ts(13)));
+  } else {
+    ctx.font = `${ts(n.type === 'plugin' ? 12 : fontSize)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2);
+  }
+  ctx.restore();
+}
+
+function drawBoundaries() {
+  const c = colors();
+
+  // Cluster boundary
+  const cb = N.cluster;
+  ctx.beginPath();
+  ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
+  ctx.strokeStyle = c.border;
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(10), ts(8)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + cb.h - 15));
+
+  // AI Inference Gateway boundary
+  const aigw = N.aigw_boundary;
+  ctx.beginPath();
+  ctx.roundRect(tx(aigw.x), ty(aigw.y), ts(aigw.w), ts(aigw.h), ts(12));
+  ctx.strokeStyle = isDark ? '#58a6ff44' : '#58a6ff33';
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(8), ts(6)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff77';
+  ctx.textAlign = 'right';
+  ctx.fillText(aigw.label, tx(aigw.x + aigw.w - 14), ty(aigw.y + aigw.h - 12));
+
+  // Wasm Shim container
+  const ab = N.wasm_boundary;
+  ctx.beginPath();
+  ctx.roundRect(tx(ab.x), ty(ab.y), ts(ab.w), ts(ab.h), ts(10));
+  ctx.strokeStyle = isDark ? '#f0883e55' : '#f0883e44';
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(6), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(11)}px system-ui`;
+  ctx.fillStyle = isDark ? '#f0883eaa' : '#f0883e99';
+  ctx.textAlign = 'left';
+  ctx.fillText(ab.label, tx(ab.x + 12), ty(ab.y + 16));
+
+  // IPP container
+  const ipp = N.ipp_boundary;
+  ctx.beginPath();
+  ctx.roundRect(tx(ipp.x), ty(ipp.y), ts(ipp.w), ts(ipp.h), ts(10));
+  ctx.strokeStyle = isDark ? '#d2a8ff55' : '#8250df44';
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(6), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(11)}px system-ui`;
+  ctx.fillStyle = isDark ? '#d2a8ffaa' : '#8250df99';
+  ctx.textAlign = 'left';
+  ctx.fillText(ipp.label, tx(ipp.x + 12), ty(ipp.y + 16));
+
+  // InferencePool
+  const ip = N.pool;
+  ctx.beginPath();
+  ctx.roundRect(tx(ip.x), ty(ip.y), ts(ip.w), ts(ip.h), ts(10));
+  ctx.strokeStyle = c.border;
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(6), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(12)}px system-ui`;
+  ctx.fillStyle = c.dim;
+  ctx.textAlign = 'left';
+  ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 16));
+}
+
+function edgePoint(n, targetX, targetY) {
+  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  const dx = targetX - cx_, dy = targetY - cy_;
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (ax < 1 && ay < 1) return { x: cx_, y: cy_ };
+  const hw = n.w / 2, hh = n.h / 2;
+  let ex, ey;
+  if (ax * hh > ay * hw) {
+    ex = cx_ + (dx > 0 ? hw : -hw);
+    ey = cy_ + dy * (hw / ax);
+  } else {
+    ey = cy_ + (dy > 0 ? hh : -hh);
+    ex = cx_ + dx * (hh / ay);
+  }
+  return { x: ex, y: ey };
+}
+
+function drawArrow(x1, y1, x2, y2, color, num, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  ctx.moveTo(tx(x1), ty(y1));
+  ctx.lineTo(tx(x2), ty(y2));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = ts(2.5);
+  ctx.stroke();
+
+  // Arrowhead
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const sz = ts(10);
+  ctx.beginPath();
+  ctx.moveTo(tx(x2), ty(y2));
+  ctx.lineTo(tx(x2) - sz * Math.cos(angle - 0.4), ty(y2) - sz * Math.sin(angle - 0.4));
+  ctx.lineTo(tx(x2) - sz * Math.cos(angle + 0.4), ty(y2) - sz * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Numbered circle at midpoint
+  if (num != null) {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    ctx.beginPath();
+    ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(num, tx(mx), ty(my));
+  }
+  ctx.restore();
+}
+
+function drawPersistentLines() {
+  persistentLines.forEach(l => {
+    const fn = N[l.from], tn = N[l.to];
+    if (!fn || !tn) return;
+    const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+    const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+    const fp = edgePoint(fn, tc, tcy), tp = edgePoint(tn, fc, fy);
+    drawArrow(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANIMATED DOT WITH PROGRESSIVE LINE
+// ═══════════════════════════════════════════════════════════════
+class AnimDot {
+  constructor(fromKey, toKey, color, speed, callback) {
+    this.fromKey = fromKey;
+    this.toKey = toKey;
+    this.color = color;
+    this.speed = speed || 0.012;
+    this.t = 0;
+    this.callback = callback;
+    this.alive = true;
+
+    const fn = N[fromKey], tn = N[toKey];
+    const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+    const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+    this.fp = edgePoint(fn, tc, tcy);
+    this.tp = edgePoint(tn, fc, fy);
+  }
+
+  update() {
+    this.t += this.speed;
+    if (this.t >= 1) {
+      this.t = 1;
+      this.alive = false;
+      activeNodes.add(this.toKey);
+      if (this.callback) this.callback();
+    }
+    this.x = this.fp.x + (this.tp.x - this.fp.x) * this.t;
+    this.y = this.fp.y + (this.tp.y - this.fp.y) * this.t;
+  }
+
+  draw() {
+    // Progressive line drawing
+    ctx.beginPath();
+    ctx.moveTo(tx(this.fp.x), ty(this.fp.y));
+    ctx.lineTo(tx(this.x), ty(this.y));
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = ts(2.5);
+    ctx.stroke();
+
+    // Glowing dot
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(tx(this.x), ty(this.y), ts(6), 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = ts(14);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN DRAW LOOP
+// ═══════════════════════════════════════════════════════════════
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBoundaries();
+  drawPersistentLines();
+  Object.keys(N).forEach(k => drawBox(k));
+  particles.forEach(p => { p.update(); p.draw(); });
+  particles = particles.filter(p => p.alive);
+}
+
+function animate() {
+  draw();
+  animFrame = requestAnimationFrame(animate);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REQUEST INSPECTOR DATA
+// ═══════════════════════════════════════════════════════════════
+function renderInspector(rqData) {
+  if (!rqData) return;
+  const container = document.getElementById('inspector-content');
+  let html = '';
+  html += `<div class="inspector-plugin">${rqData.plugin}</div>`;
+  if (rqData.headers && rqData.headers.length > 0) {
+    html += '<div class="inspector-section">Headers:</div>';
+    rqData.headers.forEach(h => {
+      html += `<div class="inspector-line ${h.s}">${h.v}</div>`;
+    });
+  }
+  if (rqData.body && rqData.body.length > 0) {
+    html += '<div class="inspector-section">Body:</div>';
+    rqData.body.forEach(b => {
+      html += `<div class="inspector-line ${b.s}">${b.v}</div>`;
+    });
+  }
+  container.innerHTML = html;
+}
+
+function scrollInspectorToStep(stepIndex) {
+  if (currentFlowId !== 'ext') return;
+  const flow = flows.ext;
+  if (stepIndex < 0 || stepIndex >= flow.steps.length) return;
+  const step = flow.steps[stepIndex];
+  if (step.rq) {
+    renderInspector(step.rq);
+  }
+  // Highlight the clicked step
+  const steps = document.querySelectorAll('.step');
+  steps.forEach((s, i) => {
+    if (i === stepIndex) {
+      s.style.background = isDark ? '#1a233266' : '#ddf4ff66';
+    } else {
+      s.style.background = '';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FLOW DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+const flows = {
+  ext: {
+    name: 'External Model',
+    steps: [
+      {
+        t: 'Client sends POST /v1/chat/completions', f: 'user', to: 'gw', c: '#58a6ff',
+        rq: {
+          plugin: 'Incoming Request',
+          headers: [
+            { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep' },
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep' },
+            { v: 'Content-Type: application/json', s: 'keep' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep' },
+            { v: '"max_tokens": 100', s: 'keep' },
+            { v: '"stream": false', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e',
+        rq: {
+          plugin: 'Kuadrant Wasm Shim',
+          headers: [
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'highlight' },
+          ],
+          body: []
+        }
+      },
+      {
+        t: '① Auth validates API key', f: 'wasm_entry', to: 'authorino', c: '#f0883e',
+        rq: {
+          plugin: '① Authorino',
+          headers: [
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'highlight' },
+          ],
+          body: [
+            { v: '✓ API key validated', s: 'add' },
+          ]
+        }
+      },
+      {
+        t: 'Auth calls MaaS API for key validation', f: 'authorino', to: 'maas_api', c: '#f0883e',
+        rq: {
+          plugin: 'Authorino → MaaS API',
+          headers: [
+            { v: 'POST /internal/v1/api-keys/validate', s: 'highlight' },
+            { v: 'key: sk-oai-abc123...', s: 'keep' },
+          ],
+          body: [
+            { v: '✓ Key valid · subscription: ext-models-sub', s: 'add' },
+          ]
+        }
+      },
+      {
+        t: '② Rate Limit checks token quota', f: 'authorino', to: 'limitador', c: '#f0883e',
+        rq: {
+          plugin: '② Limitador',
+          headers: [],
+          body: [
+            { v: '✓ Token budget: 95,000 / 100,000 remaining', s: 'add' },
+          ]
+        }
+      },
+      {
+        t: 'Gateway invokes ext_proc', f: 'gw', to: 'ipp_entry', c: '#d2a8ff',
+        rq: {
+          plugin: 'Payload Processor (ext_proc)',
+          headers: [
+            { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep' },
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep' },
+            { v: 'Content-Type: application/json', s: 'keep' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep' },
+            { v: '"max_tokens": 100', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'IPP: ① body-field-to-header', f: 'ipp_entry', to: 'p_bfth', c: '#d2a8ff',
+        rq: {
+          plugin: '① body-field-to-header',
+          headers: [
+            { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep' },
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep' },
+            { v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'IPP: ② model-provider-resolver', f: 'p_bfth', to: 'p_mpr', c: '#d2a8ff',
+        rq: {
+          plugin: '② model-provider-resolver',
+          headers: [
+            { v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'keep' },
+          ],
+          body: [
+            { v: 'CycleState.provider = "anthropic"', s: 'add' },
+            { v: 'CycleState.targetModel = "claude-haiku-4-5-20251001"', s: 'add' },
+            { v: 'CycleState.endpoint = "api.anthropic.com"', s: 'add' },
+          ]
+        }
+      },
+      {
+        t: 'IPP: ③ api-translation (OpenAI → Anthropic)', f: 'p_mpr', to: 'p_at', c: '#d2a8ff',
+        rq: {
+          plugin: '③ api-translation (OpenAI → Anthropic)',
+          headers: [
+            { v: ':path /llm/ext-anthropic/v1/chat/completions', s: 'del' },
+            { v: ':path /v1/messages', s: 'add' },
+            { v: 'anthropic-version: 2023-06-01', s: 'add' },
+            { v: 'Authorization: Bearer sk-oai-abc123...', s: 'del' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep' },
+            { v: '"max_tokens": 100', s: 'keep' },
+            { v: '"stream": false', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'IPP: ④ apikey-injection', f: 'p_at', to: 'p_aki', c: '#d2a8ff',
+        rq: {
+          plugin: '④ apikey-injection',
+          headers: [
+            { v: ':path /v1/messages', s: 'keep' },
+            { v: 'anthropic-version: 2023-06-01', s: 'keep' },
+            { v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add' },
+          ],
+          body: []
+        }
+      },
+      {
+        t: 'IPP returns mutated request', f: 'p_aki', to: 'gw', c: '#d2a8ff',
+        rq: {
+          plugin: 'IPP returns mutated request to Gateway',
+          headers: [
+            { v: 'POST /v1/messages', s: 'highlight' },
+            { v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'highlight' },
+            { v: 'anthropic-version: 2023-06-01', s: 'highlight' },
+            { v: 'Content-Type: application/json', s: 'keep' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep' },
+            { v: '"max_tokens": 100', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'Route to provider', f: 'gw', to: 'ext', c: '#58a6ff',
+        rq: {
+          plugin: 'Final Request → api.anthropic.com',
+          headers: [
+            { v: 'POST /v1/messages', s: 'highlight' },
+            { v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'highlight' },
+            { v: 'anthropic-version: 2023-06-01', s: 'highlight' },
+            { v: 'Content-Type: application/json', s: 'keep' },
+          ],
+          body: [
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep' },
+            { v: '"max_tokens": 100', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'Provider response', f: 'ext', to: 'gw', c: '#3fb950',
+        rq: {
+          plugin: 'Anthropic Response (raw)',
+          headers: [
+            { v: 'HTTP/1.1 200 OK', s: 'keep' },
+          ],
+          body: [
+            { v: '"type": "message"', s: 'keep' },
+            { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep' },
+            { v: '"stop_reason": "end_turn"', s: 'keep' },
+            { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep' },
+          ]
+        }
+      },
+      {
+        t: 'Response translation', f: 'gw', to: 'p_rg', c: '#d2a8ff',
+        rq: {
+          plugin: '⑤ response-guard + response translation',
+          headers: [],
+          body: [
+            { v: '"type": "message"', s: 'del' },
+            { v: '"object": "chat.completion"', s: 'add' },
+            { v: '"content": [{"type":"text"...}]', s: 'del' },
+            { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add' },
+            { v: '"stop_reason": "end_turn"', s: 'del' },
+            { v: '"finish_reason": "stop"', s: 'add' },
+            { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add' },
+          ]
+        }
+      },
+      {
+        t: 'Response to client', f: 'gw', to: 'user', c: '#3fb950',
+        rq: {
+          plugin: 'Final Response → Client (OpenAI format)',
+          headers: [
+            { v: 'HTTP/1.1 200 OK', s: 'keep' },
+            { v: 'Content-Type: application/json', s: 'keep' },
+          ],
+          body: [
+            { v: '"object": "chat.completion"', s: 'highlight' },
+            { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep' },
+            { v: '"choices": [{"message":{"role":"assistant","content":"Hello!"}}]', s: 'highlight' },
+            { v: '"finish_reason": "stop"', s: 'keep' },
+            { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep' },
+          ]
+        }
+      },
+    ]
+  },
+  inc: {
+    name: 'On-Cluster',
+    steps: [
+      { t: 'Client sends POST /v1/chat/completions', f: 'user', to: 'gw', c: '#58a6ff' },
+      { t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e' },
+      { t: '① Auth validates API key', f: 'wasm_entry', to: 'authorino', c: '#f0883e' },
+      { t: 'Auth calls MaaS API for key validation', f: 'authorino', to: 'maas_api', c: '#f0883e' },
+      { t: '② Rate Limit checks token quota', f: 'authorino', to: 'limitador', c: '#f0883e' },
+      { t: 'Gateway invokes ext_proc (passthrough)', f: 'gw', to: 'ipp_entry', c: '#d2a8ff' },
+      { t: 'IPP: ① body-field-to-header only', f: 'ipp_entry', to: 'p_bfth', c: '#d2a8ff' },
+      { t: 'Gateway routes to llm-d Scheduler', f: 'gw', to: 'sched', c: '#79c0ff' },
+      { t: 'Scheduler selects optimal pod', f: 'sched', to: 'vllm', c: '#79c0ff' },
+      { t: 'vLLM processes inference', f: 'vllm', to: 'sched', c: '#3fb950' },
+      { t: 'Response through scheduler', f: 'sched', to: 'gw', c: '#3fb950' },
+      { t: 'Response to client', f: 'gw', to: 'user', c: '#3fb950' },
+    ]
+  },
+  af: {
+    name: 'Auth Failure',
+    steps: [
+      { t: 'Client sends request', f: 'user', to: 'gw', c: '#58a6ff' },
+      { t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e' },
+      { t: '① Auth rejects -- invalid key', f: 'wasm_entry', to: 'authorino', c: '#f0883e', fail: 'authorino' },
+      { t: '401 Unauthorized returned to client', f: 'gw', to: 'user', c: '#f85149' },
+    ]
+  },
+  rl: {
+    name: 'Rate Limit',
+    steps: [
+      { t: 'Client sends request', f: 'user', to: 'gw', c: '#58a6ff' },
+      { t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e' },
+      { t: '① Auth validates API key', f: 'wasm_entry', to: 'authorino', c: '#f0883e' },
+      { t: 'Auth calls MaaS API for key validation', f: 'authorino', to: 'maas_api', c: '#f0883e' },
+      { t: '② Rate Limit rejects -- over quota', f: 'authorino', to: 'limitador', c: '#f0883e', fail: 'limitador' },
+      { t: '429 Too Many Requests', f: 'gw', to: 'user', c: '#f85149' },
+    ]
+  },
+  pe: {
+    name: 'Provider Error',
+    steps: [
+      { t: 'Client sends request', f: 'user', to: 'gw', c: '#58a6ff' },
+      { t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e' },
+      { t: '① Auth validates API key', f: 'wasm_entry', to: 'authorino', c: '#f0883e' },
+      { t: 'Auth calls MaaS API for key validation', f: 'authorino', to: 'maas_api', c: '#f0883e' },
+      { t: '② Rate Limit checks token quota', f: 'authorino', to: 'limitador', c: '#f0883e' },
+      { t: 'Gateway invokes ext_proc', f: 'gw', to: 'ipp_entry', c: '#d2a8ff' },
+      { t: 'IPP translates + injects key', f: 'p_at', to: 'p_aki', c: '#d2a8ff' },
+      { t: 'Gateway routes to provider', f: 'gw', to: 'ext', c: '#58a6ff' },
+      { t: 'Provider returns 500', f: 'ext', to: 'gw', c: '#f85149', fail: 'ext' },
+      { t: '500 forwarded to client', f: 'gw', to: 'user', c: '#f85149' },
+    ]
+  },
+  mn: {
+    name: 'Model Not Found',
+    steps: [
+      { t: 'Client sends request', f: 'user', to: 'gw', c: '#58a6ff' },
+      { t: 'Gateway invokes Wasm filter', f: 'gw', to: 'wasm_entry', c: '#f0883e' },
+      { t: '① Auth validates API key', f: 'wasm_entry', to: 'authorino', c: '#f0883e' },
+      { t: 'Auth calls MaaS API for key validation', f: 'authorino', to: 'maas_api', c: '#f0883e' },
+      { t: '② Rate Limit checks token quota', f: 'authorino', to: 'limitador', c: '#f0883e' },
+      { t: 'Gateway invokes ext_proc', f: 'gw', to: 'ipp_entry', c: '#d2a8ff' },
+      { t: 'IPP: ① body-field-to-header', f: 'ipp_entry', to: 'p_bfth', c: '#d2a8ff' },
+      { t: 'IPP: ② model-provider-resolver -- NOT FOUND', f: 'p_bfth', to: 'p_mpr', c: '#d2a8ff', fail: 'p_mpr' },
+      { t: '404 returned to client', f: 'gw', to: 'user', c: '#f85149' },
+    ]
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// FLOW EXECUTION
+// ═══════════════════════════════════════════════════════════════
+function run(id) {
+  if (running) return;
+  reset();
+  running = true;
+  currentFlowId = id;
+
+  document.querySelectorAll('.ctrl button').forEach(b => b.classList.remove('on'));
+  const btn = document.getElementById('b-' + id);
+  if (btn) btn.classList.add('on');
+
+  const flow = flows[id];
+  const stepsContainer = document.getElementById('steps-container');
+  stepsContainer.innerHTML = '';
+
+  // Show/hide inspector based on flow
+  const inspector = document.getElementById('inspector');
+  if (id === 'ext') {
+    inspector.style.display = '';
+    document.getElementById('inspector-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:12px">Flow starting...</div>';
+  } else {
+    inspector.style.display = 'none';
+  }
+
+  flow.steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    div.id = 'step-' + i;
+    div.innerHTML = `<span class="step-marker"></span><span>${s.t}</span>`;
+    div.addEventListener('click', () => scrollInspectorToStep(i));
+    stepsContainer.appendChild(div);
+  });
+
+  let stepIndex = 0;
+
+  function nextStep() {
+    if (stepIndex >= flow.steps.length) { running = false; return; }
+    const s = flow.steps[stepIndex];
+    const el = document.getElementById('step-' + stepIndex);
+    el.className = 'step active';
+    activeNodes.add(s.f);
+
+    // Show request inspector for ext flow
+    if (id === 'ext' && s.rq) {
+      renderInspector(s.rq);
+    }
+
+    const currentStep = stepIndex;
+    particles.push(new AnimDot(s.f, s.to, s.c, 0.012, () => {
+      persistentLines.push({ from: s.f, to: s.to, color: s.c, num: currentStep + 1 });
+      if (s.fail) {
+        failNode = s.fail;
+        el.className = 'step fail';
+      } else {
+        el.className = 'step done';
+      }
+      stepIndex++;
+      setTimeout(nextStep, 500);
+    }));
+  }
+
+  setTimeout(nextStep, 300);
+  if (!animFrame) animate();
+}
+
+function reset() {
+  running = false;
+  currentFlowId = null;
+  particles = [];
+  activeNodes.clear();
+  failNode = null;
+  persistentLines = [];
+  document.querySelectorAll('.ctrl button').forEach(b => b.classList.remove('on'));
+  document.getElementById('steps-container').innerHTML = '<div style="color:#8b949e">Select a flow to begin</div>';
+  document.getElementById('inspector-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:12px">Run "External Model" flow to see request mutations</div>';
+  document.getElementById('inspector').style.display = '';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  draw();
+}
+
+async function demo() {
+  if (running) return;
+  const flowIds = ['ext', 'inc', 'af', 'rl', 'pe', 'mn'];
+  for (const id of flowIds) {
+    run(id);
+    await new Promise(resolve => {
+      const check = () => running ? setTimeout(check, 200) : resolve();
+      setTimeout(check, 500);
+    });
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    reset();
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+}
+
+resize();
+draw();
+</script>
+</body>
+</html>
