@@ -1197,6 +1197,10 @@ function execStep() {
   }
   const si = runStepIndex;
   const s = flow[si];
+  for (let j = 0; j < si; j++) {
+    const prev = document.getElementById('step-' + j);
+    if (prev) prev.className = 'step done';
+  }
   const el = document.getElementById('step-' + si);
   el.className = 'step active';
   el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
