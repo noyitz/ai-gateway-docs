@@ -173,7 +173,7 @@ const N = {
   auth: { x: 670, y: 195, w: 320, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 13, inner: true },
   rlimit: { x: 670, y: 270, w: 320, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  maas: { x: 1190, y: 180, w: 170, h: 60, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
+  maas: { x: 850, y: 800, w: 170, h: 60, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
 
   ipp: { x: 640, y: 400, w: 380, h: 330, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   p_bfth: { x: 670, y: 440, w: 320, h: 34, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true },
@@ -401,7 +401,34 @@ function drawLines() {
       fp = edgePt(fn, tc, tcy, l.yOff||0);
       tp = edgePt(tn, fc, fy, l.yOff||0);
     }
-    drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, .8);
+    if (l.waypoints) {
+      // Draw multi-segment line through waypoints
+      const pts = [fp, ...l.waypoints, tp];
+      ctx.save(); ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
+      for (let i=1; i<pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      ctx.strokeStyle = l.color; ctx.lineWidth = ts(2.5); ctx.stroke();
+      // Arrowhead at end
+      const last=pts[pts.length-1], prev=pts[pts.length-2];
+      const ang=Math.atan2(last.y-prev.y, last.x-prev.x), sz=ts(10);
+      ctx.beginPath(); ctx.moveTo(tx(last.x),ty(last.y));
+      ctx.lineTo(tx(last.x)-sz*Math.cos(ang-.4), ty(last.y)-sz*Math.sin(ang-.4));
+      ctx.lineTo(tx(last.x)-sz*Math.cos(ang+.4), ty(last.y)-sz*Math.sin(ang+.4));
+      ctx.closePath(); ctx.fillStyle=l.color; ctx.fill();
+      // Number at midpoint of full path
+      if (l.num!=null) {
+        const mid = pts[Math.floor(pts.length/2)];
+        const r=ts(12);
+        ctx.beginPath(); ctx.arc(tx(mid.x),ty(mid.y),r,0,Math.PI*2);
+        ctx.fillStyle=l.color; ctx.fill();
+        ctx.font=`bold ${ts(10)}px system-ui`; ctx.fillStyle=isDark?'#0d1117':'#fff';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(String(l.num), tx(mid.x), ty(mid.y));
+      }
+      ctx.restore();
+    } else {
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, .8);
+    }
   });
 }
 
@@ -443,31 +470,65 @@ class Dot {
     this.t = 0; this.cb = cb; this.alive = true;
     const fn=N[fKey], tn=N[tKey];
     const yo = (opts&&opts.yOff)||0;
+    let fp, tp;
     if (opts&&opts.toLeft) {
-      this.fp = edgePt(fn, tn.x, tn.y+tn.h/2, yo);
-      this.tp = leftPt(tn); this.tp = {x:this.tp.x, y:this.tp.y+yo};
+      fp = edgePt(fn, tn.x, tn.y+tn.h/2, yo);
+      tp = leftPt(tn); tp = {x:tp.x, y:tp.y+yo};
     } else if (opts&&opts.fromRight) {
-      this.fp = rightPt(fn); this.fp = {x:this.fp.x, y:this.fp.y+yo};
-      this.tp = edgePt(tn, fn.x+fn.w, fn.y+fn.h/2, yo);
+      fp = rightPt(fn); fp = {x:fp.x, y:fp.y+yo};
+      tp = edgePt(tn, fn.x+fn.w, fn.y+fn.h/2, yo);
     } else if (opts&&opts.toRight) {
-      this.fp = edgePt(fn, tn.x+tn.w, tn.y+tn.h/2, yo);
-      this.tp = rightPt(tn); this.tp = {x:this.tp.x, y:this.tp.y+yo};
+      fp = edgePt(fn, tn.x+tn.w, tn.y+tn.h/2, yo);
+      tp = rightPt(tn); tp = {x:tp.x, y:tp.y+yo};
     } else {
       const fc=fn.x+fn.w/2, fy=fn.y+fn.h/2, tc=tn.x+tn.w/2, tcy=tn.y+tn.h/2;
-      this.fp = edgePt(fn, tc, tcy, yo);
-      this.tp = edgePt(tn, fc, fy, yo);
+      fp = edgePt(fn, tc, tcy, yo);
+      tp = edgePt(tn, fc, fy, yo);
+    }
+    // Build path as array of points (supports waypoints)
+    if (opts&&opts.waypoints) {
+      this.pts = [fp, ...opts.waypoints, tp];
+    } else {
+      this.pts = [fp, tp];
+    }
+    // Pre-calculate total path length and segment lengths
+    this.segLens = [];
+    this.totalLen = 0;
+    for (let i=1; i<this.pts.length; i++) {
+      const dx=this.pts[i].x-this.pts[i-1].x, dy=this.pts[i].y-this.pts[i-1].y;
+      const len = Math.sqrt(dx*dx+dy*dy);
+      this.segLens.push(len);
+      this.totalLen += len;
     }
   }
   update() {
     this.t += this.speed;
     if (this.t>=1) { this.t=1; this.alive=false; if(this.cb)this.cb(); }
-    this.x = this.fp.x + (this.tp.x-this.fp.x)*this.t;
-    this.y = this.fp.y + (this.tp.y-this.fp.y)*this.t;
+    // Find position along path
+    const dist = this.t * this.totalLen;
+    let accum = 0;
+    for (let i=0; i<this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        this.x = this.pts[i].x + (this.pts[i+1].x - this.pts[i].x) * segT;
+        this.y = this.pts[i].y + (this.pts[i+1].y - this.pts[i].y) * segT;
+        this.segIdx = i;
+        this.segT = segT;
+        return;
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length-1];
+    this.x = last.x; this.y = last.y;
   }
   draw() {
-    // Progressive line
-    ctx.beginPath(); ctx.moveTo(tx(this.fp.x),ty(this.fp.y));
-    ctx.lineTo(tx(this.x),ty(this.y));
+    // Progressive line through completed segments + partial current segment
+    ctx.beginPath();
+    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+    for (let i=0; i<=this.segIdx; i++) {
+      ctx.lineTo(tx(this.pts[i+1].x), ty(this.pts[i+1].y));
+    }
+    ctx.lineTo(tx(this.x), ty(this.y));
     ctx.strokeStyle = this.color; ctx.lineWidth = ts(2.5); ctx.stroke();
     // Dot
     ctx.save(); ctx.beginPath();
@@ -659,9 +720,9 @@ const flow = [
   // 3: Auth lights up
   { t: 'Auth validates API key (Authorino)', mode: 'lightup', target: 'auth', badge: 3 },
   // 4: Wasm -> MaaS API (request, yOff -8)
-  { t: 'Wasm calls MaaS API for key validation', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, fromRight: true, yOff: -8 },
+  { t: 'Wasm calls MaaS API for key validation', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, fromRight: true, waypoints: [{x:1080, y:250}, {x:1080, y:830}] },
   // 5: MaaS API -> Wasm (response, yOff +8)
-  { t: 'MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, toRight: true, yOff: 8 },
+  { t: 'MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, toRight: true, waypoints: [{x:1100, y:830}, {x:1100, y:270}] },
   // 6: Rate Limit lights up
   { t: 'Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   // 7: Gateway -> IPP left edge
@@ -729,9 +790,9 @@ function run() {
 
     if (s.mode === 'arrow') {
       if (s.f) activeNodes.add(s.f);
-      const opts = { toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight, yOff: s.yOff };
+      const opts = { toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight, yOff: s.yOff, waypoints: s.waypoints };
       dots.push(new Dot(s.f, s.to, s.c, .012, () => {
-        lines.push({ from:s.f, to:s.to, color:s.c, num:s.num, toLeft:s.toLeft, fromRight:s.fromRight, toRight:s.toRight, yOff:s.yOff });
+        lines.push({ from:s.f, to:s.to, color:s.c, num:s.num, toLeft:s.toLeft, fromRight:s.fromRight, toRight:s.toRight, yOff:s.yOff, waypoints:s.waypoints });
         if (s.glow) glowing.add(s.glow);
         activeNodes.add(s.to);
         el.className = 'step done';
