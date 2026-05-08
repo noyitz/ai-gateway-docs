@@ -891,7 +891,9 @@ function jumpToStep(targetStep) {
   for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
   dots = [];
   fading = {};
-  draw();
+  // Force a clean redraw on next frame
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(() => { draw(); draw(); }); // double draw to ensure clean state
 }
 
 function doReset() {
