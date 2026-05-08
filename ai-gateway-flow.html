@@ -28,8 +28,8 @@ body.light .steps-section{border-color:#d0d7de}
 .steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
 .step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
 body.light .step{color:#b0b8c1}
-.step:hover{background:#1a233244}
-body.light .step:hover{background:#ddf4ff44}
+.step:hover{background:#1a233266;cursor:pointer}
+body.light .step:hover{background:#ddf4ff66;cursor:pointer}
 .step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
 .step.pending{color:#484f58}
 body.light .step.pending{color:#b0b8c1}
@@ -94,7 +94,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
-    <div class="steps-title">Flow Steps</div>
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
     <div id="steps-ctr"></div>
   </div>
   <div class="insp-section" id="insp-section">
@@ -154,11 +154,11 @@ const N = {
   ipp: { x: 640, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_rguard:  { x: 675, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
-  p_mpr:     { x: 675, y: 360, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_bfth:    { x: 675, y: 400, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_at_req:  { x: 675, y: 440, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_aki:     { x: 675, y: 480, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_ims:     { x: 675, y: 518, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  p_ims:     { x: 675, y: 360, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  p_mpr:     { x: 675, y: 402, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_bfth:    { x: 675, y: 440, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_at_req:  { x: 675, y: 478, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_aki:     { x: 675, y: 518, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
   // Response plugins
   p_at_resp: { x: 675, y: 595, w: 335, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
   p_resp_guard: { x: 675, y: 633, w: 335, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
@@ -817,18 +817,18 @@ function resetStyles() {
 function inspStepInc(stepNum) {
   switch (stepNum) {
     case 10:
-      inspStepLabel = '⑩ model-provider-resolver (InferencePool)';
+      inspStepLabel = '⑩ intelligent-model-selection (coming soon)';
+      break;
+    case 11:
+      inspStepLabel = '⑪ model-provider-resolver (InferencePool)';
       inspCycle = [
         { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
         { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
       ];
       break;
-    case 11:
-      inspStepLabel = '⑪ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
-      break;
     case 12:
-      inspStepLabel = '⑫ intelligent-model-selection (coming soon)';
+      inspStepLabel = '⑫ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
       break;
     case 13: {
       inspStepLabel = '⑬ IPP → Gateway (request ready)';
@@ -939,29 +939,29 @@ function inspStep(stepNum) {
       inspStepLabel = '⑨ request-guard (coming soon)';
       break;
     case 10:
-      inspStepLabel = '⑩ model-provider-resolver';
+      inspStepLabel = '⑩ intelligent-model-selection (coming soon)';
+      break;
+    case 11:
+      inspStepLabel = '⑪ model-provider-resolver';
       inspCycle = [
         { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
       ];
       break;
-    case 11:
-      inspStepLabel = '⑪ body-field-to-header';
+    case 12:
+      inspStepLabel = '⑫ body-field-to-header';
       inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
       break;
-    case 12:
-      inspStepLabel = '⑫ api-translation (request)';
+    case 13:
+      inspStepLabel = '⑬ api-translation (request)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       inspHeaders.find(l => l.id === 'h-auth').s = 'del';
       break;
-    case 13:
-      inspStepLabel = '⑬ apikey-injection';
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
-      break;
     case 14:
-      inspStepLabel = '⑭ intelligent-model-selection (coming soon)';
+      inspStepLabel = '⑭ apikey-injection';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
     case 15: {
       inspStepLabel = '⑮ IPP → Gateway (mutated request)';
@@ -1046,11 +1046,11 @@ const flowExt = [
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // IPP request plugins
   { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
-  { t: '10. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
-  { t: '11. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 11 },
-  { t: '12. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 12 },
-  { t: '13. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 13 },
-  { t: '14. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 14 },
+  { t: '10. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 10 },
+  { t: '11. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 11 },
+  { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
+  { t: '13. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 13 },
+  { t: '14. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 14 },
   { t: '15. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 15, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   { t: '16. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 16, fromLeft: true, toRight: true, yOff: -10 },
   // RESPONSE PATH
@@ -1078,9 +1078,9 @@ const flowInc = [
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // IPP request plugins (no api-translation, no apikey-injection for on-cluster)
   { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
-  { t: '10. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 10 },
-  { t: '11. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 11 },
-  { t: '12. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 12 },
+  { t: '10. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 10 },
+  { t: '11. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 11 },
+  { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
   { t: '14. Gateway → llm-d Scheduler', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, fromBottom: true, fromXOff: 35, toTop: true },
