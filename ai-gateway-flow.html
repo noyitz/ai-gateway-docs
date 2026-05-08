@@ -114,6 +114,7 @@ const ctx = canvas.getContext('2d');
 let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
 let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
+let snapshots = []; // State snapshot after each step completes
 
 // Logical canvas dimensions
 const LW = 1200, LH = 900;
@@ -597,12 +598,7 @@ function initSteps() {
   });
 }
 
-function jumpToStep(idx) {
-  if (idx >= currentStepDone) return;
-  // Replay inspector state up to that step
-  initInspector();
-  for (let j = 1; j <= idx + 1; j++) inspStep(j);
-}
+// jumpToStep defined below with full snapshot restore
 
 // ================================================================
 // INSPECTOR
@@ -822,6 +818,7 @@ function run() {
         activeNodes.add(s.to);
         el.className = 'step done';
         currentStepDone = si + 1;
+        saveSnapshot(si);
         si++;
         setTimeout(next, 500);
       }, opts));
@@ -837,6 +834,7 @@ function run() {
       }
       el.className = 'step done';
       currentStepDone = si + 1;
+      saveSnapshot(si);
       si++;
       setTimeout(next, 500);
     }
@@ -844,6 +842,56 @@ function run() {
 
   setTimeout(next, 300);
   if (!animFrame) animate();
+}
+
+function saveSnapshot(stepIdx) {
+  snapshots[stepIdx] = {
+    activeNodes: new Set(activeNodes),
+    badges: JSON.parse(JSON.stringify(badges)),
+    lines: JSON.parse(JSON.stringify(lines)),
+    glowing: new Set(glowing),
+  };
+}
+
+function restoreSnapshot(stepIdx) {
+  if (stepIdx < 0) {
+    activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+    return;
+  }
+  const snap = snapshots[stepIdx];
+  if (!snap) return;
+  activeNodes = new Set(snap.activeNodes);
+  badges = JSON.parse(JSON.stringify(snap.badges));
+  lines = JSON.parse(JSON.stringify(snap.lines));
+  glowing = new Set(snap.glowing);
+}
+
+function jumpToStep(targetStep) {
+  if (running) return;
+  // For forward jumps beyond what's been played, replay from current to target
+  if (targetStep >= currentStepDone) {
+    // Need to build snapshots up to targetStep by simulating
+    // For now, only allow jumping to completed steps
+    // (forward jump will be supported after full playback)
+    if (!snapshots[targetStep]) return;
+  }
+  // Restore diagram state to after targetStep completed
+  restoreSnapshot(targetStep);
+  currentStepDone = targetStep + 1;
+  // Update step markers
+  document.querySelectorAll('.step').forEach((el, i) => {
+    if (i <= targetStep) el.className = 'step done';
+    else el.className = 'step pending';
+  });
+  // Highlight the clicked step
+  const clickedEl = document.getElementById('step-' + targetStep);
+  if (clickedEl) clickedEl.className = 'step active';
+  // Update inspector to that step
+  initInspector();
+  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  dots = [];
+  fading = {};
+  draw();
 }
 
 function doReset() {
@@ -855,6 +903,7 @@ function doReset() {
   glowing.clear();
   fading = {};
   currentStepDone = 0;
+  snapshots = [];
   inspHeaders = [];
   inspBody = [];
   inspCycle = [];
