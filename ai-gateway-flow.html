@@ -854,12 +854,12 @@ function run(id) {
     if (s.mode === 'arrow') {
       // Animated arrow between separate components
       if (s.f) activeNodes.add(s.f);
-      if (s.glowContainer) {
-        glowingContainers.add(s.glowContainer);
-        setTimeout(() => glowingContainers.delete(s.glowContainer), 1500);
-      }
       particles.push(new AnimDot(s.f, s.to, s.c, 0.012, () => {
         persistentLines.push({ from: s.f, to: s.to, color: s.c, num: s.num, toLeftEdge: s.toLeftEdge });
+        if (s.glowContainer) {
+          glowingContainers.add(s.glowContainer);
+          setTimeout(() => glowingContainers.delete(s.glowContainer), 1500);
+        }
         if (s.fail) {
           failNode = s.fail;
           el.className = 'step fail';
