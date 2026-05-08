@@ -840,28 +840,31 @@ function inspStepInc(stepNum) {
       if (xm) xm.s = 'highlight';
       break; }
     case 14:
-      inspStepLabel = '⑭ Gateway → llm-d Scheduler';
+      inspStepLabel = '⑭ Gateway → EPP (ext_proc)';
       break;
     case 15:
-      inspStepLabel = '⑮ Scheduler selects pods (EPP)';
+      inspStepLabel = '⑮ EPP selects pods';
       break;
     case 16:
-      inspStepLabel = '⑯ Scheduler → Prefill pods';
+      inspStepLabel = '⑯ EPP → Gateway (pod selected)';
       break;
     case 17:
-      inspStepLabel = '⑰ Prefill processing (Variant A)';
+      inspStepLabel = '⑰ Gateway → Prefill pods';
       break;
     case 18:
-      inspStepLabel = '⑱ Prefill → Shared Prefix Cache';
+      inspStepLabel = '⑱ Prefill processing (Variant A)';
       break;
     case 19:
-      inspStepLabel = '⑲ KV cache → Decode pods (NIXL)';
+      inspStepLabel = '⑲ Prefill → Shared Prefix Cache';
       break;
     case 20:
-      inspStepLabel = '⑳ Decode processing (Variant B)';
+      inspStepLabel = '⑳ KV cache → Decode pods (NIXL)';
       break;
     case 21:
-      inspStepLabel = '㉑ Decode → Gateway (response)';
+      inspStepLabel = '㉑ Decode processing (Variant B)';
+      break;
+    case 22:
+      inspStepLabel = '㉒ Decode → Gateway (response)';
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -874,27 +877,27 @@ function inspStepInc(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 22:
-      inspStepLabel = '㉒ Gateway → IPP (response)';
-      break;
     case 23:
-      inspStepLabel = '㉓ response-guard (coming soon)';
+      inspStepLabel = '㉓ Gateway → IPP (response)';
       break;
-    case 24: {
-      inspStepLabel = '㉔ IPP → Gateway (response)';
+    case 24:
+      inspStepLabel = '㉔ response-guard (coming soon)';
+      break;
+    case 25: {
+      inspStepLabel = '㉕ IPP → Gateway (response)';
       const ro = inspBody.find(l => l.id === 'r-obj');
       if (ro) ro.s = 'highlight';
       break; }
-    case 25: {
-      inspStepLabel = '㉕ Wasm reads usage.total_tokens';
+    case 26: {
+      inspStepLabel = '㉖ Wasm reads usage.total_tokens';
       const u = inspBody.find(l => l.id === 'r-usage2');
       if (u) u.s = 'highlight';
       break; }
-    case 26:
-      inspStepLabel = '㉖ Limitador: report token count';
+    case 27:
+      inspStepLabel = '㉗ Limitador: report token count';
       break;
-    case 27: {
-      inspStepLabel = '㉗ Response to Client (OpenAI format)';
+    case 28: {
+      inspStepLabel = '㉘ Response to Client (OpenAI format)';
       const rc = inspBody.find(l => l.id === 'r-choices');
       if (rc) rc.s = 'highlight';
       break; }
@@ -1087,21 +1090,22 @@ const flowInc = [
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → llm-d Scheduler (EPP)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
-  { t: '15. Scheduler selects pods (EPP)', mode: 'lightup', target: 'sched', badge: 15 },
-  { t: '16. Scheduler → Prefill pods', mode: 'arrow', f: 'sched', to: 'prefill', c: '#58a6ff', num: 16, fromBottom: true, toTop: true },
-  { t: '17. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 17 },
-  { t: '18. Prefill → Shared Prefix Cache', mode: 'arrow', f: 'prefill', to: 'spc', c: '#58a6ff', num: 18, fromRight: true, toLeft: true },
-  { t: '19. KV cache → Decode pods', mode: 'arrow', f: 'spc', to: 'decode', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
-  { t: '20. Decode processing (Variant B)', mode: 'lightup', target: 'decode', badge: 20 },
+  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '15. EPP selects pods', mode: 'lightup', target: 'sched', badge: 15 },
+  { t: '16. EPP → Gateway (pod selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 40, toBottom: true, toXOff: 70 },
+  { t: '17. Gateway → Prefill pods', mode: 'arrow', f: 'gw', to: 'prefill', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -20, toTop: true },
+  { t: '18. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 18 },
+  { t: '19. Prefill → Shared Prefix Cache', mode: 'arrow', f: 'prefill', to: 'spc', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
+  { t: '20. KV cache → Decode pods', mode: 'arrow', f: 'spc', to: 'decode', c: '#58a6ff', num: 20, fromRight: true, toLeft: true },
+  { t: '21. Decode processing (Variant B)', mode: 'lightup', target: 'decode', badge: 21 },
   // RESPONSE PATH
-  { t: '21. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 21, fromTop: true, toBottom: true, toXOff: 250 },
-  { t: '22. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 22, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '23. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 23 },
-  { t: '24. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 24, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '25. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 25 },
-  { t: '26. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 26 },
-  { t: '27. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 27, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '22. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 22, fromTop: true, toBottom: true, toXOff: 250 },
+  { t: '23. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 23, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '24. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 24 },
+  { t: '25. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 25, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '26. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 26 },
+  { t: '27. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 27 },
+  { t: '28. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 28, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 let flow = flowExt;
