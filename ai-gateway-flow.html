@@ -182,7 +182,7 @@ const N = {
   authorino: { x: 750, y: 165, w: 320, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 13, inner: true },
   limitador: { x: 750, y: 240, w: 320, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  maas_api: { x: 1160, y: 90, w: 180, h: 55, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
+  maas_api: { x: 830, y: 50, w: 180, h: 50, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
 
   ipp_boundary: { x: 720, y: 370, w: 380, h: 310, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   ipp_entry: { x: 710, y: 530, w: 10, h: 10, type: 'hidden' },
@@ -373,7 +373,7 @@ function drawBoundaries() {
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 16));
 }
 
-function edgePoint(n, targetX, targetY) {
+function edgePoint(n, targetX, targetY, yOffset) {
   const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
   const dx = targetX - cx_, dy = targetY - cy_;
   const ax = Math.abs(dx), ay = Math.abs(dy);
@@ -387,7 +387,7 @@ function edgePoint(n, targetX, targetY) {
     ey = cy_ + (dy > 0 ? hh : -hh);
     ex = cx_ + dx * (hh / ay);
   }
-  return { x: ex, y: ey };
+  return { x: ex, y: ey + (yOffset || 0) };
 }
 
 function leftEdgePoint(n) {
