@@ -143,7 +143,7 @@ const N = {
   user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1020, h: 960, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 960, h: 620, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  aigw: { x: 155, y: 115, w: 960, h: 720, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
@@ -151,7 +151,7 @@ const N = {
   auth: { x: 305, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
   rlimit: { x: 305, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 640, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 640, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_rguard:  { x: 675, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
   p_ims:     { x: 675, y: 360, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
@@ -174,7 +174,8 @@ const N = {
   maas: { x: 170, y: 750, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
 
   // llm-d Scheduler — right side, same level as MaaS
-  sched: { x: 510, y: 750, w: 200, h: 55, label: 'llm-d Scheduler', sublabel: '(EPP)', color: '#79c0ff', fs: 14 },
+  epp: { x: 480, y: 740, w: 260, h: 80, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 510, y: 765, w: 200, h: 45, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 13, inner: true },
 
   pool: { x: 360, y: 815, w: 500, h: 210, type: 'boundary', label: 'InferencePool' },
   prefill: { x: 405, y: 880, w: 120, h: 45, label: 'vLLM', color: '#d2a8ff', fs: 13 },
@@ -196,7 +197,8 @@ const tips = {
   auth:    'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key by calling MaaS API internally at /internal/v1/api-keys/validate. Also resolves subscription info and injects X-MaaS-Username header.',
   rlimit:  'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy. On request: checks if quota allows. On response: reads usage.total_tokens and reports consumed tokens.',
   maas:    'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Stores keys in PostgreSQL. Provides /v1/models and /v1/api-keys endpoints.',
-  sched:   'llm-d Endpoint Picker Proxy (EPP). Selects the optimal pod for disaggregated serving — routes to Prefill or Decode variants based on KV cache utilization, queue depth, and model affinity.',
+  epp:     'llm-d Scheduler — an ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for inference. Part of the AI Inference Gateway.',
+  sched:   'Endpoint Picker selects the optimal pod for disaggregated serving — routes to Prefill or Decode variants based on KV cache utilization, queue depth, and model affinity.',
   prefill: 'Prefill phase (Variant A). Processes the input prompt and generates the initial KV cache. In P/D disaggregated serving, dedicated GPU pods handle prefill to maximize throughput for long prompts.',
   decode:  'Decode phase (Variant B). Generates output tokens auto-regressively using the KV cache from prefill. Dedicated decode pods optimize for low latency per-token generation.',
   spc:     'Shared Prefix Caching via NIXL (NVIDIA Inference Xfer Library) or DCN (Data Center Network). Transfers KV cache between prefill and decode pods over high-speed interconnect, enabling disaggregated serving.',
@@ -365,6 +367,8 @@ function drawBounds() {
   drawContainer('wasm', glowing.has('wasm'));
   // IPP container
   drawContainer('ipp', glowing.has('ipp'));
+  // EPP container (llm-d Scheduler)
+  drawContainer('epp', glowing.has('epp'));
 
   // IPP request/response plugin sections
   if (N.ipp) {
@@ -1083,7 +1087,7 @@ const flowInc = [
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → llm-d Scheduler', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '14. Gateway → llm-d Scheduler (EPP)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
   { t: '15. Scheduler selects pods (EPP)', mode: 'lightup', target: 'sched', badge: 15 },
   { t: '16. Scheduler → Prefill pods', mode: 'arrow', f: 'sched', to: 'prefill', c: '#58a6ff', num: 16, fromBottom: true, toTop: true },
   { t: '17. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 17 },
