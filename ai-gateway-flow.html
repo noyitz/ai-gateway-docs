@@ -1281,7 +1281,6 @@ function simulateUpTo(targetStep) {
 }
 
 function jumpToStep(targetStep) {
-  const wasRunning = running || loopMode;
   if (running) {
     running = false;
     if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
@@ -1300,18 +1299,10 @@ function jumpToStep(targetStep) {
   for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
   dots = [];
   fading = {};
-  if (wasRunning) {
-    paused = false;
-    running = true;
-    updatePlayBtn();
-    if (!animFrame) animate();
-    stepTimer = setTimeout(execStep, 500 / playbackSpeed);
-  } else {
-    paused = true;
-    updatePlayBtn();
-    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-    requestAnimationFrame(() => { draw(); draw(); });
-  }
+  paused = true;
+  updatePlayBtn();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(() => { draw(); draw(); });
 }
 
 function doReset() {
