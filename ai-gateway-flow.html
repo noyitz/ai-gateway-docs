@@ -436,11 +436,17 @@ function drawLines() {
       }
       ctx.restore();
     } else {
-      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
-      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
-      const yo = l.yOff || 0;
-      const fp = edgePt(fn, tc, tcy, yo);
-      const tp = edgePt(tn, fc, fy, yo);
+      let fp = resolveEdge(fn, l, true);
+      let tp = resolveEdge(tn, l, false);
+      // Fall back to auto edge if no specific direction
+      if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
+        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+      }
+      if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
+        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp = edgePt(tn, fc, fy, l.yOff || 0);
+      }
       drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
     }
   });
@@ -505,15 +511,21 @@ class Dot {
     const yo = (opts && opts.yOff) || 0;
     let fp, tp;
 
-    if (opts && opts.waypoints) {
-      fp = resolveEdge(fn, { ...opts, waypoints: opts.waypoints }, true);
-      tp = resolveEdge(tn, { ...opts, waypoints: opts.waypoints }, false);
-      this.pts = [fp, ...opts.waypoints, tp];
-    } else {
-      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+    const lo = opts || {};
+    fp = resolveEdge(fn, lo, true);
+    tp = resolveEdge(tn, lo, false);
+    // If no specific edge direction was set, fall back to auto edge calculation
+    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
       const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
       fp = edgePt(fn, tc, tcy, yo);
+    }
+    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
       tp = edgePt(tn, fc, fy, yo);
+    }
+    if (opts && opts.waypoints) {
+      this.pts = [fp, ...opts.waypoints, tp];
+    } else {
       this.pts = [fp, tp];
     }
 
@@ -769,13 +781,13 @@ const flow = [
   // REQUEST PATH
   // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
-  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#f0883e', num: 2, glow: 'wasm', toLeft: true },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#f0883e', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, yOff: -8 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, yOff: 8 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, fromBottom: true, fromXOff: -25, toTop: true, toXOff: -25 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, fromTop: true, fromXOff: 25, toBottom: true, toXOff: 25 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7 },
-  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 8, glow: 'ipp', toLeft: true },
+  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
+  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -20 },
   // IPP plugins — request path
   { t: '9. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 9 },
   { t: '10. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
