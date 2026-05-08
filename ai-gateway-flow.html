@@ -131,23 +131,23 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 530, y: 10, w: 80, h: 50, label: 'User', type: 'icon' },
+  user: { x: 530, y: 10, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1020, h: 810, type: 'boundary' },
   aigw: { x: 155, y: 100, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 120, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
-  wasm: { x: 170, y: 260, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 195, y: 315, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 195, y: 400, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  wasm: { x: 280, y: 260, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 305, y: 315, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 305, y: 400, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 540, y: 260, w: 400, h: 370, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
-  p_bfth: { x: 570, y: 310, w: 345, h: 42, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_mpr:  { x: 570, y: 360, w: 345, h: 42, label: 'model-provider-resolver', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_at:   { x: 570, y: 410, w: 345, h: 42, label: 'api-translation', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:  { x: 570, y: 460, w: 345, h: 42, label: 'apikey-injection', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
-  p_guard:{ x: 570, y: 510, w: 345, h: 42, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  ipp: { x: 640, y: 260, w: 400, h: 370, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
+  p_bfth: { x: 670, y: 310, w: 345, h: 42, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_mpr:  { x: 670, y: 360, w: 345, h: 42, label: 'model-provider-resolver', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_at:   { x: 670, y: 410, w: 345, h: 42, label: 'api-translation', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:  { x: 670, y: 460, w: 345, h: 42, label: 'apikey-injection', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
+  p_guard:{ x: 670, y: 510, w: 345, h: 42, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
 
   // External models — far left, outside cluster
   openai:    { x: 5, y: 250, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
