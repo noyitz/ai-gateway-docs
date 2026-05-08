@@ -171,7 +171,7 @@ function ts(s) { return s * scale; }
 const N = {
   user: { x: 300, y: 30, w: 60, h: 45, label: 'User', type: 'icon' },
 
-  cluster: { x: 60, y: 100, w: 1200, h: 810, type: 'boundary' },
+  cluster: { x: 60, y: 100, w: 1350, h: 810, type: 'boundary' },
 
   aigw_boundary: { x: 200, y: 130, w: 950, h: 580, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
@@ -182,7 +182,7 @@ const N = {
   authorino: { x: 750, y: 165, w: 320, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 13, inner: true },
   limitador: { x: 750, y: 240, w: 320, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  maas_api: { x: 780, y: 720, w: 180, h: 50, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
+  maas_api: { x: 1170, y: 160, w: 170, h: 50, label: 'MaaS API', sublabel: 'API key validation', color: '#79c0ff', fs: 13 },
 
   ipp_boundary: { x: 720, y: 370, w: 380, h: 310, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   ipp_entry: { x: 710, y: 530, w: 10, h: 10, type: 'hidden' },
@@ -440,8 +440,9 @@ function drawPersistentLines() {
     } else {
       const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
       const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
-      fp = edgePoint(fn, tc, tcy);
-      tp = edgePoint(tn, fc, fy);
+      const yo = l.yOff || 0;
+      fp = edgePoint(fn, tc, tcy, yo);
+      tp = edgePoint(tn, fc, fy, yo);
     }
     drawArrow(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
   });
@@ -451,7 +452,7 @@ function drawPersistentLines() {
 // ANIMATED DOT
 // ================================================================
 class AnimDot {
-  constructor(fromKey, toKey, color, speed, callback, toLeftEdge) {
+  constructor(fromKey, toKey, color, speed, callback, toLeftEdge, yOff) {
     this.fromKey = fromKey;
     this.toKey = toKey;
     this.color = color;
@@ -461,14 +462,16 @@ class AnimDot {
     this.alive = true;
 
     const fn = N[fromKey], tn = N[toKey];
+    const yo = yOff || 0;
     if (toLeftEdge) {
-      this.fp = edgePoint(fn, tn.x, tn.y + tn.h / 2);
+      this.fp = edgePoint(fn, tn.x, tn.y + tn.h / 2, yo);
       this.tp = leftEdgePoint(tn);
+      this.tp.y += yo;
     } else {
       const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
       const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
-      this.fp = edgePoint(fn, tc, tcy);
-      this.tp = edgePoint(tn, fc, fy);
+      this.fp = edgePoint(fn, tc, tcy, yo);
+      this.tp = edgePoint(tn, fc, fy, yo);
     }
   }
 
@@ -598,7 +601,7 @@ const flows = {
           ]
         }
       },
-      { t: 'Auth calls MaaS API for key validation', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4,
+      { t: 'Wasm calls MaaS API for key validation', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4, yOff: -10,
         rq: { plugin: 'Authorino -> MaaS API',
           headers: [
             { v: 'POST /internal/v1/api-keys/validate', s: 'highlight' },
@@ -609,7 +612,7 @@ const flows = {
           ]
         }
       },
-      { t: 'MaaS API responds: key valid', mode: 'arrow', f: 'maas_api', to: 'authorino', c: '#3fb950', num: 5 },
+      { t: 'MaaS API responds: key valid', mode: 'arrow', f: 'maas_api', to: 'wasm_boundary', c: '#3fb950', num: 5, yOff: 10 },
       { t: 'Rate Limit checks token quota', mode: 'lightup', target: 'limitador', badge: 6,
         rq: { plugin: 'Limitador (Rate Limit)',
           headers: [],
@@ -763,7 +766,7 @@ const flows = {
       { t: 'Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
       { t: 'Gateway invokes Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm_boundary', c: '#f0883e', num: 2, toLeftEdge: true, glowContainer: 'wasm_boundary' },
       { t: 'Auth validates API key', mode: 'lightup', target: 'authorino', badge: 3 },
-      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4 },
+      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4 },
       { t: 'Rate Limit checks quota', mode: 'lightup', target: 'limitador', badge: 5 },
       { t: 'Gateway invokes ext_proc (passthrough)', mode: 'arrow', f: 'gw', to: 'ipp_boundary', c: '#d2a8ff', num: 6, toLeftEdge: true, glowContainer: 'ipp_boundary' },
       { t: 'body-field-to-header only', mode: 'lightup', target: 'p_bfth', badge: 7 },
@@ -780,7 +783,7 @@ const flows = {
       { t: 'Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
       { t: 'Gateway invokes Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm_boundary', c: '#f0883e', num: 2, toLeftEdge: true, glowContainer: 'wasm_boundary' },
       { t: 'Auth calls MaaS API to validate key', mode: 'lightup', target: 'authorino', badge: 3 },
-      { t: 'Auth → MaaS API (key lookup)', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4 },
+      { t: 'Auth → MaaS API (key lookup)', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4 },
       { t: 'MaaS API returns: key invalid — Auth rejects', mode: 'lightup', target: 'authorino', badge: 5, fail: 'authorino' },
       { t: '401 Unauthorized returned to client', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 6 },
     ]
@@ -791,7 +794,7 @@ const flows = {
       { t: 'Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
       { t: 'Gateway invokes Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm_boundary', c: '#f0883e', num: 2, toLeftEdge: true, glowContainer: 'wasm_boundary' },
       { t: 'Auth validates API key', mode: 'lightup', target: 'authorino', badge: 3 },
-      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4 },
+      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4 },
       { t: 'Rate Limit rejects -- over quota', mode: 'lightup', target: 'limitador', badge: 5, fail: 'limitador' },
       { t: '429 Too Many Requests', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 6 },
     ]
@@ -802,7 +805,7 @@ const flows = {
       { t: 'Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
       { t: 'Gateway invokes Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm_boundary', c: '#f0883e', num: 2, toLeftEdge: true, glowContainer: 'wasm_boundary' },
       { t: 'Auth validates API key', mode: 'lightup', target: 'authorino', badge: 3 },
-      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4 },
+      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4 },
       { t: 'Rate Limit checks quota', mode: 'lightup', target: 'limitador', badge: 5 },
       { t: 'Gateway invokes ext_proc', mode: 'arrow', f: 'gw', to: 'ipp_boundary', c: '#d2a8ff', num: 6, toLeftEdge: true, glowContainer: 'ipp_boundary' },
       { t: 'IPP translates + injects key', mode: 'lightup', target: 'p_aki', badge: 7 },
@@ -817,7 +820,7 @@ const flows = {
       { t: 'Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
       { t: 'Gateway invokes Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm_boundary', c: '#f0883e', num: 2, toLeftEdge: true, glowContainer: 'wasm_boundary' },
       { t: 'Auth validates API key', mode: 'lightup', target: 'authorino', badge: 3 },
-      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'authorino', to: 'maas_api', c: '#f0883e', num: 4 },
+      { t: 'Auth calls MaaS API', mode: 'arrow', f: 'wasm_boundary', to: 'maas_api', c: '#f0883e', num: 4 },
       { t: 'Rate Limit checks quota', mode: 'lightup', target: 'limitador', badge: 5 },
       { t: 'Gateway invokes ext_proc', mode: 'arrow', f: 'gw', to: 'ipp_boundary', c: '#d2a8ff', num: 6, toLeftEdge: true, glowContainer: 'ipp_boundary' },
       { t: 'body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 7 },
@@ -883,7 +886,7 @@ function run(id) {
       // Animated arrow between separate components
       if (s.f) activeNodes.add(s.f);
       particles.push(new AnimDot(s.f, s.to, s.c, 0.012, () => {
-        persistentLines.push({ from: s.f, to: s.to, color: s.c, num: s.num, toLeftEdge: s.toLeftEdge });
+        persistentLines.push({ from: s.f, to: s.to, color: s.c, num: s.num, toLeftEdge: s.toLeftEdge, yOff: s.yOff });
         if (s.glowContainer) {
           glowingContainers.add(s.glowContainer);
           // Container stays lit for the rest of the flow
