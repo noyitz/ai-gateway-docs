@@ -1090,9 +1090,9 @@ const flowInc = [
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true, toXOff: -20 },
   { t: '15. EPP selects pods', mode: 'lightup', target: 'sched', badge: 15 },
-  { t: '16. EPP → Gateway (pod selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 40, toBottom: true, toXOff: 70 },
+  { t: '16. EPP → Gateway (pod selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 70 },
   { t: '17. Gateway → Prefill pods', mode: 'arrow', f: 'gw', to: 'prefill', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -20, toTop: true },
   { t: '18. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 18 },
   { t: '19. Prefill → Shared Prefix Cache', mode: 'arrow', f: 'prefill', to: 'spc', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
