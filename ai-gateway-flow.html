@@ -98,6 +98,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
+<div id="info-panel" style="position:fixed;bottom:16px;left:180px;right:400px;z-index:100;padding:10px 16px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;color:#8b949e;opacity:0.6;transition:all .3s;min-height:40px">Click a component to see details</div>
+
 <div class="legend">
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
@@ -169,13 +171,21 @@ const N = {
 };
 
 const tips = {
-  p_bfth:  'Extracts model name from body to X-Gateway-Model-Name header',
-  p_mpr:   'Looks up ExternalModel CRD via reconciler, resolves provider + endpoint',
-  p_at:    'Translates request/response between OpenAI and provider formats',
-  p_aki:   'Injects provider API key from Kubernetes Secret',
-  p_guard: 'NeMo safety guardrail filter on request and response',
-  auth:    'Validates API key via gRPC dispatch to Authorino',
-  rlimit:  'Checks token quota via gRPC call to Limitador',
+  gw:      'Envoy-based gateway that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filter for payload processing. Routes to upstream providers or on-cluster models.',
+  p_bfth:  'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header. This enables model-based routing without parsing the body in Envoy.',
+  p_mpr:   'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider (openai, anthropic, etc.), target model ID, and endpoint. Stores results in CycleState for downstream plugins.',
+  p_at:    'Translates between OpenAI Chat Completions format and provider-native APIs. On request: converts OpenAI → Anthropic Messages API (or other formats). On response: converts back to OpenAI format. Handles path rewriting, header mutations, and body transformation.',
+  p_aki:   'Reads the provider API key from a Kubernetes Secret (labeled inference.networking.k8s.io/bbr-managed) and injects the appropriate auth header — Authorization: Bearer for OpenAI, x-api-key for Anthropic, api-key for Azure.',
+  p_guard: 'NVIDIA NeMo Guardrails integration. Evaluates safety policies on both request content (before sending to provider) and response content (before returning to client). Can block requests that violate content policies.',
+  auth:    'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key by calling MaaS API internally at /internal/v1/api-keys/validate. Also resolves subscription info and injects X-MaaS-Username header.',
+  rlimit:  'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy. On request: checks if quota allows. On response: reads usage.total_tokens and reports consumed tokens.',
+  maas:    'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Stores keys in PostgreSQL. Provides /v1/models and /v1/api-keys endpoints.',
+  sched:   'llm-d Endpoint Picker Proxy (EPP). Selects the optimal vLLM/Triton/SGLang pod based on KV cache utilization, queue depth, and model affinity. Used for on-cluster inference routing.',
+  anthropic: 'Anthropic Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format (/v1/messages). Response is translated back to OpenAI format by the api-translation plugin.',
+  openai:  'OpenAI API endpoint. Requests pass through without format translation (native OpenAI format). Only credential injection is applied.',
+  azure:   'Azure OpenAI endpoint. Similar to OpenAI but uses api-key header instead of Authorization: Bearer. Content filter fields are stripped from responses.',
+  bedrock: 'AWS Bedrock Mantle endpoint (OpenAI-compatible). Uses the /v1/chat/completions path. Credential is base64-encoded access key.',
+  vertex:  'Google Vertex AI endpoint (OpenAI-compatible). Path is rewritten to /v1beta1/projects/{project}/locations/{location}/endpoints/openapi/chat/completions.',
 };
 
 function C() {
@@ -455,36 +465,30 @@ function resolveEdge(n, l, isFrom) {
   }
 }
 
-// Tooltip
-let hoverKey = null;
-canvas.addEventListener('mousemove', e => {
+// Click handler — show component info in bottom panel
+canvas.addEventListener('click', e => {
   const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
-  hoverKey = null;
   for (const k of Object.keys(tips)) {
     const n = N[k];
-    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { hoverKey = k; break; }
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
+      const panel = document.getElementById('info-panel');
+      const label = n.label || k;
+      panel.innerHTML = `<strong>${esc(label)}</strong>${n.sublabel ? ' <span style="color:#8b949e">' + esc(n.sublabel) + '</span>' : ''}<br><span style="color:#c9d1d9">${esc(tips[k])}</span>`;
+      panel.style.opacity = '1';
+      canvas.style.cursor = 'pointer';
+      return;
+    }
   }
-  canvas.style.cursor = hoverKey ? 'help' : 'default';
 });
-
-function drawTooltip() {
-  if (!hoverKey) return;
-  const n = N[hoverKey], txt = tips[hoverKey];
-  const x = tx(n.x + n.w / 2), y = ty(n.y) - ts(12);
-  ctx.save();
-  ctx.font = `${ts(12)}px system-ui`;
-  const m = ctx.measureText(txt);
-  const pw = m.width + ts(16), ph = ts(26);
-  const bx = x - pw / 2, by = y - ph;
-  ctx.fillStyle = isDark ? '#30363d' : '#d0d7de';
-  ctx.beginPath();
-  ctx.roundRect(bx, by, pw, ph, ts(6));
-  ctx.fill();
-  ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(txt, x, by + ph / 2);
-  ctx.restore();
+canvas.addEventListener('mousemove', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  let found = false;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
+  }
+  canvas.style.cursor = found ? 'pointer' : 'default';
+});
 }
 
 // ================================================================
@@ -576,7 +580,7 @@ function draw() {
   Object.keys(N).forEach(k => drawBox(k));
   dots.forEach(d => { d.update(); d.draw(); });
   dots = dots.filter(d => d.alive);
-  drawTooltip();
+  // tooltip removed — info shown in bottom panel on click
 }
 function animate() { draw(); animFrame = requestAnimationFrame(animate); }
 
