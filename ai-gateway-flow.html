@@ -13,14 +13,14 @@ body.light{background:#fff;color:#24292f}
 .right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
 body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
 
-.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center}
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 body.light .flow-bar{border-color:#d0d7de}
 .flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:13px;font-family:inherit;cursor:pointer}
 body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
 .flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
 body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 .flow-bar button:hover{border-color:#58a6ff}
-.flow-bar .start{border-color:#3fb950;color:#3fb950}
+.flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
 .flow-bar .rst{border-color:#f0883e;color:#f0883e}
 
 .steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:0 1 auto;overflow-y:auto;max-height:52%}
@@ -60,6 +60,9 @@ body.light .insp-plugin{background:#8250df15;color:#8250df}
 .theme-toggle{position:fixed;top:16px;left:16px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 
+/* Gradient title */
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+
 /* Legend */
 .legend{position:fixed;bottom:16px;left:16px;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;transition:all .3s}
 body.light .legend{background:#f6f8fa;border-color:#d0d7de}
@@ -77,6 +80,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <body>
 
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer</div>
 
 <div class="right-panel">
   <div class="flow-bar">
@@ -86,6 +90,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <option value="af" disabled>Auth Failure (401) -- coming soon</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
+    <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
@@ -115,6 +120,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
 let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = []; // State snapshot after each step completes
 
@@ -133,16 +139,16 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 530, y: 10, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
+  user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1020, h: 810, type: 'boundary' },
   aigw: { x: 155, y: 115, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
-  wasm: { x: 280, y: 260, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 305, y: 315, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 305, y: 400, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  wasm: { x: 280, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 305, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 305, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
   ipp: { x: 640, y: 260, w: 400, h: 370, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   p_bfth: { x: 670, y: 310, w: 345, h: 42, label: 'body-field-to-header', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
@@ -152,11 +158,11 @@ const N = {
   p_guard:{ x: 670, y: 510, w: 345, h: 42, label: 'guardrail (nemo)', sublabel: '(req + resp)', color: '#d2a8ff', type: 'plugin', inner: true, fs: 14 },
 
   // External models — far left, outside cluster
-  openai:    { x: 5, y: 250, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
-  anthropic: { x: 5, y: 310, w: 105, h: 50, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 12 },
-  azure:     { x: 5, y: 370, w: 105, h: 50, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 11 },
-  bedrock:   { x: 5, y: 430, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
-  vertex:    { x: 5, y: 490, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
+  openai:    { x: 0, y: 310, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
+  anthropic: { x: 0, y: 370, w: 105, h: 50, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 12 },
+  azure:     { x: 0, y: 430, w: 105, h: 50, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 11 },
+  bedrock:   { x: 0, y: 490, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
+  vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
   // MaaS API — left side, inside cluster but outside AI Gateway, below Kuadrant
   maas: { x: 170, y: 680, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
@@ -560,23 +566,62 @@ class Dot {
     this.y = last.y;
     this.segIdx = this.segLens.length - 1;
   }
+  posAt(t) {
+    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    return { x: last.x, y: last.y };
+  }
   draw() {
+    ctx.save();
+    // Progressive trail — only behind the packet
     ctx.beginPath();
     ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
-    for (let i = 0; i <= this.segIdx; i++) {
-      ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
-    }
+    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
     ctx.lineTo(tx(this.x), ty(this.y));
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = ts(2.5);
+    ctx.lineWidth = ts(2);
+    ctx.globalAlpha = 0.3;
     ctx.stroke();
+    // Trailing data stream — small dots behind the leading packet
+    for (let j = 4; j >= 1; j--) {
+      const bt = this.t - j * 0.06;
+      if (bt <= 0) continue;
+      const p = this.posAt(bt);
+      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+      ctx.beginPath();
+      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+    // Leading packet — pentagon shape oriented along travel direction
+    ctx.globalAlpha = 1;
+    const si = Math.min(this.segIdx, this.pts.length - 2);
+    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
     ctx.save();
+    ctx.translate(tx(this.x), ty(this.y));
+    ctx.rotate(ang);
+    const pw = ts(13), ph = ts(7);
     ctx.beginPath();
-    ctx.arc(tx(this.x), ty(this.y), ts(6), 0, Math.PI * 2);
+    ctx.moveTo(pw / 2, 0);
+    ctx.lineTo(pw / 6, -ph / 2);
+    ctx.lineTo(-pw / 2, -ph / 2);
+    ctx.lineTo(-pw / 2, ph / 2);
+    ctx.lineTo(pw / 6, ph / 2);
+    ctx.closePath();
     ctx.fillStyle = this.color;
     ctx.shadowColor = this.color;
-    ctx.shadowBlur = ts(14);
+    ctx.shadowBlur = ts(16);
     ctx.fill();
+    ctx.restore();
     ctx.restore();
   }
 }
@@ -685,10 +730,10 @@ function inspStep(stepNum) {
     case 7:
       inspStepLabel = '⑦ Kuadrant → Gateway (auth complete)';
       break;
-    case 9:
+    case 8:
       inspStepLabel = '⑧ Gateway → ext_proc (IPP)';
       break;
-    case 10:
+    case 9:
       inspStepLabel = '⑨ body-field-to-header';
       inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
       break;
@@ -724,7 +769,7 @@ function inspStep(stepNum) {
       inspStepLabel = '⑮ Gateway routes to Anthropic';
       break;
     case 16:
-      inspStepLabel = "⑰ Gateway → IPP (response)";
+      inspStepLabel = '⑯ Anthropic responds';
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -737,14 +782,14 @@ function inspStep(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 16:
-      inspStepLabel = "⑰ Gateway → IPP (response)";
-      break;
     case 17:
-      inspStepLabel = '⑯ guardrail (response check)';
+      inspStepLabel = '⑰ Gateway → IPP (response)';
       break;
     case 18:
-      inspStepLabel = '⑰ api-translation (response)';
+      inspStepLabel = '⑱ guardrail (response check)';
+      break;
+    case 19:
+      inspStepLabel = '⑲ api-translation (response)';
       inspBody.find(l => l.id === 'r-type').s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(l => l.id === 'r-content').s = 'del';
@@ -754,21 +799,28 @@ function inspStep(stepNum) {
       inspBody.find(l => l.id === 'r-usage').s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       break;
-    case 19:
-      inspStepLabel = '⑱ Wasm reads usage.total_tokens';
-      const u2 = inspBody.find(l => l.id === 'r-usage2');
-      if (u2) u2.s = 'highlight';
-      break;
-    case 20:
-      inspStepLabel = '⑲ Limitador: report token count';
-      break;
-    case 21:
-      inspStepLabel = '⑳ Response to Client (OpenAI format)';
+    case 20: {
+      inspStepLabel = '⑳ IPP → Gateway (translated response)';
       const robj = inspBody.find(l => l.id === 'r-obj');
       if (robj) robj.s = 'highlight';
       const rch = inspBody.find(l => l.id === 'r-choices');
       if (rch) rch.s = 'highlight';
+      break; }
+    case 21: {
+      inspStepLabel = '㉑ Wasm reads usage.total_tokens';
+      const u2 = inspBody.find(l => l.id === 'r-usage2');
+      if (u2) u2.s = 'highlight';
+      break; }
+    case 22:
+      inspStepLabel = '㉒ Limitador: report token count';
       break;
+    case 23: {
+      inspStepLabel = '㉓ Response to Client (OpenAI format)';
+      const robj2 = inspBody.find(l => l.id === 'r-obj');
+      if (robj2) robj2.s = 'highlight';
+      const rch2 = inspBody.find(l => l.id === 'r-choices');
+      if (rch2) rch2.s = 'highlight';
+      break; }
   }
   renderInsp();
 }
@@ -778,98 +830,138 @@ function inspStep(stepNum) {
 // ================================================================
 const flow = [
   // REQUEST PATH
-  // REQUEST PATH
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
-  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#f0883e', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, fromBottom: true, fromXOff: -25, toTop: true, toXOff: -25 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, fromTop: true, fromXOff: 25, toBottom: true, toXOff: 25 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
-  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -20 },
+  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // IPP plugins — request path
   { t: '9. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 9 },
   { t: '10. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
   { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at', badge: 11 },
   { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
   { t: '13. guardrail: safety check on request', mode: 'lightup', target: 'p_guard', badge: 13 },
-  { t: '14. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#d2a8ff', num: 14, yOff: 10 },
-  { t: '15. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15 },
+  { t: '14. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '15. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15, fromLeft: true, toRight: true, yOff: -10 },
   // RESPONSE PATH
-  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, yOff: 10 },
-  { t: '17. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 17, toLeft: true, yOff: 15 },
+  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '17. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 17, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   { t: '18. guardrail: safety check on response', mode: 'lightup', target: 'p_guard', badge: 18 },
   { t: '19. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 19 },
-  { t: '20. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, yOff: 20 },
+  { t: '20. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
   // TOKEN USAGE REPORTING
   { t: '21. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 21 },
   { t: '22. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 22 },
-  { t: '23. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23 },
+  { t: '23. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 // ================================================================
 // RUN / RESET
 // ================================================================
+function updatePlayBtn() {
+  const btn = document.querySelector('.start');
+  if (paused) btn.innerHTML = '&#9654; Resume';
+  else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
+  else btn.innerHTML = '&#9654; Start';
+}
+
+function cycleSpeed() {
+  const speeds = [0.5, 1, 2];
+  const idx = speeds.indexOf(playbackSpeed);
+  playbackSpeed = speeds[(idx + 1) % speeds.length];
+  document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function stepOpts(s) {
+  return {
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function stepLine(s) {
+  return {
+    from: s.f, to: s.to, color: s.c, num: s.num,
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
 function run() {
-  if (running) return;
+  if (paused) {
+    paused = false;
+    running = true;
+    updatePlayBtn();
+    stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+    return;
+  }
+  if (running) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
   doReset();
   running = true;
-  let si = 0;
+  paused = false;
+  runStepIndex = 0;
   currentStepDone = 0;
   initInspector();
+  updatePlayBtn();
+  stepTimer = setTimeout(execStep, 300);
+  if (!animFrame) animate();
+}
 
-  function next() {
-    if (si >= flow.length) { running = false; return; }
-    const s = flow[si];
-    const el = document.getElementById('step-' + si);
-    el.className = 'step active';
-    // Scroll step into view
-    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+function execStep() {
+  if (!running || paused || runStepIndex >= flow.length) {
+    if (runStepIndex >= flow.length) { running = false; paused = false; updatePlayBtn(); }
+    return;
+  }
+  const si = runStepIndex;
+  const s = flow[si];
+  const el = document.getElementById('step-' + si);
+  el.className = 'step active';
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  inspStep(si + 1);
 
-    inspStep(si + 1);
-
-    if (s.mode === 'arrow') {
-      if (s.f) activeNodes.add(s.f);
-      const opts = {
-        toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
-        fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
-        yOff: s.yOff, xOff: s.xOff, waypoints: s.waypoints
-      };
-      dots.push(new Dot(s.f, s.to, s.c, 0.012, () => {
-        lines.push({
-          from: s.f, to: s.to, color: s.c, num: s.num,
-          toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
-          fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
-          yOff: s.yOff, xOff: s.xOff, waypoints: s.waypoints
-        });
-        if (s.glow) glowing.add(s.glow);
-        activeNodes.add(s.to);
-        el.className = 'step done';
-        currentStepDone = si + 1;
-        saveSnapshot(si);
-        si++;
-        setTimeout(next, 500);
-      }, opts));
-    } else if (s.mode === 'lightup') {
-      fading[s.target] = Date.now();
-      activeNodes.add(s.target);
-      if (badges[s.target] != null) {
-        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
-        existing.push(s.badge);
-        badges[s.target] = existing;
-      } else {
-        badges[s.target] = s.badge;
-      }
+  if (s.mode === 'arrow') {
+    if (s.f) activeNodes.add(s.f);
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
       el.className = 'step done';
       currentStepDone = si + 1;
       saveSnapshot(si);
-      si++;
-      setTimeout(next, 500);
+      runStepIndex++;
+      if (running && !paused) {
+        stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+      }
+    }, stepOpts(s)));
+  } else if (s.mode === 'lightup') {
+    fading[s.target] = Date.now();
+    activeNodes.add(s.target);
+    if (badges[s.target] != null) {
+      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      existing.push(s.badge);
+      badges[s.target] = existing;
+    } else {
+      badges[s.target] = s.badge;
+    }
+    el.className = 'step done';
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (running && !paused) {
+      stepTimer = setTimeout(execStep, 800 / playbackSpeed);
     }
   }
-
-  setTimeout(next, 300);
-  if (!animFrame) animate();
 }
 
 function saveSnapshot(stepIdx) {
@@ -895,37 +987,36 @@ function restoreSnapshot(stepIdx) {
 }
 
 function jumpToStep(targetStep) {
-  if (running) return;
-  // For forward jumps beyond what's been played, replay from current to target
-  if (targetStep >= currentStepDone) {
-    // Need to build snapshots up to targetStep by simulating
-    // For now, only allow jumping to completed steps
-    // (forward jump will be supported after full playback)
-    if (!snapshots[targetStep]) return;
+  if (running && !paused) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
   }
-  // Restore diagram state to after targetStep completed
+  if (!snapshots[targetStep]) return;
   restoreSnapshot(targetStep);
   currentStepDone = targetStep + 1;
-  // Update step markers
+  runStepIndex = targetStep + 1;
   document.querySelectorAll('.step').forEach((el, i) => {
     if (i <= targetStep) el.className = 'step done';
     else el.className = 'step pending';
   });
-  // Highlight the clicked step
   const clickedEl = document.getElementById('step-' + targetStep);
   if (clickedEl) clickedEl.className = 'step active';
-  // Update inspector to that step
   initInspector();
   for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
   dots = [];
   fading = {};
-  // Force a clean redraw on next frame
+  paused = true;
+  updatePlayBtn();
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  requestAnimationFrame(() => { draw(); draw(); }); // double draw to ensure clean state
+  requestAnimationFrame(() => { draw(); draw(); });
 }
 
 function doReset() {
   running = false;
+  paused = false;
+  runStepIndex = 0;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
   dots = [];
   activeNodes.clear();
   badges = {};
@@ -938,6 +1029,7 @@ function doReset() {
   inspBody = [];
   inspCycle = [];
   initSteps();
+  updatePlayBtn();
   document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the request flow</div>';
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   draw();
