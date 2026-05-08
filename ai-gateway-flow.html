@@ -757,28 +757,24 @@ function inspStep(stepNum) {
 // ================================================================
 const flow = [
   // REQUEST PATH
+  // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1 },
-  { t: '2. Gateway invokes Kuadrant Wasm filter', mode: 'arrow', f: 'gw', to: 'wasm', c: '#f0883e', num: 2, glow: 'wasm',
-    fromBottom: true, fromXOff: -150, toTop: true, toXOff: 0, waypoints: [{ x: 450, y: 218 }, { x: 320, y: 218 }] },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#f0883e', num: 2, glow: 'wasm', toLeft: true },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Authorino calls MaaS API for validation', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4,
-    fromBottom: true, fromXOff: -20, waypoints: [{ x: 300, y: 500 }, { x: 300, y: 640 }, { x: 850, y: 640 }], toLeft: true },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5,
-    fromLeft: true, waypoints: [{ x: 830, y: 668 }, { x: 360, y: 668 }, { x: 360, y: 500 }], toBottom: true, toXOff: 40 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, yOff: -8 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, yOff: 8 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. Gateway invokes ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 7, glow: 'ipp',
-    fromBottom: true, fromXOff: 100, toTop: true, toXOff: 0, waypoints: [{ x: 700, y: 218 }, { x: 720, y: 218 }] },
+  { t: '7. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 7, glow: 'ipp', toLeft: true },
   // IPP plugins — request path
   { t: '8. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 8 },
   { t: '9. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 9 },
   { t: '10. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at', badge: 10 },
   { t: '11. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 11 },
   { t: '12. guardrail: safety check on request', mode: 'lightup', target: 'p_guard', badge: 12 },
-  { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13, yOff: -8 },
+  { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13 },
   // RESPONSE PATH
-  { t: '14. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, yOff: 8 },
-  { t: '15. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 15,
-    fromBottom: true, fromXOff: 130, toTop: true, toXOff: 30, waypoints: [{ x: 730, y: 220 }, { x: 750, y: 220 }] },
+  { t: '14. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, yOff: 10 },
+  { t: '15. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 15, toLeft: true, yOff: 15 },
   { t: '16. guardrail: safety check on response', mode: 'lightup', target: 'p_guard', badge: 16 },
   { t: '17. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 17 },
   // TOKEN USAGE REPORTING
