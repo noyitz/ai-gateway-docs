@@ -186,14 +186,13 @@ const N = {
 
   ipp_boundary: { x: 720, y: 370, w: 380, h: 310, type: 'container', label: 'Payload Processor (ext_proc)', color: '#d2a8ff' },
   ipp_entry: { x: 710, y: 530, w: 10, h: 10, type: 'hidden' },
-  // Request plugins (top section)
+  // Plugins in execution order (top to bottom)
   p_bfth: { x: 750, y: 415, w: 320, h: 34, label: 'body-field-to-header', sublabel: 'extract model → header', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_mpr: { x: 750, y: 457, w: 320, h: 34, label: 'model-provider-resolver', sublabel: 'lookup ExternalModel CRD (reconciler)', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_reqg: { x: 750, y: 499, w: 320, h: 34, label: 'request-guard', sublabel: 'safety filter — request (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_at: { x: 750, y: 541, w: 320, h: 34, label: 'api-translation', sublabel: 'request: OpenAI → provider · response: provider → OpenAI', color: '#d2a8ff', type: 'plugin', inner: true },
-  p_aki: { x: 750, y: 583, w: 320, h: 34, label: 'apikey-injection', sublabel: 'inject provider credential from Secret', color: '#d2a8ff', type: 'plugin', inner: true },
-  // Response plugins (bottom section)
-  p_rg: { x: 750, y: 625, w: 320, h: 34, label: 'response-guard', sublabel: 'safety filter — response (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_mpr: { x: 750, y: 455, w: 320, h: 34, label: 'model-provider-resolver', sublabel: 'lookup ExternalModel CRD (reconciler)', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_at: { x: 750, y: 495, w: 320, h: 34, label: 'api-translation', sublabel: 'request: OpenAI → provider · response: provider → OpenAI', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_aki: { x: 750, y: 535, w: 320, h: 34, label: 'apikey-injection', sublabel: 'inject provider credential from Secret', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_reqg: { x: 750, y: 575, w: 320, h: 34, label: 'request-guard', sublabel: 'safety filter — request (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
+  p_rg: { x: 750, y: 615, w: 320, h: 34, label: 'response-guard', sublabel: 'safety filter — response (nemo)', color: '#d2a8ff', type: 'plugin', inner: true },
 
   // Five external model providers -- OUTSIDE cluster boundary
   openai: { x: 80, y: 620, w: 120, h: 55, label: 'OpenAI', sublabel: 'gpt-4o-mini', color: '#3fb950', fs: 12 },
