@@ -14,36 +14,33 @@ canvas{display:block}
 .pbg{background:#161b22;border:1px solid #30363d}
 body.light .pbg{background:#f6f8fa;border-color:#d0d7de}
 
-/* Controls */
-.ctrl{top:16px;left:16px;width:240px;display:flex;flex-direction:column;gap:6px;padding:14px 16px;overflow:hidden;transition:all .3s}
-.ctrl.collapsed{height:42px;padding:10px 16px;overflow:hidden}
-.ctrl.collapsed>*:not(.ctrl-hdr){display:none}
-.ctrl-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
-.ctrl-title{font-size:16px;font-weight:800;background:linear-gradient(90deg,#58a6ff,#d2a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.ctrl-chev{font-size:14px;color:#8b949e;transition:transform .3s}
-.ctrl.collapsed .ctrl-chev{transform:rotate(-90deg)}
-.ctrl button{padding:9px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:12px;text-align:left;font-family:inherit;transition:all .15s}
-body.light .ctrl button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
-.ctrl button:hover{border-color:#58a6ff;background:#1a2332}
-body.light .ctrl button:hover{background:#ddf4ff}
-.ctrl button.on{border-color:#3fb950;background:#1a2e1a;color:#3fb950}
-.ctrl .sep{border:none;border-top:1px solid #30363d;margin:3px 0}
-body.light .ctrl .sep{border-color:#d0d7de}
-.ctrl button.demo-btn{border-color:#d2a8ff;color:#d2a8ff}
-.ctrl button.reset-btn{border-color:#f0883e;color:#f0883e}
+/* Right Panel — unified sidebar */
+.right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
+body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
 
-/* Theme toggle */
-.theme-toggle{position:fixed;top:16px;right:16px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
-body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+/* Flow selector */
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center}
+body.light .flow-bar{border-color:#d0d7de}
+.flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:12px;font-family:inherit;cursor:pointer}
+body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
+.flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s}
+body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.flow-bar button:hover{border-color:#58a6ff}
+.flow-bar button.start{border-color:#3fb950;color:#3fb950}
+.flow-bar button.rst{border-color:#f0883e;color:#f0883e}
 
-/* Steps panel */
-.steps-panel{top:60px;right:16px;width:350px;max-height:38%;overflow-y:auto;padding:14px 16px}
-.steps-title{font-weight:700;margin-bottom:8px;font-size:14px}
-.step{margin:3px 0;color:#8b949e;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.5;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
-body.light .step{color:#656d76}
+/* Steps section */
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex-shrink:0;max-height:40%;overflow-y:auto}
+body.light .steps-section{border-color:#d0d7de}
+.steps-title{font-weight:700;margin-bottom:6px;font-size:13px}
+.step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:11px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
+body.light .step{color:#b0b8c1}
 .step:hover{background:#1a233244}
 body.light .step:hover{background:#ddf4ff44}
-.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:12px}
+.step.pending{color:#484f58}
+body.light .step.pending{color:#b0b8c1}
+.step.pending .step-mk::before{content:'\25CB'}
 .step.active{color:#58a6ff}
 .step.active .step-mk::before{content:'\25CF'}
 .step.done{color:#3fb950}
@@ -52,10 +49,14 @@ body.light .step:hover{background:#ddf4ff44}
 .step.fail .step-mk::before{content:'\2717'}
 .step .step-mk::before{content:'\25CB'}
 
-/* Inspector */
-.inspector{bottom:16px;right:16px;width:380px;height:380px;overflow:hidden;padding:14px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;display:flex;flex-direction:column}
-.insp-title{font-weight:700;font-size:13px;margin-bottom:8px;font-family:-apple-system,sans-serif;flex-shrink:0}
-.insp-scroll{overflow-y:auto;flex:1}
+/* Inspector section */
+.insp-section{flex:1;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+
+/* Theme toggle */
+.theme-toggle{position:fixed;top:12px;right:396px;z-index:200;width:34px;height:34px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.insp-title{font-weight:700;font-size:13px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
+body.light .insp-title{border-color:#d0d7de}
 .insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:11px;font-family:-apple-system,sans-serif}
 .insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre;line-height:1.6;transition:all .4s}
 .insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
@@ -79,27 +80,41 @@ body.light .insp-plugin{background:#8250df15;color:#8250df}
 .legend-dot{width:11px;height:11px;border-radius:50%}
 
 /* Scrollbar */
-.steps-panel::-webkit-scrollbar,.insp-scroll::-webkit-scrollbar{width:6px}
-.steps-panel::-webkit-scrollbar-track,.insp-scroll::-webkit-scrollbar-track{background:transparent}
-.steps-panel::-webkit-scrollbar-thumb,.insp-scroll::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
-body.light .steps-panel::-webkit-scrollbar-thumb,body.light .insp-scroll::-webkit-scrollbar-thumb{background:#d0d7de}
+.steps-section::-webkit-scrollbar,.insp-section::-webkit-scrollbar{width:6px}
+.steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
+.steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
 </style>
 </head>
 <body>
 
-<div class="panel pbg ctrl" id="ctrl-panel">
-<div class="ctrl-hdr" onclick="toggleCtrl()">
-  <div class="ctrl-title">Flows</div>
-  <div class="ctrl-chev">&#9660;</div>
-</div>
-<button onclick="run()" id="b-ext">External Model (Anthropic)</button>
-<hr class="sep">
-<button class="demo-btn" onclick="demo()" id="b-demo">&#9654; Demo Mode</button>
-<button class="reset-btn" onclick="doReset()">Reset</button>
+<!-- Right Panel -->
+<div class="right-panel" id="right-panel">
+  <!-- Flow Selector -->
+  <div class="flow-bar">
+    <select id="flow-select">
+      <option value="ext">External Model (Anthropic)</option>
+      <option value="inc" disabled>On-Cluster (vLLM) — coming soon</option>
+      <option value="af" disabled>Auth Failure (401) — coming soon</option>
+    </select>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <button class="rst" onclick="doReset()">Reset</button>
+  </div>
+  <!-- Steps -->
+  <div class="steps-section" id="steps-section">
+    <div class="steps-title">Flow Steps</div>
+    <div id="steps-ctr"></div>
+  </div>
+  <!-- Inspector -->
+  <div class="insp-section" id="insp-section">
+    <div class="insp-title">Request Inspector</div>
+    <div id="insp-content"></div>
+  </div>
 </div>
 
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
 
+<!-- Legend stays bottom-left -->
 <div class="panel pbg legend">
 <div class="legend-title">Legend</div>
 <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
@@ -109,25 +124,13 @@ body.light .steps-panel::-webkit-scrollbar-thumb,body.light .insp-scroll::-webki
 <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Payload Processor</div>
 </div>
 
-<div class="panel pbg steps-panel" id="steps-panel">
-<div class="steps-title">Flow Steps</div>
-<div id="steps-ctr"><div style="color:#8b949e">Select a flow to begin</div></div>
-</div>
-
-<div class="panel pbg inspector" id="inspector">
-<div class="insp-title">Request Inspector</div>
-<div class="insp-scroll" id="insp-scroll">
-<div id="insp-content"></div>
-</div>
-</div>
-
 <div class="main-title">AI Inference Gateway &#8212; Flow Visualizer</div>
 <canvas id="canvas"></canvas>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set();
+let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
 let badges = {}, failNode = null, lines = [], running = false;
 let glowing = new Set(), collapseTimer = null, fading = {};
 
@@ -143,11 +146,24 @@ function toggleTheme() {
   document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
   draw();
 }
-function toggleCtrl() { document.getElementById('ctrl-panel').classList.toggle('collapsed'); }
+// Pre-populate steps in pending state on load
+function initSteps() {
+  const ctr = document.getElementById('steps-ctr');
+  ctr.innerHTML = '';
+  flow.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'step pending'; d.id = 'step-'+i;
+    d.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
+    d.onclick = () => { if (currentStepDone > i) { updateInsp(i); } };
+    ctr.appendChild(d);
+  });
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function resize() {
-  W = canvas.width = innerWidth; H = canvas.height = innerHeight;
-  sc = Math.min(W / LW, H / LH, 0.95);
+  const panelW = 380; // right panel width
+  W = canvas.width = innerWidth - panelW; H = canvas.height = innerHeight;
+  sc = Math.min(W / LW, H / LH, 0.9);
   ox = (W - LW * sc) / 2; oy = (H - LH * sc) / 2;
   draw();
 }
@@ -554,7 +570,6 @@ function animate() { draw(); animFrame = requestAnimationFrame(animate); }
 // ================================================================
 // INSPECTOR — accumulated state
 // ================================================================
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function initInspector() {
   inspHeaders = [
@@ -756,19 +771,20 @@ function run() {
 
   if (collapseTimer) clearTimeout(collapseTimer);
   collapseTimer = setTimeout(() => {
-    document.getElementById('ctrl-panel').classList.add('collapsed');
+    // panel auto-managed
   }, 60000);
 
-  document.getElementById('b-ext').classList.add('on');
+  let si = 0;
+  currentStepDone = 0;
 
-  let si = 0, currentStepDone = 0;
-
+  // Steps already pre-populated as pending, just reset their state
   const stCtr = document.getElementById('steps-ctr');
-  stCtr.innerHTML = '';
+  stCtr.querySelectorAll('.step').forEach(s => s.className = 'step pending');
+
   flow.forEach((s,i) => {
-    const div = document.createElement('div');
-    div.className = 'step'; div.id = 'st-'+i;
-    div.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
+    const div = document.getElementById('step-'+i);
+    if (!div) return;
+    div.className = 'step pending';
     div.addEventListener('click', () => {
       if (i+1 <= currentStepDone) {
         initInspector();
@@ -783,7 +799,7 @@ function run() {
   function next() {
     if (si >= flow.length) { running = false; return; }
     const s = flow[si];
-    const el = document.getElementById('st-'+si);
+    const el = document.getElementById('step-'+si);
     el.className = 'step active';
 
     inspStep(si+1);
@@ -828,9 +844,9 @@ function doReset() {
   lines = []; glowing.clear(); fading = {};
   inspHeaders = []; inspBody = []; inspCycle = [];
   if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; }
-  document.getElementById('ctrl-panel').classList.remove('collapsed');
+  // panel auto-managed
   document.getElementById('b-ext').classList.remove('on');
-  document.getElementById('steps-ctr').innerHTML = '<div style="color:#8b949e">Select a flow to begin</div>';
+  initSteps();
   document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:12px">Run "External Model" flow to see request mutations</div>';
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   draw();
@@ -846,6 +862,7 @@ async function demo() {
 }
 
 resize();
+initSteps();
 draw();
 </script>
 </body>
