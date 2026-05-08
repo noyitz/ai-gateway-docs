@@ -127,7 +127,7 @@ body.light .steps-panel::-webkit-scrollbar-thumb,body.light .inspector-scroll::-
 </div>
 </div>
 
-<div class="main-title">AI Inference Gateway</div>
+<div class="main-title">AI Inference Gateway — Flow Visualizer</div>
 <canvas id="canvas"></canvas>
 
 <script>
@@ -868,7 +868,7 @@ function run(id) {
         persistentLines.push({ from: s.f, to: s.to, color: s.c, num: s.num, toLeftEdge: s.toLeftEdge });
         if (s.glowContainer) {
           glowingContainers.add(s.glowContainer);
-          setTimeout(() => glowingContainers.delete(s.glowContainer), 1500);
+          // Container stays lit for the rest of the flow
         }
         if (s.fail) {
           failNode = s.fail;
