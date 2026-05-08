@@ -134,9 +134,9 @@ const N = {
   user: { x: 530, y: 10, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1020, h: 810, type: 'boundary' },
-  aigw: { x: 155, y: 100, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  aigw: { x: 155, y: 115, w: 960, h: 560, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 250, y: 120, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
+  gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
   wasm: { x: 280, y: 260, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
   auth: { x: 305, y: 315, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
@@ -760,23 +760,26 @@ const flow = [
   { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#f0883e', num: 4, yOff: -8 },
   { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#3fb950', num: 5, yOff: 8 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
-  { t: '7. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 7, glow: 'ipp', toLeft: true },
+  { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7 },
+  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 8, glow: 'ipp', toLeft: true },
   // IPP plugins — request path
-  { t: '8. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 8 },
-  { t: '9. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 9 },
-  { t: '10. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at', badge: 10 },
-  { t: '11. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 11 },
-  { t: '12. guardrail: safety check on request', mode: 'lightup', target: 'p_guard', badge: 12 },
-  { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13 },
+  { t: '9. body-field-to-header extracts model name', mode: 'lightup', target: 'p_bfth', badge: 9 },
+  { t: '10. model-provider-resolver looks up ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
+  { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at', badge: 11 },
+  { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
+  { t: '13. guardrail: safety check on request', mode: 'lightup', target: 'p_guard', badge: 13 },
+  { t: '14. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#d2a8ff', num: 14, yOff: 10 },
+  { t: '15. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15 },
   // RESPONSE PATH
-  { t: '14. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, yOff: 10 },
-  { t: '15. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 15, toLeft: true, yOff: 15 },
-  { t: '16. guardrail: safety check on response', mode: 'lightup', target: 'p_guard', badge: 16 },
-  { t: '17. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 17 },
+  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, yOff: 10 },
+  { t: '17. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 17, toLeft: true, yOff: 15 },
+  { t: '18. guardrail: safety check on response', mode: 'lightup', target: 'p_guard', badge: 18 },
+  { t: '19. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at', badge: 19 },
+  { t: '20. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, yOff: 20 },
   // TOKEN USAGE REPORTING
-  { t: '18. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 18 },
-  { t: '19. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 19 },
-  { t: '20. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 20 },
+  { t: '21. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 21 },
+  { t: '22. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 22 },
+  { t: '23. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23 },
 ];
 
 // ================================================================
