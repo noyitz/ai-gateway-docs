@@ -23,7 +23,7 @@ body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7d
 .flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
 .flow-bar .rst{border-color:#f0883e;color:#f0883e}
 
-.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:1;overflow-y:auto}
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;overflow-y:auto}
 body.light .steps-section{border-color:#d0d7de}
 .steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
 .step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
@@ -40,7 +40,7 @@ body.light .step.pending{color:#b0b8c1}
 .step.done .step-mk::before{content:'\2713'}
 .step .step-mk::before{content:'\25CB'}
 
-.insp-section{flex:1;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
 .insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
 body.light .insp-title{border-color:#d0d7de}
 .insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
@@ -107,6 +107,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none;transition:transform .2s ease-out"></div>
 <div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
   <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
     <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
@@ -249,10 +250,31 @@ function showOverlay(key) {
   card.style.left = cx + 'px';
   card.style.top = cy + 'px';
   ov.style.display = 'block';
+  // Show highlight box above overlay at the component's screen position
+  const hb = document.getElementById('highlight-box');
+  hb.style.left = nx + 'px';
+  hb.style.top = ny + 'px';
+  hb.style.width = nw + 'px';
+  hb.style.height = nh + 'px';
+  hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
+  hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
+  hb.style.background = isDark ? '#161b22' : '#f6f8fa';
+  hb.style.display = 'flex';
+  hb.style.flexDirection = 'column';
+  hb.style.alignItems = 'center';
+  hb.style.justifyContent = 'center';
+  hb.style.fontFamily = 'system-ui';
+  hb.style.color = isDark ? '#c9d1d9' : '#24292f';
+  hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
+  hb.style.display = 'block';
+  hb.style.transform = 'scale(1)';
+  requestAnimationFrame(() => { hb.style.transform = 'scale(1.08)'; });
   draw();
 }
 function closeOverlay() {
   document.getElementById('overlay').style.display = 'none';
+  const hb = document.getElementById('highlight-box');
+  hb.style.display = 'none';
   highlightKey = null;
   draw();
   if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
