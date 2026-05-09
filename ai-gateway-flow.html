@@ -225,7 +225,7 @@ function resize() {
   const panelW = 380;
   W = canvas.width = innerWidth - panelW;
   H = canvas.height = innerHeight;
-  sc = Math.min(W / LW, H / LH) * 0.92;
+  sc = Math.min(W / LW, H / LH) * 0.98;
   ox = (W - LW * sc) / 2;
   oy = (H - LH * sc) * 0.04;
   draw();
