@@ -58,9 +58,12 @@ body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
 .insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
 body.light .insp-plugin{background:#8250df15;color:#8250df}
 
-/* Theme toggle — in right panel flow bar */
-.theme-toggle{position:static;flex-shrink:0;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+/* Theme toggle — top-right of main panel */
+.theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Red Hat logo — top-left branding */
+.rh-logo{position:fixed;top:12px;left:16px;z-index:200;height:32px;pointer-events:none}
 
 /* Gradient title */
 .viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
@@ -81,6 +84,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 </head>
 <body>
 
+<img src="redhat-logo.svg" class="rh-logo" alt="Red Hat">
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
 <div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
 
 <div class="right-panel">
@@ -95,7 +100,6 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
     <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
-    <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
   </div>
   <div class="steps-section" id="steps-section">
     <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
