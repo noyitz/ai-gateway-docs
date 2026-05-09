@@ -180,10 +180,10 @@ const N = {
   sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
 
   pool: { x: 140, y: 870, w: 1040, h: 175, type: 'boundary', label: 'InferencePool' },
-  sidecar: { x: 170, y: 905, w: 120, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
-  prefill: { x: 310, y: 900, w: 180, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
-  nixl:    { x: 540, y: 905, w: 190, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 13 },
-  decode:  { x: 770, y: 900, w: 180, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
+  sidecar: { x: 210, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
+  decode:  { x: 180, y: 935, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
+  nixl:    { x: 480, y: 940, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
+  prefill: { x: 830, y: 935, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
 };
 
 const tips = {
@@ -421,32 +421,10 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
 
-  // Prefill Pod B sub-boundary (left)
+  // Decode Pod A sub-boundary (left, under sidecar)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(295), ty(888), ts(210), ts(82), ts(8));
-  ctx.strokeStyle = '#d2a8ff44';
-  ctx.lineWidth = ts(1.5);
-  ctx.setLineDash([ts(5), ts(4)]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Stacked vLLM pods behind prefill (decorative)
-  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
-  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
-  for (let j = 2; j >= 1; j--) {
-    ctx.beginPath();
-    ctx.roundRect(tx(310 - j * 8), ty(900 - j * 5), ts(180), ts(60), ts(6));
-    ctx.fillStyle = podC;
-    ctx.strokeStyle = podS;
-    ctx.lineWidth = ts(1);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  // Decode Pod A sub-boundary (right)
-  ctx.beginPath();
-  ctx.roundRect(tx(755), ty(888), ts(210), ts(82), ts(8));
+  ctx.roundRect(tx(165), ty(923), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -454,9 +432,31 @@ function drawBounds() {
   ctx.setLineDash([]);
 
   // Stacked vLLM pods behind decode (decorative)
+  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
+  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(770 - j * 8), ty(900 - j * 5), ts(180), ts(60), ts(6));
+    ctx.roundRect(tx(180 - j * 8), ty(935 - j * 5), ts(200), ts(60), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Prefill Pod B sub-boundary (right)
+  ctx.beginPath();
+  ctx.roundRect(tx(815), ty(923), ts(230), ts(82), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Stacked vLLM pods behind prefill (decorative)
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(830 - j * 8), ty(935 - j * 5), ts(200), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -1165,13 +1165,13 @@ const flowInc = [
   { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 15, toBottom: true, toXOff: 50 },
   { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -150, toTop: true },
   { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
-  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
+  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19 },
   { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
-  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromRight: true, toLeft: true },
-  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromRight: true, toLeft: true },
+  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromLeft: true, toRight: true },
+  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toRight: true },
   { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
   // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: 285 },
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -150 },
   { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
   { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
