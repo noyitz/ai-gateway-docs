@@ -142,16 +142,16 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
+  user: { x: 5, y: 155, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
   aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
+  gw: { x: 250, y: 140, w: 700, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
   wasm: { x: 190, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
+  rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
 
   ipp: { x: 740, y: 260, w: 380, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
@@ -173,17 +173,17 @@ const N = {
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
-  maas: { x: 230, y: 640, w: 220, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
+  maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
 
   // llm-d Scheduler / EPP — centered under all components
   epp: { x: 460, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
+  sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
 
-  pool: { x: 200, y: 870, w: 800, h: 175, type: 'boundary', label: 'InferencePool' },
-  sidecar: { x: 230, y: 900, w: 110, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
-  prefill: { x: 360, y: 900, w: 160, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
-  nixl:    { x: 545, y: 905, w: 160, h: 45, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 11 },
-  decode:  { x: 730, y: 900, w: 160, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
+  pool: { x: 140, y: 870, w: 1040, h: 175, type: 'boundary', label: 'InferencePool' },
+  sidecar: { x: 170, y: 905, w: 120, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
+  prefill: { x: 310, y: 900, w: 180, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
+  nixl:    { x: 540, y: 905, w: 190, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 13 },
+  decode:  { x: 770, y: 900, w: 180, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
 };
 
 const tips = {
@@ -424,7 +424,7 @@ function drawBounds() {
   // Prefill Pod B sub-boundary (left)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(345), ty(888), ts(190), ts(78), ts(8));
+  ctx.roundRect(tx(295), ty(888), ts(210), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -436,7 +436,7 @@ function drawBounds() {
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(360 - j * 8), ty(900 - j * 5), ts(160), ts(55), ts(6));
+    ctx.roundRect(tx(310 - j * 8), ty(900 - j * 5), ts(180), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -446,7 +446,7 @@ function drawBounds() {
 
   // Decode Pod A sub-boundary (right)
   ctx.beginPath();
-  ctx.roundRect(tx(715), ty(888), ts(190), ts(78), ts(8));
+  ctx.roundRect(tx(755), ty(888), ts(210), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -456,7 +456,7 @@ function drawBounds() {
   // Stacked vLLM pods behind decode (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(730 - j * 8), ty(900 - j * 5), ts(160), ts(55), ts(6));
+    ctx.roundRect(tx(770 - j * 8), ty(900 - j * 5), ts(180), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -1160,10 +1160,10 @@ const flowInc = [
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -15 },
   { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
-  { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 70 },
-  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -100, toTop: true },
+  { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 15, toBottom: true, toXOff: 50 },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -150, toTop: true },
   { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
   { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
   { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
@@ -1171,7 +1171,7 @@ const flowInc = [
   { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromRight: true, toLeft: true },
   { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
   // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: 200 },
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: 285 },
   { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
   { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
