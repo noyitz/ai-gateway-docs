@@ -185,14 +185,14 @@ const N = {
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
 
   // llm-d Scheduler / EPP — centered under all components
-  epp: { x: 460, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
+  epp: { x: 500, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 530, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
 
-  pool: { x: 140, y: 870, w: 1040, h: 175, type: 'boundary', label: 'InferencePool' },
-  sidecar: { x: 310, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
-  decode:  { x: 180, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
-  nixl:    { x: 480, y: 950, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
-  prefill: { x: 830, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
+  pool: { x: 200, y: 870, w: 1000, h: 175, type: 'boundary', label: 'InferencePool' },
+  sidecar: { x: 380, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
+  decode:  { x: 250, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
+  nixl:    { x: 530, y: 950, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
+  prefill: { x: 860, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
 };
 
 const tips = {
@@ -454,7 +454,7 @@ function drawBounds() {
   // Decode Pod A sub-boundary (left, under sidecar)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(165), ty(933), ts(230), ts(82), ts(8));
+  ctx.roundRect(tx(235), ty(933), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -466,7 +466,7 @@ function drawBounds() {
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(180 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
+    ctx.roundRect(tx(250 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -476,7 +476,7 @@ function drawBounds() {
 
   // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
-  ctx.roundRect(tx(815), ty(933), ts(230), ts(82), ts(8));
+  ctx.roundRect(tx(845), ty(933), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -486,7 +486,7 @@ function drawBounds() {
   // Stacked vLLM pods behind prefill (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(830 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
+    ctx.roundRect(tx(860 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
