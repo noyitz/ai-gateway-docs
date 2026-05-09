@@ -107,7 +107,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
-<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none;transition:transform .2s ease-out"></div>
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
 <div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
   <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
     <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
@@ -259,16 +259,10 @@ function showOverlay(key) {
   hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
   hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
   hb.style.background = isDark ? '#161b22' : '#f6f8fa';
-  hb.style.display = 'flex';
-  hb.style.flexDirection = 'column';
-  hb.style.alignItems = 'center';
-  hb.style.justifyContent = 'center';
-  hb.style.fontFamily = 'system-ui';
-  hb.style.color = isDark ? '#c9d1d9' : '#24292f';
+  hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
+  hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
   hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
-  hb.style.display = 'block';
-  hb.style.transform = 'scale(1)';
-  requestAnimationFrame(() => { hb.style.transform = 'scale(1.08)'; });
+  hb.style.transform = 'none';
   draw();
 }
 function closeOverlay() {
