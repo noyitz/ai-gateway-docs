@@ -102,7 +102,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <div id="steps-ctr"></div>
   </div>
   <div class="insp-section" id="insp-section">
-    <div class="insp-title">Request Inspector</div>
+    <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
     <div id="insp-content"></div>
   </div>
 </div>
@@ -806,7 +806,15 @@ function initSteps() {
 // ================================================================
 // INSPECTOR
 // ================================================================
+function setInspPhase(phase) {
+  const el = document.getElementById('insp-title');
+  if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
+  else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
+}
+
 function initInspector() {
+  setInspPhase('request');
   inspHeaders = [
     { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep', id: 'h-path' },
     { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep', id: 'h-auth' },
@@ -858,6 +866,7 @@ function inspStepAuth(stepNum) {
       break;
     case 7:
       inspStepLabel = '⑦ Kuadrant → Gateway (auth failed)';
+      setInspPhase('error');
       inspHeaders = [
         { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -883,6 +892,7 @@ function inspStepRL(stepNum) {
       break;
     case 8:
       inspStepLabel = '⑧ Kuadrant → Gateway (rate limited)';
+      setInspPhase('error');
       inspHeaders = [
         { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -956,6 +966,7 @@ function inspStepInc(stepNum) {
       break;
     case 24:
       inspStepLabel = '㉔ Decode → Gateway (response)';
+      setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -1083,6 +1094,7 @@ function inspStep(stepNum) {
       break;
     case 17:
       inspStepLabel = '⑰ Anthropic responds';
+      setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -1194,7 +1206,7 @@ const flowInc = [
   { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -15 },
   { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
   { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 15, toBottom: true, toXOff: 50 },
-  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -150, toTop: true },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -20, toTop: true },
   { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
   { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19 },
   { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
@@ -1202,7 +1214,7 @@ const flowInc = [
   { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toRight: true },
   { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
   // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -150 },
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
   { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
   { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
