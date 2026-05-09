@@ -137,7 +137,7 @@ let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = []; // State snapshot after each step completes
 
 // Logical canvas dimensions
-const LW = 1200, LH = 1050;
+const LW = 1250, LH = 1050;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -151,7 +151,7 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 5, y: 155, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
+  user: { x: -20, y: 155, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
   aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
@@ -175,11 +175,11 @@ const N = {
   p_resp_guard: { x: 770, y: 633, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
 
   // External models — far left, outside cluster
-  openai:    { x: 0, y: 310, w: 120, h: 55, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
-  anthropic: { x: 0, y: 375, w: 120, h: 55, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
-  azure:     { x: 0, y: 440, w: 120, h: 55, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
-  bedrock:   { x: 0, y: 505, w: 120, h: 55, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
-  vertex:    { x: 0, y: 570, w: 120, h: 55, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 14 },
+  openai:    { x: -40, y: 300, w: 140, h: 55, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 15 },
+  anthropic: { x: -40, y: 365, w: 140, h: 55, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 15 },
+  azure:     { x: -40, y: 430, w: 140, h: 55, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 14 },
+  bedrock:   { x: -40, y: 495, w: 140, h: 55, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 15 },
+  vertex:    { x: -40, y: 560, w: 140, h: 55, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 15 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
