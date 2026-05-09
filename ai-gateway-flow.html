@@ -86,7 +86,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="flow-bar">
     <select id="flow-select">
       <option value="ext">External Model (Anthropic)</option>
-      <option value="inc">On-Cluster (vLLM P/D)</option>
+      <option value="inc">Internal Model (llm-d)</option>
       <option value="auth">Auth Failure (401)</option>
       <option value="rl">Rate Limit (429)</option>
     </select>
@@ -180,10 +180,10 @@ const N = {
   sched: { x: 535, y: 642, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
   pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
-  sidecar: { x: 555, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
-  decode:  { x: 375, y: 920, w: 140, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
-  prefill: { x: 710, y: 920, w: 140, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
-  nixl:    { x: 380, y: 990, w: 460, h: 30, label: 'NIXL — KV Transfer (KVXfer)', color: '#8b949e', fs: 10 },
+  sidecar: { x: 385, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
+  decode:  { x: 375, y: 925, w: 140, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
+  prefill: { x: 710, y: 900, w: 140, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
+  nixl:    { x: 380, y: 995, w: 460, h: 30, label: 'NIXL — KV Transfer (KVXfer)', color: '#8b949e', fs: 10 },
 };
 
 const tips = {
@@ -421,10 +421,10 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
 
-  // Decode Pod A sub-boundary (left)
+  // Decode Pod A sub-boundary (left, under sidecar)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(360), ty(908), ts(175), ts(80), ts(8));
+  ctx.roundRect(tx(360), ty(913), ts(175), ts(78), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -436,7 +436,7 @@ function drawBounds() {
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(375 - j * 8), ty(920 - j * 5), ts(140), ts(55), ts(6));
+    ctx.roundRect(tx(375 - j * 8), ty(925 - j * 5), ts(140), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -446,7 +446,7 @@ function drawBounds() {
 
   // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
-  ctx.roundRect(tx(695), ty(908), ts(175), ts(80), ts(8));
+  ctx.roundRect(tx(695), ty(888), ts(175), ts(78), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -456,7 +456,7 @@ function drawBounds() {
   // Stacked vLLM pods behind prefill (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(710 - j * 8), ty(920 - j * 5), ts(140), ts(55), ts(6));
+    ctx.roundRect(tx(710 - j * 8), ty(900 - j * 5), ts(140), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -1163,7 +1163,7 @@ const flowInc = [
   { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
   { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
   { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 70 },
-  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: 0, toTop: true },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -30, toTop: true },
   { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
   { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toTop: true },
   { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
@@ -1204,7 +1204,7 @@ const flowRL = [
 ];
 
 const flowMap = { ext: flowExt, inc: flowInc, auth: flowAuth, rl: flowRL };
-const flowLabels = { ext: 'External Model (Anthropic)', inc: 'On-Cluster (vLLM P/D)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' };
+const flowLabels = { ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' };
 const flowOrder = ['ext', 'inc', 'auth', 'rl'];
 let flow = flowExt;
 
