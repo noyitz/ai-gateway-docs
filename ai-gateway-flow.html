@@ -80,13 +80,15 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <body>
 
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer</div>
+<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-size:14px;font-weight:400;-webkit-text-fill-color:#8b949e;opacity:0.8"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
     <select id="flow-select">
       <option value="ext">External Model (Anthropic)</option>
       <option value="inc">On-Cluster (vLLM P/D)</option>
+      <option value="auth">Auth Failure (401)</option>
+      <option value="rl">Rate Limit (429)</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
@@ -818,6 +820,66 @@ function resetStyles() {
   inspCycle.forEach(l => { if (l.s !== 'del') l.s = 'keep'; });
 }
 
+function inspStepAuth(stepNum) {
+  switch (stepNum) {
+    case 5:
+      inspStepLabel = '⑤ MaaS API responds: key INVALID';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
+      inspBody = [
+        { v: '"valid": false', s: 'add', id: 'b-valid' },
+        { v: '"error": "invalid_api_key"', s: 'add', id: 'b-err' },
+      ];
+      break;
+    case 6:
+      inspStepLabel = '⑥ Auth REJECTS request';
+      break;
+    case 7:
+      inspStepLabel = '⑦ Kuadrant → Gateway (auth failed)';
+      inspHeaders = [
+        { v: 'HTTP/1.1 401 Unauthorized', s: 'add', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "invalid_api_key"', s: 'add', id: 'r-err' },
+        { v: '"message": "API key is not valid"', s: 'add', id: 'r-msg' },
+      ];
+      inspCycle = [];
+      break;
+    case 8: {
+      inspStepLabel = '⑧ 401 Unauthorized → Client';
+      const st = inspHeaders.find(l => l.id === 'r-status');
+      if (st) st.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepRL(stepNum) {
+  switch (stepNum) {
+    case 7:
+      inspStepLabel = '⑦ Limitador: quota EXCEEDED';
+      break;
+    case 8:
+      inspStepLabel = '⑧ Kuadrant → Gateway (rate limited)';
+      inspHeaders = [
+        { v: 'HTTP/1.1 429 Too Many Requests', s: 'add', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+        { v: 'Retry-After: 60', s: 'add', id: 'r-retry' },
+      ];
+      inspBody = [
+        { v: '"error": "rate_limited"', s: 'add', id: 'r-err' },
+        { v: '"message": "Token quota exceeded"', s: 'add', id: 'r-msg' },
+        { v: '"retry_after": 60', s: 'add', id: 'r-ra' },
+      ];
+      inspCycle = [];
+      break;
+    case 9: {
+      inspStepLabel = '⑨ 429 Too Many Requests → Client';
+      const st = inspHeaders.find(l => l.id === 'r-status');
+      if (st) st.s = 'highlight';
+      break; }
+  }
+}
+
 function inspStepInc(stepNum) {
   switch (stepNum) {
     case 10:
@@ -906,6 +968,16 @@ function inspStepInc(stepNum) {
 
 function inspStep(stepNum) {
   resetStyles();
+  if (stepNum >= 5 && activeFlow === 'auth') {
+    inspStepAuth(stepNum);
+    renderInsp();
+    return;
+  }
+  if (stepNum >= 7 && activeFlow === 'rl') {
+    inspStepRL(stepNum);
+    renderInsp();
+    return;
+  }
   if (stepNum >= 10 && activeFlow === 'inc') {
     inspStepInc(stepNum);
     renderInsp();
@@ -1108,7 +1180,37 @@ const flowInc = [
   { t: '28. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 28, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
+const flowAuth = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'wasm', c: '#f85149', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '6. Auth rejects request', mode: 'lightup', target: 'auth', badge: '✗', errColor: '#f85149' },
+  { t: '7. Kuadrant → Gateway (auth failed)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '8. Gateway → Client: 401 Unauthorized', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 8, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowRL = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Limitador: quota EXCEEDED', mode: 'lightup', target: 'rlimit', badge: '✗', errColor: '#f85149' },
+  { t: '8. Kuadrant → Gateway (rate limited)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 8, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '9. Gateway → Client: 429 Too Many Requests', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 9, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowMap = { ext: flowExt, inc: flowInc, auth: flowAuth, rl: flowRL };
+const flowLabels = { ext: 'External Model (Anthropic)', inc: 'On-Cluster (vLLM P/D)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' };
+const flowOrder = ['ext', 'inc', 'auth', 'rl'];
 let flow = flowExt;
+
+function updateTitle() {
+  document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
+}
 
 // ================================================================
 // RUN / RESET
@@ -1185,10 +1287,11 @@ function execStep() {
       running = false; paused = false; updatePlayBtn();
       if (loopMode) {
         stepTimer = setTimeout(() => {
-          // Cycle to next flow
-          activeFlow = (activeFlow === 'ext') ? 'inc' : 'ext';
-          flow = (activeFlow === 'ext') ? flowExt : flowInc;
+          const idx = flowOrder.indexOf(activeFlow);
+          activeFlow = flowOrder[(idx + 1) % flowOrder.length];
+          flow = flowMap[activeFlow];
           document.getElementById('flow-select').value = activeFlow;
+          updateTitle();
           doReset(); run();
         }, 3000 / playbackSpeed);
       }
@@ -1223,6 +1326,7 @@ function execStep() {
   } else if (s.mode === 'lightup') {
     fading[s.target] = Date.now();
     activeNodes.add(s.target);
+    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
     if (badges[s.target] != null) {
       const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
       existing.push(s.badge);
@@ -1273,6 +1377,7 @@ function simulateUpTo(targetStep) {
       activeNodes.add(s.to);
     } else if (s.mode === 'lightup') {
       activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
       if (badges[s.target] != null) {
         const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
         existing.push(s.badge);
@@ -1311,6 +1416,7 @@ function jumpToStep(targetStep) {
 }
 
 function doReset() {
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
   running = false;
   paused = false;
   runStepIndex = 0;
@@ -1335,12 +1441,14 @@ function doReset() {
 
 document.getElementById('flow-select').addEventListener('change', function() {
   activeFlow = this.value;
-  flow = (activeFlow === 'ext') ? flowExt : flowInc;
+  flow = flowMap[activeFlow];
+  updateTitle();
   doReset();
 });
 
 resize();
 initSteps();
+updateTitle();
 draw();
 
 // Auto-start loop mode on page load
