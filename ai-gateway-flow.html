@@ -144,8 +144,8 @@ function toggleTheme() {
 const N = {
   user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  cluster: { x: 120, y: 80, w: 1020, h: 960, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 960, h: 720, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
+  aigw: { x: 155, y: 115, w: 1010, h: 720, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
@@ -173,11 +173,11 @@ const N = {
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
-  maas: { x: 520, y: 420, w: 180, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
+  maas: { x: 550, y: 420, w: 180, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
 
   // llm-d Scheduler / EPP — below MaaS, centered in gap
-  epp: { x: 510, y: 620, w: 220, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 535, y: 642, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
+  epp: { x: 540, y: 620, w: 220, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 565, y: 642, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
   pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 385, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
