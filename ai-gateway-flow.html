@@ -155,22 +155,22 @@ const N = {
 
   ipp: { x: 740, y: 260, w: 380, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
-  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, soon: true },
   p_ims:     { x: 770, y: 360, w: 320, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
-  p_mpr:     { x: 770, y: 402, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_bfth:    { x: 770, y: 440, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_at_req:  { x: 770, y: 478, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_aki:     { x: 770, y: 518, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_mpr:     { x: 770, y: 402, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:    { x: 770, y: 440, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:  { x: 770, y: 478, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:     { x: 770, y: 518, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   // Response plugins
-  p_at_resp: { x: 770, y: 595, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
-  p_resp_guard: { x: 770, y: 633, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_at_resp: { x: 770, y: 595, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  p_resp_guard: { x: 770, y: 633, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
 
   // External models — far left, outside cluster
-  openai:    { x: 0, y: 310, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
-  anthropic: { x: 0, y: 370, w: 105, h: 50, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 12 },
-  azure:     { x: 0, y: 430, w: 105, h: 50, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 11 },
-  bedrock:   { x: 0, y: 490, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
-  vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
+  openai:    { x: 0, y: 310, w: 120, h: 55, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
+  anthropic: { x: 0, y: 375, w: 120, h: 55, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
+  azure:     { x: 0, y: 440, w: 120, h: 55, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
+  bedrock:   { x: 0, y: 505, w: 120, h: 55, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
+  vertex:    { x: 0, y: 570, w: 120, h: 55, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 14 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
@@ -181,9 +181,9 @@ const N = {
 
   pool: { x: 140, y: 870, w: 1040, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 210, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
-  decode:  { x: 180, y: 935, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
-  nixl:    { x: 480, y: 940, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
-  prefill: { x: 830, y: 935, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
+  decode:  { x: 180, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 16 },
+  nixl:    { x: 480, y: 950, w: 240, h: 50, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 14 },
+  prefill: { x: 830, y: 945, w: 200, h: 60, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 16 },
 };
 
 const tips = {
@@ -277,7 +277,7 @@ function drawBox(key) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  const fs = n.fs || 14;
+  const fs = n.fs || 16;
   ctx.fillStyle = c.txt;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -424,7 +424,7 @@ function drawBounds() {
   // Decode Pod A sub-boundary (left, under sidecar)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(165), ty(923), ts(230), ts(82), ts(8));
+  ctx.roundRect(tx(165), ty(933), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -436,7 +436,7 @@ function drawBounds() {
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(180 - j * 8), ty(935 - j * 5), ts(200), ts(60), ts(6));
+    ctx.roundRect(tx(180 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -446,7 +446,7 @@ function drawBounds() {
 
   // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
-  ctx.roundRect(tx(815), ty(923), ts(230), ts(82), ts(8));
+  ctx.roundRect(tx(815), ty(933), ts(230), ts(82), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -456,7 +456,7 @@ function drawBounds() {
   // Stacked vLLM pods behind prefill (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(830 - j * 8), ty(935 - j * 5), ts(200), ts(60), ts(6));
+    ctx.roundRect(tx(830 - j * 8), ty(945 - j * 5), ts(200), ts(60), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
