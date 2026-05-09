@@ -179,11 +179,11 @@ const N = {
   epp: { x: 460, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
   sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
-  pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
-  sidecar: { x: 385, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
-  decode:  { x: 375, y: 925, w: 140, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
-  prefill: { x: 710, y: 900, w: 140, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
-  nixl:    { x: 380, y: 995, w: 460, h: 30, label: 'NIXL — KV Transfer (KVXfer)', color: '#8b949e', fs: 10 },
+  pool: { x: 200, y: 870, w: 800, h: 175, type: 'boundary', label: 'InferencePool' },
+  sidecar: { x: 230, y: 900, w: 110, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
+  prefill: { x: 360, y: 900, w: 160, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
+  nixl:    { x: 545, y: 905, w: 160, h: 45, label: 'NIXL', sublabel: 'KV Transfer (KVXfer)', color: '#8b949e', fs: 11 },
+  decode:  { x: 730, y: 900, w: 160, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
 };
 
 const tips = {
@@ -421,32 +421,10 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
 
-  // Decode Pod A sub-boundary (left, under sidecar)
+  // Prefill Pod B sub-boundary (left)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(360), ty(913), ts(175), ts(78), ts(8));
-  ctx.strokeStyle = '#d2a8ff44';
-  ctx.lineWidth = ts(1.5);
-  ctx.setLineDash([ts(5), ts(4)]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Stacked vLLM pods behind decode (decorative)
-  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
-  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
-  for (let j = 2; j >= 1; j--) {
-    ctx.beginPath();
-    ctx.roundRect(tx(375 - j * 8), ty(925 - j * 5), ts(140), ts(55), ts(6));
-    ctx.fillStyle = podC;
-    ctx.strokeStyle = podS;
-    ctx.lineWidth = ts(1);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  // Prefill Pod B sub-boundary (right)
-  ctx.beginPath();
-  ctx.roundRect(tx(695), ty(888), ts(175), ts(78), ts(8));
+  ctx.roundRect(tx(345), ty(888), ts(190), ts(78), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
@@ -454,9 +432,31 @@ function drawBounds() {
   ctx.setLineDash([]);
 
   // Stacked vLLM pods behind prefill (decorative)
+  const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
+  const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(710 - j * 8), ty(900 - j * 5), ts(140), ts(55), ts(6));
+    ctx.roundRect(tx(360 - j * 8), ty(900 - j * 5), ts(160), ts(55), ts(6));
+    ctx.fillStyle = podC;
+    ctx.strokeStyle = podS;
+    ctx.lineWidth = ts(1);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Decode Pod A sub-boundary (right)
+  ctx.beginPath();
+  ctx.roundRect(tx(715), ty(888), ts(190), ts(78), ts(8));
+  ctx.strokeStyle = '#d2a8ff44';
+  ctx.lineWidth = ts(1.5);
+  ctx.setLineDash([ts(5), ts(4)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Stacked vLLM pods behind decode (decorative)
+  for (let j = 2; j >= 1; j--) {
+    ctx.beginPath();
+    ctx.roundRect(tx(730 - j * 8), ty(900 - j * 5), ts(160), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -1163,15 +1163,15 @@ const flowInc = [
   { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
   { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
   { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 70 },
-  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -30, toTop: true },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -100, toTop: true },
   { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
-  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toTop: true },
+  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
   { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
-  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromBottom: true, toRight: true },
-  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toBottom: true },
+  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromRight: true, toLeft: true },
+  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromRight: true, toLeft: true },
   { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
   // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: 200 },
   { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
   { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
