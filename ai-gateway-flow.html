@@ -63,8 +63,10 @@ body.light .insp-plugin{background:#8250df15;color:#8250df}
 body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 
 /* Red Hat logo — top-left branding */
-.rh-logo{position:fixed;top:12px;left:16px;z-index:200;height:32px;pointer-events:none;color:#c9d1d9}
-body.light .rh-logo{color:#24292f}
+.rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
+.rh-brand img{height:30px}
+.rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body.light .rh-brand span{color:#1a1a1a}
 
 /* Gradient title */
 .viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
@@ -85,7 +87,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 </head>
 <body>
 
-<img src="redhat-logo-full.svg" class="rh-logo" alt="Red Hat">
+<div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
 <div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
 
