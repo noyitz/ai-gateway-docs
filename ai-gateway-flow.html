@@ -58,8 +58,8 @@ body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
 .insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
 body.light .insp-plugin{background:#8250df15;color:#8250df}
 
-/* Theme toggle — top-left corner */
-.theme-toggle{position:fixed;top:16px;left:16px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+/* Theme toggle — in right panel flow bar */
+.theme-toggle{position:static;flex-shrink:0;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 
 /* Gradient title */
@@ -81,7 +81,6 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 </head>
 <body>
 
-<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
 <div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
 
 <div class="right-panel">
@@ -96,6 +95,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
     <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
+    <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
   </div>
   <div class="steps-section" id="steps-section">
     <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
@@ -208,9 +208,9 @@ const tips = {
   p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['Secret Label','inference.networking.k8s.io/bbr-managed'],['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Azure','api-key: ...'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic → OpenAI format'],['Transforms','content→choices, stop_reason→finish_reason, usage normalization'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_resp_guard: { t:'response-guard (nemo)', d:'NVIDIA NeMo Guardrails — evaluates content policies on the provider response after api-translation converts it to OpenAI format.', dt:[['Status','Coming Soon'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  auth: { t:'Auth (Authorino)', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and resolves subscription info.', dt:[['Protocol','gRPC (dispatch_grpc_call)'],['Validation','Calls MaaS API /internal/v1/api-keys/validate'],['Headers Injected','X-MaaS-Username, X-MaaS-Subscription'],['Error','401 Unauthorized']], links:[['Authorino Repo','https://github.com/Kuadrant/authorino']] },
-  rlimit: { t:'Rate Limit (Limitador)', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy.', dt:[['Protocol','gRPC'],['Request Phase','Check if token quota allows'],['Response Phase','Read usage.total_tokens, report consumed'],['Policy','TokenRateLimitPolicy'],['Error','429 Too Many Requests']], links:[['Limitador Repo','https://github.com/Kuadrant/limitador']] },
-  maas: { t:'MaaS API', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Requires 3 CRDs to be created for each model offering.', dt:[['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRD: MaaSModelRef','Maps user-facing model name to provider endpoint and target model ID'],['CRD: MaaSAuth','Configures API key authentication via K8s Secret'],['CRD: MaaSSubscription','Defines quota — associates user/team with allowed models and rate limits'],['Repo','github.com/opendatahub-io/models-as-a-service'],['Docs','opendatahub-io.github.io/models-as-a-service']], links:[['Repo','https://github.com/opendatahub-io/models-as-a-service'],['CRD Docs','https://opendatahub-io.github.io/models-as-a-service/']] },
+  auth: { t:'Auth (Authorino)', logo:'redhat-logo.svg', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and resolves subscription info.', dt:[['Protocol','gRPC (dispatch_grpc_call)'],['Validation','Calls MaaS API /internal/v1/api-keys/validate'],['Headers Injected','X-MaaS-Username, X-MaaS-Subscription'],['Error','401 Unauthorized']], links:[['Authorino Repo','https://github.com/Kuadrant/authorino']] },
+  rlimit: { t:'Rate Limit (Limitador)', logo:'redhat-logo.svg', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy.', dt:[['Protocol','gRPC'],['Request Phase','Check if token quota allows'],['Response Phase','Read usage.total_tokens, report consumed'],['Policy','TokenRateLimitPolicy'],['Error','429 Too Many Requests']], links:[['Limitador Repo','https://github.com/Kuadrant/limitador']] },
+  maas: { t:'MaaS API', logo:'redhat-logo.svg', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Requires 3 CRDs to be created for each model offering.', dt:[['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRD: MaaSModelRef','Maps user-facing model name to provider endpoint and target model ID'],['CRD: MaaSAuth','Configures API key authentication via K8s Secret'],['CRD: MaaSSubscription','Defines quota — associates user/team with allowed models and rate limits']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service'],['MaaSModelRef CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-model-ref/'],['MaaSAuth CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-auth/'],['MaaSSubscription CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-subscription/']] },
   epp: { t:'llm-d Scheduler / EPP', d:'An ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for on-cluster inference.', dt:[['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Supports','P/D disaggregated serving, prefix caching']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
   sched: { t:'Endpoint Picker', d:'Selects the optimal pod for disaggregated serving. Routes to Prefill or Decode variants based on KV cache utilization and model affinity.', dt:[['Metrics','KV cache utilization, queue depth, model affinity'],['Output','Selected pod IP (Prefill + Decode)'],['Mode','P/D disaggregation or unified']], links:[['llm-d Scheduler','https://github.com/llm-d/llm-d-inference-scheduler']] },
   sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction. Communicates with the prefill worker IP and orchestrates the KV cache transfer to the decode worker.', dt:[['Role','Transaction coordinator'],['Coordinates','Prefill worker IP ↔ Decode worker'],['Triggers','KVXfer metadata exchange']] },
@@ -237,6 +237,7 @@ function showOverlay(key) {
   document.getElementById('overlay-title').textContent = tip.t;
   document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
   document.getElementById('overlay-desc').textContent = tip.d;
+  if (tip.logo) { const titleEl = document.getElementById('overlay-title'); titleEl.innerHTML = esc(tip.t); titleEl.insertAdjacentHTML('beforebegin', `<img src="${tip.logo}" style="height:24px;margin-bottom:8px">`); }
   let dh = '';
   if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
   if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
@@ -247,7 +248,7 @@ function showOverlay(key) {
   // Place card to the right of the component if space, otherwise left
   let cx, cy;
   if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
-  cy = Math.max(10, Math.min(ny, innerHeight - 400));
+  cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
   card.style.left = cx + 'px';
   card.style.top = cy + 'px';
   ov.style.display = 'block';
@@ -268,6 +269,7 @@ function showOverlay(key) {
 }
 function closeOverlay() {
   document.getElementById('overlay').style.display = 'none';
+  const logoImg = document.querySelector('#overlay-card > img'); if (logoImg) logoImg.remove();
   const hb = document.getElementById('highlight-box');
   hb.style.display = 'none';
   highlightKey = null;
