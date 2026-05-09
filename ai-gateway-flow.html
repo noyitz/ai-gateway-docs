@@ -149,21 +149,21 @@ const N = {
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
-  wasm: { x: 220, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 245, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 245, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  wasm: { x: 190, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  ipp: { x: 700, y: 260, w: 400, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 740, y: 260, w: 380, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
-  p_rguard:  { x: 735, y: 318, w: 335, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
-  p_ims:     { x: 735, y: 360, w: 335, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
-  p_mpr:     { x: 735, y: 402, w: 335, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_bfth:    { x: 735, y: 440, w: 335, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_at_req:  { x: 735, y: 478, w: 335, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
-  p_aki:     { x: 735, y: 518, w: 335, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_ims:     { x: 770, y: 360, w: 320, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
+  p_mpr:     { x: 770, y: 402, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_bfth:    { x: 770, y: 440, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_at_req:  { x: 770, y: 478, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_aki:     { x: 770, y: 518, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
   // Response plugins
-  p_at_resp: { x: 735, y: 595, w: 335, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
-  p_resp_guard: { x: 735, y: 633, w: 335, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
+  p_at_resp: { x: 770, y: 595, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
+  p_resp_guard: { x: 770, y: 633, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 13, soon: true },
 
   // External models — far left, outside cluster
   openai:    { x: 0, y: 310, w: 105, h: 50, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 12 },
@@ -172,12 +172,12 @@ const N = {
   bedrock:   { x: 0, y: 490, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
-  // MaaS API — centered between Kuadrant and IPP
-  maas: { x: 540, y: 620, w: 150, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
+  // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
+  maas: { x: 520, y: 420, w: 180, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
 
-  // llm-d Scheduler / EPP — below MaaS, centered
-  epp: { x: 510, y: 680, w: 210, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 530, y: 702, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
+  // llm-d Scheduler / EPP — below MaaS, centered in gap
+  epp: { x: 510, y: 620, w: 220, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 535, y: 642, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
   pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 555, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
@@ -377,7 +377,7 @@ function drawBounds() {
     ctx.save();
     // Request plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(720), ty(300), ts(365), ts(260), ts(8));
+    ctx.roundRect(tx(758), ty(300), ts(345), ts(260), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -388,11 +388,11 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(732), ty(312));
+    ctx.fillText('Request Plugins →', tx(770), ty(312));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(720), ty(575), ts(365), ts(105), ts(8));
+    ctx.roundRect(tx(758), ty(575), ts(345), ts(105), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -403,7 +403,7 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(732), ty(587));
+    ctx.fillText('← Response Plugins', tx(770), ty(587));
     ctx.restore();
   }
 
