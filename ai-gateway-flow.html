@@ -172,18 +172,18 @@ const N = {
   bedrock:   { x: 0, y: 490, w: 105, h: 50, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 12 },
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
-  // MaaS API — left side, inside cluster but outside AI Gateway, below Kuadrant
-  maas: { x: 170, y: 750, w: 170, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
+  // MaaS API — centered between Kuadrant and IPP
+  maas: { x: 540, y: 620, w: 150, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
 
-  // llm-d Scheduler — right side, same level as MaaS
-  epp: { x: 480, y: 740, w: 260, h: 80, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 510, y: 765, w: 200, h: 45, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 13, inner: true },
+  // llm-d Scheduler / EPP — below MaaS, centered
+  epp: { x: 510, y: 680, w: 210, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 530, y: 702, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
-  pool: { x: 340, y: 850, w: 540, h: 185, type: 'boundary', label: 'InferencePool' },
-  prefill: { x: 375, y: 895, w: 145, h: 55, label: 'Prefill', sublabel: 'vLLM pods', color: '#d2a8ff', fs: 15 },
-  spc:     { x: 540, y: 890, w: 130, h: 50, label: 'Shared Prefix Cache', sublabel: 'NIXL, DCN', color: '#8b949e', fs: 11 },
-  decode:  { x: 700, y: 895, w: 145, h: 55, label: 'Decode', sublabel: 'vLLM pods', color: '#d2a8ff', fs: 15 },
-  ipc:     { x: 365, y: 965, w: 490, h: 35, label: 'Independent Prefix Caching', sublabel: 'LMCache, Host Memory', color: '#8b949e', fs: 10 },
+  pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
+  sidecar: { x: 555, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
+  decode:  { x: 375, y: 920, w: 140, h: 55, label: 'vLLM', sublabel: 'Decode Pod A', color: '#d2a8ff', fs: 15 },
+  prefill: { x: 710, y: 920, w: 140, h: 55, label: 'vLLM', sublabel: 'Prefill Pod B', color: '#d2a8ff', fs: 15 },
+  nixl:    { x: 380, y: 990, w: 460, h: 30, label: 'NIXL — KV Transfer (KVXfer)', color: '#8b949e', fs: 10 },
 };
 
 const tips = {
@@ -201,10 +201,10 @@ const tips = {
   maas:    'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Stores keys in PostgreSQL. Provides /v1/models and /v1/api-keys endpoints.',
   epp:     'llm-d Scheduler — an ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for inference. Part of the AI Inference Gateway.',
   sched:   'Endpoint Picker selects the optimal pod for disaggregated serving — routes to Prefill or Decode variants based on KV cache utilization, queue depth, and model affinity.',
-  prefill: 'Prefill phase (Variant A). Processes the input prompt and generates the initial KV cache. In P/D disaggregated serving, dedicated GPU pods handle prefill to maximize throughput for long prompts.',
-  decode:  'Decode phase (Variant B). Generates output tokens auto-regressively using the KV cache from prefill. Dedicated decode pods optimize for low latency per-token generation.',
-  spc:     'Shared Prefix Caching via NIXL (NVIDIA Inference Xfer Library) or DCN (Data Center Network). Transfers KV cache between prefill and decode pods over high-speed interconnect, enabling disaggregated serving.',
-  ipc:     'Independent Prefix Caching using LMCache or host memory. Each pod caches commonly-used prefixes locally to avoid redundant computation across requests with shared system prompts.',
+  sidecar: 'Sidecar proxy coordinates the P/D disaggregation transaction. Receives the request, communicates with the prefill worker IP, and orchestrates the KV cache transfer.',
+  prefill: 'Prefill Pod B. Processes the input prompt and generates the initial KV cache. Returns KVXfer metadata to enable the decode pod to pull the KV cache via NIXL.',
+  decode:  'Decode Pod A. Generates output tokens auto-regressively. Pulls KV cache from the prefill pod using KVXfer metadata via NIXL high-speed interconnect.',
+  nixl:    'NIXL (NVIDIA Inference Xfer Library). High-speed KV cache transfer between prefill and decode pods. Decode pulls KVs using KVXfer metadata over GPU-direct RDMA or DCN.',
   anthropic: 'Anthropic Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format (/v1/messages). Response is translated back to OpenAI format by the api-translation plugin.',
   openai:  'OpenAI API endpoint. Requests pass through without format translation (native OpenAI format). Only credential injection is applied.',
   azure:   'Azure OpenAI endpoint. Similar to OpenAI but uses api-key header instead of Authorization: Bearer. Content filter fields are stripped from responses.',
@@ -421,26 +421,22 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
 
-  // Variant A (Prefill) sub-boundary
+  // Decode Pod A sub-boundary (left)
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(tx(360), ty(875), ts(185), ts(85), ts(8));
+  ctx.roundRect(tx(360), ty(908), ts(175), ts(80), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = `${ts(10)}px system-ui`;
-  ctx.fillStyle = '#d2a8ff88';
-  ctx.textAlign = 'left';
-  ctx.fillText('Variant A (Prefill)', tx(370), ty(888));
 
-  // Stacked vLLM pods behind prefill (decorative)
+  // Stacked vLLM pods behind decode (decorative)
   const podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
   const podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(375 - j * 8), ty(895 - j * 6), ts(145), ts(55), ts(6));
+    ctx.roundRect(tx(375 - j * 8), ty(920 - j * 5), ts(140), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -448,23 +444,19 @@ function drawBounds() {
     ctx.stroke();
   }
 
-  // Variant B (Decode) sub-boundary
+  // Prefill Pod B sub-boundary (right)
   ctx.beginPath();
-  ctx.roundRect(tx(680), ty(875), ts(185), ts(85), ts(8));
+  ctx.roundRect(tx(695), ty(908), ts(175), ts(80), ts(8));
   ctx.strokeStyle = '#d2a8ff44';
   ctx.lineWidth = ts(1.5);
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = `${ts(10)}px system-ui`;
-  ctx.fillStyle = '#d2a8ff88';
-  ctx.textAlign = 'right';
-  ctx.fillText('Variant B (Decode)', tx(855), ty(888));
 
-  // Stacked vLLM pods behind decode (decorative)
+  // Stacked vLLM pods behind prefill (decorative)
   for (let j = 2; j >= 1; j--) {
     ctx.beginPath();
-    ctx.roundRect(tx(700 - j * 8), ty(895 - j * 6), ts(145), ts(55), ts(6));
+    ctx.roundRect(tx(710 - j * 8), ty(920 - j * 5), ts(140), ts(55), ts(6));
     ctx.fillStyle = podC;
     ctx.strokeStyle = podS;
     ctx.lineWidth = ts(1);
@@ -905,28 +897,34 @@ function inspStepInc(stepNum) {
       inspStepLabel = '⑭ Gateway → EPP (ext_proc)';
       break;
     case 15:
-      inspStepLabel = '⑮ EPP selects pods';
+      inspStepLabel = '⑮ EPP selects P/D workers';
       break;
     case 16:
-      inspStepLabel = '⑯ EPP → Gateway (pod selected)';
+      inspStepLabel = '⑯ EPP → Gateway (pods selected)';
       break;
     case 17:
-      inspStepLabel = '⑰ Gateway → Prefill pods';
+      inspStepLabel = '⑰ Gateway → Sidecar';
       break;
     case 18:
-      inspStepLabel = '⑱ Prefill processing (Variant A)';
+      inspStepLabel = '⑱ Sidecar coordinates P/D';
       break;
     case 19:
-      inspStepLabel = '⑲ Prefill → Shared Prefix Cache';
+      inspStepLabel = '⑲ Sidecar → Prefill Pod B';
       break;
     case 20:
-      inspStepLabel = '⑳ KV cache → Decode pods (NIXL)';
+      inspStepLabel = '⑳ Prefill processing';
       break;
     case 21:
-      inspStepLabel = '㉑ Decode processing (Variant B)';
+      inspStepLabel = '㉑ Prefill → NIXL (KVXfer)';
       break;
     case 22:
-      inspStepLabel = '㉒ Decode → Gateway (response)';
+      inspStepLabel = '㉒ NIXL → Decode Pod A (pull KVs)';
+      break;
+    case 23:
+      inspStepLabel = '㉓ Decode processing';
+      break;
+    case 24:
+      inspStepLabel = '㉔ Decode → Gateway (response)';
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
@@ -939,27 +937,27 @@ function inspStepInc(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 23:
-      inspStepLabel = '㉓ Gateway → IPP (response)';
+    case 25:
+      inspStepLabel = '㉕ Gateway → IPP (response)';
       break;
-    case 24:
-      inspStepLabel = '㉔ response-guard (coming soon)';
+    case 26:
+      inspStepLabel = '㉖ response-guard (coming soon)';
       break;
-    case 25: {
-      inspStepLabel = '㉕ IPP → Gateway (response)';
+    case 27: {
+      inspStepLabel = '㉗ IPP → Gateway (response)';
       const ro = inspBody.find(l => l.id === 'r-obj');
       if (ro) ro.s = 'highlight';
       break; }
-    case 26: {
-      inspStepLabel = '㉖ Wasm reads usage.total_tokens';
+    case 28: {
+      inspStepLabel = '㉘ Wasm reads usage.total_tokens';
       const u = inspBody.find(l => l.id === 'r-usage2');
       if (u) u.s = 'highlight';
       break; }
-    case 27:
-      inspStepLabel = '㉗ Limitador: report token count';
+    case 29:
+      inspStepLabel = '㉙ Limitador: report token count';
       break;
-    case 28: {
-      inspStepLabel = '㉘ Response to Client (OpenAI format)';
+    case 30: {
+      inspStepLabel = '㉚ Response to Client (OpenAI format)';
       const rc = inspBody.find(l => l.id === 'r-choices');
       if (rc) rc.s = 'highlight';
       break; }
@@ -1118,8 +1116,8 @@ const flowExt = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
@@ -1150,8 +1148,8 @@ const flowInc = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
@@ -1162,22 +1160,24 @@ const flowInc = [
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
   { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true, toXOff: -20 },
-  { t: '15. EPP selects pods', mode: 'lightup', target: 'sched', badge: 15 },
-  { t: '16. EPP → Gateway (pod selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 70 },
-  { t: '17. Gateway → Prefill pods', mode: 'arrow', f: 'gw', to: 'prefill', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -20, toTop: true },
-  { t: '18. Prefill processing (Variant A)', mode: 'lightup', target: 'prefill', badge: 18 },
-  { t: '19. Prefill → Shared Prefix Cache', mode: 'arrow', f: 'prefill', to: 'spc', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
-  { t: '20. KV cache → Decode pods', mode: 'arrow', f: 'spc', to: 'decode', c: '#58a6ff', num: 20, fromRight: true, toLeft: true },
-  { t: '21. Decode processing (Variant B)', mode: 'lightup', target: 'decode', badge: 21 },
+  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 35, toTop: true },
+  { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
+  { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 70 },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: 0, toTop: true },
+  { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
+  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toTop: true },
+  { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
+  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromBottom: true, toRight: true },
+  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toBottom: true },
+  { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
   // RESPONSE PATH
-  { t: '22. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 22, fromTop: true, toBottom: true, toXOff: 250 },
-  { t: '23. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 23, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '24. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 24 },
-  { t: '25. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 25, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '26. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 26 },
-  { t: '27. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 27 },
-  { t: '28. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 28, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
+  { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '28. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 28 },
+  { t: '29. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 29 },
+  { t: '30. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 30, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowAuth = [
@@ -1185,7 +1185,7 @@ const flowAuth = [
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
-  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'wasm', c: '#f85149', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'wasm', c: '#f85149', num: 5, fromLeft: true, toRight: true, yOff: 8 },
   { t: '6. Auth rejects request', mode: 'lightup', target: 'auth', badge: '✗', errColor: '#f85149' },
   { t: '7. Kuadrant → Gateway (auth failed)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → Client: 401 Unauthorized', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 8, fromLeft: true, toRight: true, yOff: 10 },
@@ -1195,8 +1195,8 @@ const flowRL = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Limitador: quota EXCEEDED', mode: 'lightup', target: 'rlimit', badge: '✗', errColor: '#f85149' },
   { t: '8. Kuadrant → Gateway (rate limited)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 8, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
