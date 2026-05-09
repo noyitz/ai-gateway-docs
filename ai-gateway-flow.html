@@ -683,6 +683,9 @@ class Dot {
     this.segIdx = 0;
     this.x = this.pts[0].x;
     this.y = this.pts[0].y;
+    // Normalize speed so all arrows move at same pixel velocity (~4px/frame)
+    const pxPerFrame = 4;
+    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
   }
   update() {
     this.t += this.speed;
