@@ -145,7 +145,7 @@ const N = {
   user: { x: 5, y: 140, w: 80, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 1010, h: 720, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 650, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 18 },
 
@@ -173,11 +173,11 @@ const N = {
   vertex:    { x: 0, y: 550, w: 105, h: 50, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 12 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
-  maas: { x: 550, y: 420, w: 180, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 13 },
+  maas: { x: 230, y: 640, w: 220, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
 
-  // llm-d Scheduler / EPP — below MaaS, centered in gap
-  epp: { x: 540, y: 620, w: 220, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 565, y: 642, w: 170, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
+  // llm-d Scheduler / EPP — centered under all components
+  epp: { x: 460, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 490, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 12, inner: true },
 
   pool: { x: 340, y: 860, w: 540, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 385, y: 885, w: 120, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
@@ -1116,8 +1116,8 @@ const flowExt = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
@@ -1148,8 +1148,8 @@ const flowInc = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
@@ -1185,7 +1185,7 @@ const flowAuth = [
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
-  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'wasm', c: '#f85149', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '5. MaaS API responds: key INVALID', mode: 'arrow', f: 'maas', to: 'wasm', c: '#f85149', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Auth rejects request', mode: 'lightup', target: 'auth', badge: '✗', errColor: '#f85149' },
   { t: '7. Kuadrant → Gateway (auth failed)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   { t: '8. Gateway → Client: 401 Unauthorized', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 8, fromLeft: true, toRight: true, yOff: 10 },
@@ -1195,8 +1195,8 @@ const flowRL = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
-  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Limitador: quota EXCEEDED', mode: 'lightup', target: 'rlimit', badge: '✗', errColor: '#f85149' },
   { t: '8. Kuadrant → Gateway (rate limited)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f85149', num: 8, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
