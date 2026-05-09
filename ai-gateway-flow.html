@@ -107,14 +107,14 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
-<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center">
-  <div style="background:#161b22;border:1px solid #30363d;border-radius:16px;max-width:520px;width:90%;padding:28px 32px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
-    <button onclick="closeOverlay()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
-    <div id="overlay-accent" style="width:4px;height:28px;border-radius:2px;position:absolute;left:0;top:28px"></div>
-    <h2 id="overlay-title" style="margin:0 0 8px;font-size:20px;color:#c9d1d9;font-family:system-ui"></h2>
-    <p id="overlay-desc" style="margin:0 0 16px;font-size:14px;color:#8b949e;line-height:1.6;font-family:system-ui"></p>
-    <div id="overlay-details" style="font-size:13px;font-family:'SF Mono',Menlo,monospace"></div>
-    <button onclick="closeOverlay()" style="margin-top:18px;padding:8px 24px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:14px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
+<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
+  <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
+    <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
+    <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
+    <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
+    <div id="overlay-details" style="font-size:12px;font-family:'SF Mono',Menlo,monospace"></div>
+    <button onclick="closeOverlay()" style="margin-top:14px;padding:7px 20px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:13px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
   </div>
 </div>
 
@@ -223,24 +223,38 @@ const tips = {
   vertex: { t:'Google Vertex AI', d:'Vertex AI endpoint (OpenAI-compatible). Path is rewritten to the Vertex-specific endpoint format.', dt:[['Model','gemini-2.5-flash'],['Path Rewrite','/v1beta1/projects/{proj}/locations/{loc}/endpoints/openapi/chat/completions']] },
 };
 
-let overlayWasRunning = false;
+let overlayWasRunning = false, highlightKey = null;
 function showOverlay(key) {
   const tip = tips[key], n = N[key];
   if (!tip) return;
   overlayWasRunning = running;
+  highlightKey = key;
   if (running && !paused) { paused = true; running = false; if (stepTimer) clearTimeout(stepTimer); updatePlayBtn(); }
   const ov = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
   document.getElementById('overlay-accent').style.background = n.color || '#58a6ff';
   document.getElementById('overlay-title').textContent = tip.t;
   document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
   document.getElementById('overlay-desc').textContent = tip.d;
   let dh = '';
-  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:120px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
   document.getElementById('overlay-details').innerHTML = dh;
-  ov.style.display = 'flex';
+  // Position card to not overlap the highlighted component
+  const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
+  const canvasRight = innerWidth - 380;
+  // Place card to the right of the component if space, otherwise left
+  let cx, cy;
+  if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
+  cy = Math.max(10, Math.min(ny, innerHeight - 400));
+  card.style.left = cx + 'px';
+  card.style.top = cy + 'px';
+  ov.style.display = 'block';
+  draw();
 }
 function closeOverlay() {
   document.getElementById('overlay').style.display = 'none';
+  highlightKey = null;
+  draw();
   if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
 }
 
@@ -779,7 +793,20 @@ function draw() {
   Object.keys(N).forEach(k => drawBox(k));
   dots.forEach(d => { d.update(); d.draw(); });
   dots = dots.filter(d => d.alive);
-  // tooltip removed — info shown in bottom panel on click
+  // Highlight clicked component when overlay is showing
+  if (highlightKey && N[highlightKey]) {
+    const n = N[highlightKey];
+    const pad = 8;
+    ctx.save();
+    ctx.shadowColor = n.color || '#58a6ff';
+    ctx.shadowBlur = ts(30);
+    ctx.strokeStyle = n.color || '#58a6ff';
+    ctx.lineWidth = ts(3);
+    ctx.beginPath();
+    ctx.roundRect(tx(n.x) - pad, ty(n.y) - pad, ts(n.w) + pad * 2, ts(n.h) + pad * 2, ts(10));
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 function animate() { draw(); animFrame = requestAnimationFrame(animate); }
 
@@ -836,12 +863,12 @@ function renderInsp() {
   let h = `<div class="insp-plugin">${esc(inspStepLabel)}</div>`;
   h += '<div class="insp-sec">Headers:</div>';
   inspHeaders.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  h += '<div class="insp-sec">Body:</div>';
+  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   if (inspCycle.length) {
     h += '<div class="insp-sec">CycleState:</div>';
     inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   }
-  h += '<div class="insp-sec">Body:</div>';
-  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
   el.innerHTML = h;
 }
 
