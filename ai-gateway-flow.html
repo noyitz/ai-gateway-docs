@@ -23,7 +23,7 @@ body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7d
 .flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
 .flow-bar .rst{border-color:#f0883e;color:#f0883e}
 
-.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:0 1 auto;overflow-y:auto;max-height:52%}
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:1;overflow-y:auto}
 body.light .steps-section{border-color:#d0d7de}
 .steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
 .step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
@@ -50,6 +50,8 @@ body.light .insp-line.add{background:#dafbe1;color:#116329}
 .insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
 body.light .insp-line.del{background:#ffebe9;color:#82071e}
 .insp-line.keep{color:#8b949e;border-left:3px solid transparent}
+.insp-line.err{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:600}
+body.light .insp-line.err{background:#ffebe9;color:#82071e}
 .insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
 body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
 @keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
@@ -836,9 +838,9 @@ function renderInsp() {
 }
 
 function resetStyles() {
-  inspHeaders.forEach(l => { if (l.s !== 'del') l.s = 'keep'; });
-  inspBody.forEach(l => { if (l.s !== 'del') l.s = 'keep'; });
-  inspCycle.forEach(l => { if (l.s !== 'del') l.s = 'keep'; });
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
 }
 
 function inspStepAuth(stepNum) {
@@ -857,12 +859,12 @@ function inspStepAuth(stepNum) {
     case 7:
       inspStepLabel = '⑦ Kuadrant → Gateway (auth failed)';
       inspHeaders = [
-        { v: 'HTTP/1.1 401 Unauthorized', s: 'add', id: 'r-status' },
+        { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
       ];
       inspBody = [
-        { v: '"error": "invalid_api_key"', s: 'add', id: 'r-err' },
-        { v: '"message": "API key is not valid"', s: 'add', id: 'r-msg' },
+        { v: '"error": "invalid_api_key"', s: 'err', id: 'r-err' },
+        { v: '"message": "API key is not valid"', s: 'err', id: 'r-msg' },
       ];
       inspCycle = [];
       break;
@@ -882,14 +884,14 @@ function inspStepRL(stepNum) {
     case 8:
       inspStepLabel = '⑧ Kuadrant → Gateway (rate limited)';
       inspHeaders = [
-        { v: 'HTTP/1.1 429 Too Many Requests', s: 'add', id: 'r-status' },
+        { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-        { v: 'Retry-After: 60', s: 'add', id: 'r-retry' },
+        { v: 'Retry-After: 60', s: 'err', id: 'r-retry' },
       ];
       inspBody = [
-        { v: '"error": "rate_limited"', s: 'add', id: 'r-err' },
-        { v: '"message": "Token quota exceeded"', s: 'add', id: 'r-msg' },
-        { v: '"retry_after": 60', s: 'add', id: 'r-ra' },
+        { v: '"error": "rate_limited"', s: 'err', id: 'r-err' },
+        { v: '"message": "Token quota exceeded"', s: 'err', id: 'r-msg' },
+        { v: '"retry_after": 60', s: 'err', id: 'r-ra' },
       ];
       inspCycle = [];
       break;
