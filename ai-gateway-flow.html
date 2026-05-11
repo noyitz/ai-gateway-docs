@@ -172,17 +172,18 @@ const N = {
   auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
   rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
 
-  ipp: { x: 740, y: 260, w: 380, h: 460, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, soon: true },
   p_ims:     { x: 770, y: 360, w: 320, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
   p_mpr:     { x: 770, y: 402, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_bfth:    { x: 770, y: 440, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_at_req:  { x: 770, y: 478, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:     { x: 770, y: 518, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bmth:    { x: 770, y: 478, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:  { x: 770, y: 516, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:     { x: 770, y: 554, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   // Response plugins
-  p_at_resp: { x: 770, y: 595, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
-  p_resp_guard: { x: 770, y: 633, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
+  p_at_resp: { x: 770, y: 631, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  p_resp_guard: { x: 770, y: 669, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
 
   // External models — far left, outside cluster
   openai:    { x: -40, y: 300, w: 140, h: 55, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 15 },
@@ -195,8 +196,8 @@ const N = {
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
 
   // llm-d Scheduler / EPP — centered under all components
-  epp: { x: 500, y: 760, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
-  sched: { x: 530, y: 782, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
+  epp: { x: 460, y: 770, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
+  sched: { x: 490, y: 792, w: 200, h: 40, label: 'Endpoint Picker', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14, inner: true },
 
   pool: { x: 200, y: 870, w: 1000, h: 175, type: 'boundary', label: 'InferencePool' },
   sidecar: { x: 380, y: 890, w: 130, h: 38, label: 'Sidecar', color: '#8b949e', fs: 14 },
@@ -211,6 +212,7 @@ const tips = {
   p_ims: { t:'intelligent-model-selection', d:'Automatically selects the optimal model or provider based on request characteristics, cost, latency, and availability.', dt:[['Status','Coming Soon'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_mpr: { t:'model-provider-resolver', d:'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider, target model ID, and endpoint URL.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_bmth: { t:'base-model-to-header', d:'Resolves LoRA adapter names to their base model using Kubernetes ConfigMaps. Sets X-Gateway-Base-Model-Name header so EPP can select pods running the correct base model.', dt:[['Header Set','X-Gateway-Base-Model-Name'],['Data Source','Kubernetes ConfigMaps (adapter→base model mappings)'],['Use Case','LoRA adapter routing to correct InferencePool'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI → Anthropic Messages API'],['Path Rewrite','/v1/chat/completions → /v1/messages'],['Headers Added','anthropic-version: 2023-06-01'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['Secret Label','inference.networking.k8s.io/bbr-managed'],['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Azure','api-key: ...'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic → OpenAI format'],['Transforms','content→choices, stop_reason→finish_reason, usage normalization'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
@@ -475,7 +477,7 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(770), ty(587));
+    ctx.fillText('← Response Plugins', tx(770), ty(623));
     ctx.restore();
   }
 
@@ -982,43 +984,49 @@ function inspStepInc(stepNum) {
       inspStepLabel = '⑫ body-field-to-header';
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
       break;
-    case 13: {
-      inspStepLabel = '⑬ IPP → Gateway (request ready)';
+    case 13:
+      inspStepLabel = '⑬ base-model-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Base-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xbase' });
+      break;
+    case 14: {
+      inspStepLabel = '⑭ IPP → Gateway (request ready)';
       const xm = inspHeaders.find(l => l.id === 'h-xmodel');
       if (xm) xm.s = 'highlight';
+      const xb = inspHeaders.find(l => l.id === 'h-xbase');
+      if (xb) xb.s = 'highlight';
       break; }
-    case 14:
-      inspStepLabel = '⑭ Gateway → EPP (ext_proc)';
-      break;
     case 15:
-      inspStepLabel = '⑮ EPP selects P/D workers';
+      inspStepLabel = '⑮ Gateway → EPP (ext_proc)';
       break;
     case 16:
-      inspStepLabel = '⑯ EPP → Gateway (pods selected)';
+      inspStepLabel = '⑯ EPP selects P/D workers';
       break;
     case 17:
-      inspStepLabel = '⑰ Gateway → Sidecar';
+      inspStepLabel = '⑰ EPP → Gateway (pods selected)';
       break;
     case 18:
-      inspStepLabel = '⑱ Sidecar coordinates P/D';
+      inspStepLabel = '⑱ Gateway → Sidecar';
       break;
     case 19:
-      inspStepLabel = '⑲ Sidecar → Prefill Pod B';
+      inspStepLabel = '⑲ Sidecar coordinates P/D';
       break;
     case 20:
-      inspStepLabel = '⑳ Prefill processing';
+      inspStepLabel = '⑳ Sidecar → Prefill Pod B';
       break;
     case 21:
-      inspStepLabel = '㉑ Prefill → NIXL (KVXfer)';
+      inspStepLabel = '㉑ Prefill processing';
       break;
     case 22:
-      inspStepLabel = '㉒ NIXL → Decode Pod A (pull KVs)';
+      inspStepLabel = '㉒ Prefill → NIXL (KVXfer)';
       break;
     case 23:
-      inspStepLabel = '㉓ Decode processing';
+      inspStepLabel = '㉓ NIXL → Decode Pod A (pull KVs)';
       break;
     case 24:
-      inspStepLabel = '㉔ Decode → Gateway (response)';
+      inspStepLabel = '㉔ Decode processing';
+      break;
+    case 25:
+      inspStepLabel = '㉕ Decode → Gateway (response)';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1032,27 +1040,36 @@ function inspStepInc(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 25:
-      inspStepLabel = '㉕ Gateway → IPP (response)';
-      break;
     case 26:
-      inspStepLabel = '㉖ response-guard (coming soon)';
+      inspStepLabel = '㉖ Gateway → EPP (response)';
       break;
-    case 27: {
-      inspStepLabel = '㉗ IPP → Gateway (response)';
+    case 27:
+      inspStepLabel = '㉗ EPP response plugins';
+      break;
+    case 28:
+      inspStepLabel = '㉘ EPP → Gateway (response)';
+      break;
+    case 29:
+      inspStepLabel = '㉙ Gateway → IPP (response)';
+      break;
+    case 30:
+      inspStepLabel = '㉚ response-guard (coming soon)';
+      break;
+    case 31: {
+      inspStepLabel = '㉛ IPP → Gateway (response)';
       const ro = inspBody.find(l => l.id === 'r-obj');
       if (ro) ro.s = 'highlight';
       break; }
-    case 28: {
-      inspStepLabel = '㉘ Wasm reads usage.total_tokens';
+    case 32: {
+      inspStepLabel = '㉜ Wasm reads usage.total_tokens';
       const u = inspBody.find(l => l.id === 'r-usage2');
       if (u) u.s = 'highlight';
       break; }
-    case 29:
-      inspStepLabel = '㉙ Limitador: report token count';
+    case 33:
+      inspStepLabel = '㉝ Limitador: report token count';
       break;
-    case 30: {
-      inspStepLabel = '㉚ Response to Client (OpenAI format)';
+    case 34: {
+      inspStepLabel = '㉞ Response to Client (OpenAI format)';
       const rc = inspBody.find(l => l.id === 'r-choices');
       if (rc) rc.s = 'highlight';
       break; }
@@ -1254,26 +1271,30 @@ const flowInc = [
   { t: '10. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 10 },
   { t: '11. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 11 },
   { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
-  { t: '13. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '13. base-model-to-header: resolve LoRA base model', mode: 'lightup', target: 'p_bmth', badge: 13 },
+  { t: '14. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
   // On-cluster routing
-  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -15 },
-  { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
-  { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: 15, toBottom: true, toXOff: 50 },
-  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -20, toTop: true },
-  { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
-  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19 },
-  { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
-  { t: '21. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 21, fromLeft: true, toRight: true },
-  { t: '22. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toRight: true },
-  { t: '23. Decode processing', mode: 'lightup', target: 'decode', badge: 23 },
+  { t: '15. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 15, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '16. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 16 },
+  { t: '17. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '18. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 18, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '19. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 19 },
+  { t: '20. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 20 },
+  { t: '21. Prefill processing', mode: 'lightup', target: 'prefill', badge: 21 },
+  { t: '22. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 22, fromLeft: true, toRight: true },
+  { t: '23. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 23, fromLeft: true, toRight: true },
+  { t: '24. Decode processing', mode: 'lightup', target: 'decode', badge: 24 },
   // RESPONSE PATH
-  { t: '24. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 24, fromTop: true, toBottom: true, toXOff: -50 },
-  { t: '25. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 25, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '26. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 26 },
-  { t: '27. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 27, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '28. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 28 },
-  { t: '29. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 29 },
-  { t: '30. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 30, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '25. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 25, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '26. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 26, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '27. EPP response plugins', mode: 'lightup', target: 'sched', badge: 27 },
+  { t: '28. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 28, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  { t: '29. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 29, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '30. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 30 },
+  { t: '31. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 31, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '32. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 32 },
+  { t: '33. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 33 },
+  { t: '34. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 34, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowAuth = [
