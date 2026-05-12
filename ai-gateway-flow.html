@@ -93,8 +93,10 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 .mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
 .mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
 .mobile-splash .badge span{color:#3fb950;font-weight:600}
-.mobile-splash .laptop-msg{margin-top:32px;padding:16px 24px;background:#161b22;border:1px solid #30363d;border-radius:12px;font-size:14px;color:#e2e8f0;line-height:1.6}
-.mobile-splash .laptop-msg strong{color:#58a6ff}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#58a6ff18,#d2a8ff18);border:2px solid #58a6ff66;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .laptop-msg strong{color:#fff}
+.mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
+@keyframes pulse-border{0%,100%{border-color:#58a6ff66;box-shadow:0 0 20px #58a6ff22}50%{border-color:#58a6ffcc;box-shadow:0 0 30px #58a6ff44}}
 .mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
 .mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
 .mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
@@ -123,7 +125,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <div class="stat purple">30+ Components</div>
     </div>
     <div class="laptop-msg">
-      <strong>Open on laptop or desktop</strong> to see the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+      <div class="laptop-icon">&#128187;</div>
+      <strong>Open this page on your laptop or desktop</strong><br>to experience the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
     </div>
   </div>
 </div>
