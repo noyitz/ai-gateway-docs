@@ -83,9 +83,50 @@ body.light .legend{background:#f6f8fa;border-color:#d0d7de}
 .steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
 .steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
+/* Mobile splash */
+.mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+.mobile-splash.show{display:flex}
+.mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.mobile-splash-content{position:relative;z-index:1}
+.mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
+.mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
+.mobile-splash .badge span{color:#3fb950;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:16px 24px;background:#161b22;border:1px solid #30363d;border-radius:12px;font-size:14px;color:#e2e8f0;line-height:1.6}
+.mobile-splash .laptop-msg strong{color:#58a6ff}
+.mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
+.mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
+.mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
+.mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
+.mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
+.mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
+.mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
+.mobile-splash .rh-logo img{height:24px}
+.mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
+@media(min-width:800px){.mobile-splash{display:none!important}}
 </style>
 </head>
 <body>
+
+<div class="mobile-splash show" id="mobile-splash">
+  <canvas id="mobile-canvas"></canvas>
+  <div class="mobile-splash-content">
+    <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>RHOAI 3.4</span> GA</div>
+    <h1>AI Inference Gateway<br><span class="grad">MaaS in Action</span></h1>
+    <p class="sub">Interactive animated architecture flow<br>for the AI Inference Gateway</p>
+    <div class="stats">
+      <div class="stat blue">4 Flows</div>
+      <div class="stat green">5 Providers</div>
+      <div class="stat orange">35 Steps</div>
+      <div class="stat purple">30+ Components</div>
+    </div>
+    <div class="laptop-msg">
+      <strong>Open on laptop or desktop</strong> to see the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+    </div>
+  </div>
+</div>
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
@@ -1574,6 +1615,72 @@ draw();
 
 // Auto-start loop mode on page load
 setTimeout(() => { toggleLoop(); }, 500);
+
+// Mobile splash animation
+(function(){
+  if(window.innerWidth>=800)return;
+  const mc=document.getElementById('mobile-canvas');
+  if(!mc)return;
+  const mx=mc.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  let mW,mH;
+  function mResize(){
+    const r=mc.getBoundingClientRect();
+    mW=r.width;mH=r.height;
+    mc.width=mW*dpr;mc.height=mH*dpr;
+    mx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  mResize();
+  const boxes=[
+    {x:.15,y:.12,label:'Client',color:'#58a6ff'},
+    {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
+    {x:.85,y:.12,label:'Auth',color:'#f0883e'},
+    {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
+    {x:.5,y:.32,label:'Anthropic',color:'#3fb950'},
+    {x:.85,y:.35,label:'OpenAI',color:'#3fb950'},
+    {x:.2,y:.7,label:'EPP',color:'#79c0ff'},
+    {x:.5,y:.75,label:'vLLM',color:'#d2a8ff'},
+    {x:.8,y:.7,label:'NIXL',color:'#8b949e'},
+    {x:.35,y:.92,label:'Bedrock',color:'#3fb950'},
+    {x:.65,y:.92,label:'Vertex',color:'#3fb950'},
+  ];
+  let particles=[];
+  function spawn(){
+    const fi=Math.floor(Math.random()*boxes.length);
+    let ti=Math.floor(Math.random()*boxes.length);
+    while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
+    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#f85149'];
+    particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      sz:2+Math.random()*3,a:.3+Math.random()*.4});
+  }
+  for(let i=0;i<12;i++)spawn();
+  function mDraw(){
+    mx.clearRect(0,0,mW,mH);
+    boxes.forEach(b=>{
+      mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
+      mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
+      mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
+      mx.fillText(b.label,b.x*mW,b.y*mH+3);
+      mx.restore();
+    });
+    particles.forEach(p=>{
+      const f=boxes[p.f],t=boxes[p.t];
+      const px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      const py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      const fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+      mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
+      mx.shadowColor=p.c;mx.shadowBlur=8;
+      mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
+      mx.restore();
+      p.p+=p.sp;
+    });
+    particles=particles.filter(p=>p.p<1);
+    if(Math.random()<.2)spawn();
+    requestAnimationFrame(mDraw);
+  }
+  mDraw();
+})();
 </script>
 </body>
 </html>
