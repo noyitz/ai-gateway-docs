@@ -1017,16 +1017,19 @@ function inspStepInc(stepNum) {
       inspStepLabel = '㉑ Prefill processing';
       break;
     case 22:
-      inspStepLabel = '㉒ Prefill → NIXL (KVXfer)';
+      inspStepLabel = '㉒ Prefill → Sidecar (KV metadata ready)';
       break;
     case 23:
-      inspStepLabel = '㉓ NIXL → Decode Pod A (pull KVs)';
+      inspStepLabel = '㉓ Sidecar → Decode Pod A';
       break;
     case 24:
-      inspStepLabel = '㉔ Decode processing';
+      inspStepLabel = '㉔ Decode requests KVs via NIXL';
       break;
     case 25:
-      inspStepLabel = '㉕ Decode → Gateway (response)';
+      inspStepLabel = '㉕ NIXL returns KV cache (RDMA)';
+      break;
+    case 26:
+      inspStepLabel = '㉖ Decode → Gateway (response)';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1040,36 +1043,36 @@ function inspStepInc(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 26:
-      inspStepLabel = '㉖ Gateway → EPP (response)';
-      break;
     case 27:
-      inspStepLabel = '㉗ EPP response plugins';
+      inspStepLabel = '㉗ Gateway → EPP (response)';
       break;
     case 28:
-      inspStepLabel = '㉘ EPP → Gateway (response)';
+      inspStepLabel = '㉘ EPP response plugins';
       break;
     case 29:
-      inspStepLabel = '㉙ Gateway → IPP (response)';
+      inspStepLabel = '㉙ EPP → Gateway (response)';
       break;
     case 30:
-      inspStepLabel = '㉚ response-guard (coming soon)';
+      inspStepLabel = '㉚ Gateway → IPP (response)';
       break;
-    case 31: {
-      inspStepLabel = '㉛ IPP → Gateway (response)';
+    case 31:
+      inspStepLabel = '㉛ response-guard (coming soon)';
+      break;
+    case 32: {
+      inspStepLabel = '㉜ IPP → Gateway (response)';
       const ro = inspBody.find(l => l.id === 'r-obj');
       if (ro) ro.s = 'highlight';
       break; }
-    case 32: {
-      inspStepLabel = '㉜ Wasm reads usage.total_tokens';
+    case 33: {
+      inspStepLabel = '㉝ Wasm reads usage.total_tokens';
       const u = inspBody.find(l => l.id === 'r-usage2');
       if (u) u.s = 'highlight';
       break; }
-    case 33:
-      inspStepLabel = '㉝ Limitador: report token count';
+    case 34:
+      inspStepLabel = '㉞ Limitador: report token count';
       break;
-    case 34: {
-      inspStepLabel = '㉞ Response to Client (OpenAI format)';
+    case 35: {
+      inspStepLabel = '㉟ Response to Client (OpenAI format)';
       const rc = inspBody.find(l => l.id === 'r-choices');
       if (rc) rc.s = 'highlight';
       break; }
@@ -1279,22 +1282,23 @@ const flowInc = [
   { t: '17. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
   { t: '18. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 18, fromBottom: true, fromXOff: -35, toTop: true },
   { t: '19. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 19 },
-  { t: '20. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 20 },
+  { t: '20. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 20, fromRight: true, toLeft: true },
   { t: '21. Prefill processing', mode: 'lightup', target: 'prefill', badge: 21 },
-  { t: '22. Prefill → NIXL (KVXfer metadata)', mode: 'arrow', f: 'prefill', to: 'nixl', c: '#58a6ff', num: 22, fromLeft: true, toRight: true },
-  { t: '23. NIXL → Decode Pod A (pull KVs)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#58a6ff', num: 23, fromLeft: true, toRight: true },
-  { t: '24. Decode processing', mode: 'lightup', target: 'decode', badge: 24 },
+  { t: '22. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 22, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '23. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 23, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '24. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 24, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '25. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 25, fromLeft: true, toRight: true, yOff: 8 },
   // RESPONSE PATH
-  { t: '25. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 25, fromTop: true, toBottom: true, toXOff: -50 },
-  { t: '26. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 26, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
-  { t: '27. EPP response plugins', mode: 'lightup', target: 'sched', badge: 27 },
-  { t: '28. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 28, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
-  { t: '29. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 29, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '30. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 30 },
-  { t: '31. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 31, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '32. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 32 },
-  { t: '33. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 33 },
-  { t: '34. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 34, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '26. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 26, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '27. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 27, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '28. EPP response plugins', mode: 'lightup', target: 'sched', badge: 28 },
+  { t: '29. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 29, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  { t: '30. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 30, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '31. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 31 },
+  { t: '32. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 32, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '33. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 33 },
+  { t: '34. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 34 },
+  { t: '35. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 35, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowAuth = [
