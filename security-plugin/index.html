@@ -13,9 +13,9 @@ body.light{background:#fff;color:#24292f}
 .right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
 body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
 
-.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.flow-bar{padding:8px 10px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
 body.light .flow-bar{border-color:#d0d7de}
-.flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
+.flow-bar button{padding:5px 10px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:12px;font-family:inherit;transition:all .15s;white-space:nowrap}
 body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 .flow-bar button:hover{border-color:#58a6ff}
 .flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
@@ -245,7 +245,7 @@ const N = {
 
 const tips = {
   gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filters for payload processing.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Port','8080 (HTTP), 8443 (HTTPS)']] },
-  p_idsec_req: { t:'identity-security (request phase)', d:'FIRST plugin in the request chain. Reads identity headers injected by Authorino (x-maas-username, x-maas-group, x-maas-subscription), stores them in CycleState, then STRIPS them from the request. This prevents identity data from leaking to external model backends like Anthropic or OpenAI.', dt:[['Phase','Request (runs FIRST)'],['Reads','x-maas-username, x-maas-group, x-maas-subscription'],['Stores In','CycleState (per-request in-memory state)'],['Action','REMOVE identity headers from request'],['Why','Prevent identity leakage to model providers'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_idsec_req: { t:'identity-security (request phase)', d:'FIRST plugin in the request chain. Reads user and group headers injected by Authorino, stores them in CycleState, then STRIPS them from the request. Subscription header stays — Limitador needs it on the response path for token reporting.', dt:[['Phase','Request (runs FIRST)'],['Strips','x-maas-username, x-maas-group'],['Preserves','x-maas-subscription (for Limitador)'],['Stores In','CycleState (per-request in-memory state)'],['Why','Prevent user/group leakage to model providers'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_idsec_resp: { t:'identity-security (response phase)', d:'Runs on the response path. Restores identity headers from CycleState back onto the response so that downstream internal consumers (like external-metering) can use them for attribution and billing. Before the response leaves the gateway, these headers are stripped again so the client never sees internal identity data.', dt:[['Phase','Response (runs via reverse registration order)'],['Restores','x-maas-username, x-maas-group, x-maas-subscription'],['Source','CycleState (saved during request phase)'],['Consumers','external-metering (CloudEvents attribution)'],['Final Action','STRIP headers before response reaches client'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_mpr: { t:'model-provider-resolver', d:'Watches ExternalModel CRDs via a Kubernetes reconciler. Resolves the model name to provider, target model ID, and endpoint URL. Stores results in CycleState.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request']] },
   p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request']] },
@@ -872,37 +872,33 @@ function inspStep(stepNum) {
       inspStepLabel = '(5) Gateway -> IPP (ext_proc)';
       break;
     case 6:
-      inspStepLabel = '(6) identity-security: READ identity headers';
+      inspStepLabel = '(6) identity-security: READ user + group headers';
       var u6 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g6 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s6 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
       if (u6) u6.s = 'security-highlight';
       if (g6) g6.s = 'security-highlight';
-      if (s6) s6.s = 'security-highlight';
       break;
     case 7:
-      inspStepLabel = '(7) identity-security: STORE in CycleState';
+      inspStepLabel = '(7) identity-security: STORE user + group in CycleState';
       inspCycle = [
         { v: 'username = "cluster-admin"', s: 'add', id: 'c-user' },
         { v: 'group = "engineering"', s: 'add', id: 'c-group' },
-        { v: 'subscription = "ext-models-sub"', s: 'add', id: 'c-sub' },
       ];
       var u7 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g7 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s7 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
       if (u7) u7.s = 'security-highlight';
       if (g7) g7.s = 'security-highlight';
-      if (s7) s7.s = 'security-highlight';
       break;
     case 8:
-      inspStepLabel = '(8) identity-security: STRIP identity headers from request';
+      inspStepLabel = '(8) identity-security: STRIP user + group from request';
       var u8 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g8 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s8 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
       if (u8) u8.s = 'del';
       if (g8) g8.s = 'del';
-      if (s8) s8.s = 'del';
-      // CycleState still has them
+      // subscription stays — Limitador needs it on the response path
+      var sub8 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (sub8) sub8.s = 'keep';
+      // CycleState has user + group
       inspCycle.forEach(function(c) { c.s = 'highlight'; });
       break;
     case 9:
@@ -926,13 +922,14 @@ function inspStep(stepNum) {
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
     case 13:
-      inspStepLabel = '(13) IPP -> Gateway (NO identity headers!)';
+      inspStepLabel = '(13) IPP -> Gateway (user/group stripped, subscription stays)';
       var u13 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g13 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s13 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
       if (u13) u13.s = 'del';
       if (g13) g13.s = 'del';
-      if (s13) s13.s = 'del';
+      // subscription stays for Limitador
+      var sub13 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (sub13) sub13.s = 'highlight';
       var xapi13 = inspHeaders.find(function(l){ return l.id === 'h-xapi'; });
       if (xapi13) xapi13.s = 'highlight';
       break;
@@ -955,7 +952,6 @@ function inspStep(stepNum) {
       inspCycle = [
         { v: 'username = "cluster-admin"', s: 'keep', id: 'c-user' },
         { v: 'group = "engineering"', s: 'keep', id: 'c-group' },
-        { v: 'subscription = "ext-models-sub"', s: 'keep', id: 'c-sub' },
         { v: 'provider = "anthropic"', s: 'keep', id: 'c-prov' },
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'keep', id: 'c-model' },
       ];
@@ -974,7 +970,7 @@ function inspStep(stepNum) {
       inspBody.find(function(l){ return l.id === 'r-usage'; }).s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       inspCycle.forEach(function(c) {
-        if (c.id === 'c-user' || c.id === 'c-group' || c.id === 'c-sub') c.s = 'highlight';
+        if (c.id === 'c-user' || c.id === 'c-group') c.s = 'highlight';
       });
       break;
     case 18:
@@ -1004,9 +1000,9 @@ const flow = [
   { t: '5. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 80, toTop: true, toXOff: -80 },
 
   // IDENTITY-SECURITY REQUEST (steps 6-8)
-  { t: '6. identity-security: READ identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
-  { t: '7. identity-security: STORE in CycleState', mode: 'lightup', target: 'p_idsec_req', badge: 7 },
-  { t: '8. identity-security: STRIP identity headers from request', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
+  { t: '6. identity-security: READ user + group headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
+  { t: '7. identity-security: STORE user + group in CycleState', mode: 'lightup', target: 'p_idsec_req', badge: 7 },
+  { t: '8. identity-security: STRIP user + group (subscription stays for Limitador)', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
 
   // OTHER REQUEST PLUGINS (steps 9-12)
   { t: '9. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 9 },
@@ -1015,7 +1011,7 @@ const flow = [
   { t: '12. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 12 },
 
   // IPP -> GATEWAY -> ANTHROPIC (steps 13-14)
-  { t: '13. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 120 },
+  { t: '13. IPP -> Gateway (user/group stripped, subscription stays)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 120 },
   { t: '14. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
 
   // RESPONSE PATH
