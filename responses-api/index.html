@@ -423,9 +423,8 @@ function drawBounds() {
   var loopBadge = badges['loop_area'];
   var loopStart = fading['loop_area'] || 0;
   var loopAge = loopStart ? Date.now() - loopStart : 99999;
-  var loopFlashCount = Math.floor(loopAge / 400);
-  var loopGlow = loopBadge != null && loopFlashCount < 4;
-  var loopFlashOn = loopGlow && (loopFlashCount % 2 === 1);
+  var loopGlow = loopBadge != null && loopAge < 800;
+  var loopFlashOn = loopGlow && loopAge < 500;
   ctx.save();
   if (loopFlashOn) {
     ctx.shadowColor = '#f85149';
@@ -446,7 +445,7 @@ function drawBounds() {
   ctx.textAlign = 'left';
   ctx.fillText('Agentic Loop', tx(80), ty(345));
   // Draw loop badge number on the boundary
-  if (loopBadge != null) {
+  if (loopFlashOn) {
     var lb = Array.isArray(loopBadge) ? loopBadge[loopBadge.length-1] : loopBadge;
     ctx.fillStyle = '#f85149';
     ctx.strokeStyle = '#f85149';
