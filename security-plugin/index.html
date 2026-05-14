@@ -154,6 +154,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="flow-bar">
     <span class="flow-label">Identity Security Flow</span>
     <button class="start" onclick="run()">&#9654; Start</button>
+    <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9654;&#9646;</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
     <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
@@ -201,7 +202,7 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopM
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1350, LH = 950;
+const LW = 1100, LH = 780;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -215,33 +216,32 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: -30, y: 130, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
+  user: { x: 30, y: 130, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  cluster: { x: 110, y: 60, w: 1200, h: 870, type: 'boundary' },
-  aigw: { x: 145, y: 90, w: 1140, h: 780, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 160, y: 50, w: 900, h: 680, type: 'boundary' },
+  aigw: { x: 185, y: 75, w: 850, h: 630, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 230, y: 115, w: 780, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
+  gw: { x: 250, y: 100, w: 550, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  wasm: { x: 170, y: 260, w: 280, h: 220, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 195, y: 310, w: 230, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
-  rlimit: { x: 195, y: 390, w: 230, h: 55, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
+  wasm: { x: 210, y: 230, w: 260, h: 200, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 230, y: 275, w: 220, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 230, y: 348, w: 220, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  // IPP container - LARGE, this is the focus
-  ipp: { x: 560, y: 230, w: 380, h: 440, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  // IPP container - the focus
+  ipp: { x: 530, y: 210, w: 360, h: 400, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
 
-  // Request plugins (top-to-bottom execution order)
-  p_idsec_req: { x: 590, y: 300, w: 310, h: 40, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
-  p_mpr:       { x: 590, y: 348, w: 310, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bfth:      { x: 590, y: 390, w: 310, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_at_req:    { x: 590, y: 432, w: 310, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:       { x: 590, y: 474, w: 310, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  // Request plugins
+  p_idsec_req: { x: 555, y: 275, w: 310, h: 38, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_mpr:       { x: 555, y: 320, w: 310, h: 34, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:      { x: 555, y: 360, w: 310, h: 34, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:    { x: 555, y: 400, w: 310, h: 34, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:       { x: 555, y: 440, w: 310, h: 34, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
 
   // Response plugins
-  p_idsec_resp: { x: 590, y: 560, w: 310, h: 40, label: 'identity-security', sublabel: '(response)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
-  p_at_resp:    { x: 590, y: 608, w: 310, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  p_at_resp:    { x: 555, y: 540, w: 310, h: 34, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
 
   // External: Model Provider (left, outside cluster)
-  anthropic: { x: -45, y: 360, w: 140, h: 55, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 15 },
+  anthropic: { x: 20, y: 350, w: 130, h: 50, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 14 },
 };
 
 const tips = {
@@ -452,7 +452,7 @@ function drawBounds() {
   if (N.ipp) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(tx(578), ty(280), ts(335), ts(290), ts(8));
+    ctx.roundRect(tx(543), ty(258), ts(335), ts(230), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -463,11 +463,11 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins (execution order) →', tx(590), ty(294));
+    ctx.fillText('Request Plugins (execution order) →', tx(555), ty(270));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(578), ty(545), ts(335), ts(115), ts(8));
+    ctx.roundRect(tx(543), ty(520), ts(335), ts(70), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -478,7 +478,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins (reverse order)', tx(590), ty(555));
+    ctx.fillText('← Response Plugins', tx(555), ty(532));
 
     ctx.restore();
   }
@@ -965,16 +965,7 @@ function inspStep(stepNum) {
       inspStepLabel = '(16) Gateway -> IPP (response processing)';
       break;
     case 17:
-      inspStepLabel = '(17) identity-security: RESTORE headers from CycleState';
-      inspHeaders.push({ v: 'x-maas-username: cluster-admin', s: 'add', id: 'r-maas-user' });
-      inspHeaders.push({ v: 'x-maas-group: engineering', s: 'add', id: 'r-maas-group' });
-      inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'r-maas-sub' });
-      inspCycle.forEach(function(c) {
-        if (c.id === 'c-user' || c.id === 'c-group' || c.id === 'c-sub') c.s = 'highlight';
-      });
-      break;
-    case 18:
-      inspStepLabel = '(18) api-translation: Anthropic -> OpenAI response';
+      inspStepLabel = '(17) api-translation: Anthropic -> OpenAI response';
       inspBody.find(function(l){ return l.id === 'r-type'; }).s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(function(l){ return l.id === 'r-content'; }).s = 'del';
@@ -983,32 +974,20 @@ function inspStep(stepNum) {
       inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
       inspBody.find(function(l){ return l.id === 'r-usage'; }).s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
+      inspCycle.forEach(function(c) {
+        if (c.id === 'c-user' || c.id === 'c-group' || c.id === 'c-sub') c.s = 'highlight';
+      });
       break;
-    case 19:
-      inspStepLabel = '(19) identity-security: STRIP identity headers from response';
-      var ru19 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg19 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs19 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru19) ru19.s = 'del';
-      if (rg19) rg19.s = 'del';
-      if (rs19) rs19.s = 'del';
-      break;
-    case 20:
-      inspStepLabel = '(20) IPP -> Gateway (clean response, identity removed)';
-      var ru20 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg20 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs20 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru20) ru20.s = 'del';
-      if (rg20) rg20.s = 'del';
-      if (rs20) rs20.s = 'del';
-      var robj20 = inspBody.find(function(l){ return l.id === 'r-obj'; });
-      if (robj20) robj20.s = 'highlight';
+    case 18:
+      inspStepLabel = '(18) IPP -> Gateway (translated response)';
+      var robj18 = inspBody.find(function(l){ return l.id === 'r-obj'; });
+      if (robj18) robj18.s = 'highlight';
       inspCycle = [];
       break;
-    case 21:
-      inspStepLabel = '(21) Response to client (clean, no identity headers)';
-      var robj21 = inspBody.find(function(l){ return l.id === 'r-choices'; });
-      if (robj21) robj21.s = 'highlight';
+    case 19:
+      inspStepLabel = '(19) Response to client';
+      var rch19 = inspBody.find(function(l){ return l.id === 'r-choices'; });
+      if (rch19) rch19.s = 'highlight';
       break;
   }
   renderInsp();
@@ -1044,18 +1023,12 @@ const flow = [
   { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
   { t: '16. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
 
-  // IDENTITY-SECURITY RESPONSE
-  { t: '17. identity-security: RESTORE identity headers from CycleState', mode: 'lightup', target: 'p_idsec_resp', badge: 17 },
-
-  // API TRANSLATION
-  { t: '18. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 18 },
-
-  // STRIP AGAIN
-  { t: '19. identity-security: STRIP identity headers from response', mode: 'lightup', target: 'p_idsec_resp', badge: 19 },
+  // RESPONSE PLUGINS (identity data read from CycleState, never restored to headers)
+  { t: '17. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
 
   // RETURN
-  { t: '20. IPP -> Gateway (translated response, identity removed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, fromTop: true, fromXOff: -30, toBottom: true, toXOff: 280 },
-  { t: '21. Response to client (clean, no identity headers)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 21, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '18. IPP -> Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -30, toBottom: true, toXOff: 200 },
+  { t: '19. Response to client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 // ================================================================
@@ -1098,6 +1071,26 @@ function stepLine(s) {
     fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
     yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
   };
+}
+
+let stepOnceMode = false;
+function stepOnce() {
+  if (running && !paused) {
+    paused = true; running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  if (runStepIndex === 0) {
+    doReset(); initInspector();
+  }
+  if (runStepIndex >= flow.length) {
+    doReset(); return;
+  }
+  stepOnceMode = true;
+  running = true; paused = false;
+  if (!animFrame) animate();
+  execStep();
 }
 
 function run() {
@@ -1160,7 +1153,9 @@ function execStep() {
       currentStepDone = si + 1;
       saveSnapshot(si);
       runStepIndex++;
-      if (running && !paused) {
+      if (stepOnceMode) {
+        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+      } else if (running && !paused) {
         stepTimer = setTimeout(execStep, 300 / playbackSpeed);
       }
     }, stepOpts(s)));
@@ -1179,7 +1174,9 @@ function execStep() {
     currentStepDone = si + 1;
     saveSnapshot(si);
     runStepIndex++;
-    if (running && !paused) {
+    if (stepOnceMode) {
+      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+    } else if (running && !paused) {
       stepTimer = setTimeout(execStep, 800 / playbackSpeed);
     }
   }
@@ -1322,8 +1319,7 @@ draw();
   document.addEventListener('touchend',function(){dragging=false;});
 })();
 
-// Auto-start loop mode on page load
-setTimeout(function() { toggleLoop(); }, 500);
+// No auto-start — this is a design review page, not a demo
 
 // Mobile splash animation
 (function(){
