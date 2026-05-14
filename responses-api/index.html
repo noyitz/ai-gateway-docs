@@ -421,8 +421,10 @@ function drawBounds() {
 
   // Agentic Loop boundary (dashed red/coral rectangle)
   var loopBadge = badges['loop_area'];
-  var loopGlow = loopBadge != null;
-  var loopFlashOn = loopGlow && (Math.floor(Date.now() / 400) % 2 === 0);
+  var loopStart = fading['loop_area'] || 0;
+  var loopAge = loopStart ? Date.now() - loopStart : 99999;
+  var loopGlow = loopBadge != null && loopAge < 1600;
+  var loopFlashOn = loopGlow && (Math.floor(loopAge / 400) % 2 === 0);
   ctx.save();
   if (loopFlashOn) {
     ctx.shadowColor = '#f85149';
@@ -448,7 +450,7 @@ function drawBounds() {
     ctx.fillStyle = '#f85149';
     ctx.strokeStyle = '#f85149';
     ctx.beginPath();
-    ctx.arc(tx(540), ty(345), ts(14), 0, Math.PI*2);
+    ctx.arc(tx(1000), ty(335), ts(14), 0, Math.PI*2);
     ctx.fillStyle = isDark ? '#0d1117' : '#fff';
     ctx.fill();
     ctx.stroke();
@@ -456,7 +458,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(12)+'px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(lb, tx(540), ty(345));
+    ctx.fillText(lb, tx(1000), ty(335));
     ctx.textBaseline = 'alphabetic';
   }
   ctx.restore();
