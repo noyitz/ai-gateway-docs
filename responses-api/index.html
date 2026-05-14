@@ -140,7 +140,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div class="right-panel">
   <div class="flow-bar" style="flex-direction:column;align-items:stretch;gap:8px">
     <select id="flow-select">
-      <option value="simple">Simple Request (No Tools)</option>
+      <option value="simple">Agentic Loop (Tool Call)</option>
       <option value="blocked">Input Guardrails Block</option>
     </select>
     <div style="display:flex;gap:6px">
@@ -450,16 +450,6 @@ function drawBounds() {
   ctx.fill();
   ctx.restore();
 
-  // Row labels (subtle)
-  ctx.save();
-  ctx.font = ts(10) + 'px system-ui';
-  ctx.fillStyle = isDark ? '#484f5888' : '#b0b8c188';
-  ctx.textAlign = 'left';
-  ctx.fillText('HYDRATION', tx(10), ty(68));
-  ctx.fillText('REQUEST', tx(10), ty(180));
-  ctx.fillText('PROCESSING', tx(10), ty(320));
-  ctx.fillText('FINAL', tx(480), ty(560));
-  ctx.restore();
 }
 
 function edgePt(n, targetX, targetY, yOff) {
@@ -1081,14 +1071,28 @@ const flowSimple = [
   // 21. Guardrails -> Output Limit
   { t: '21. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 21 },
   // 22. Output Limit
-  { t: '22. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 22 },
-  // 23. Output Limit -> Dehydrate
-  { t: '23. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 23,
-    fromBottom: true, toTop: true },
-  // 24. Dehydrate
-  { t: '24. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 24 },
-  // 25. Dehydrate -> Client
-  { t: '25. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 25 },
+  { t: '22. Output Limit: tool_use detected', mode: 'lightup', target: 'output_limit', badge: 22 },
+  // 23. Output Limit -> Tool Invocation
+  { t: '23. Output Limit -> Tool Invocation', mode: 'arrow', f: 'output_limit', to: 'tool_invoke', c: '#e3b341', num: 23,
+    fromBottom: true, toTop: true,
+    waypoints: [{x:875, y:460}, {x:290, y:460}] },
+  // 24. Tool Invocation: call MCP server
+  { t: '24. Tool Invocation: call MCP / File / Search', mode: 'lightup', target: 'tool_invoke', badge: 24 },
+  // 25. Tool Invocation -> Assemble
+  { t: '25. Tool Invocation -> Assemble', mode: 'arrow', f: 'tool_invoke', to: 'assemble', c: '#e3b341', num: 25 },
+  // 26. Assemble: combine results
+  { t: '26. Assemble: combine tool results', mode: 'lightup', target: 'assemble', badge: 26 },
+  // 27. Assemble -> Convert (AGENTIC LOOP - red arrow goes around the loop boundary)
+  { t: '27. LOOP: Assemble -> Convert to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
+    fromBottom: true, toBottom: true,
+    waypoints: [{x:400, y:550}, {x:960, y:550}, {x:960, y:420}, {x:20, y:420}, {x:20, y:400}] },
+  // 28. Assemble -> Dehydrate (final output)
+  { t: '28. Assemble -> Dehydrate', mode: 'arrow', f: 'assemble', to: 'dehydrate', c: '#8b949e', num: 28,
+    fromRight: true, toLeft: true },
+  // 29. Dehydrate
+  { t: '29. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 29 },
+  // 30. Dehydrate -> Client
+  { t: '30. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 30 },
 ];
 
 const flowAgentic = [
