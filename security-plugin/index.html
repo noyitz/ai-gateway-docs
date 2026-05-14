@@ -152,7 +152,6 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="right-panel">
   <div class="flow-bar">
-    <span class="flow-label">Identity Security Flow</span>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
@@ -223,22 +222,22 @@ const N = {
 
   gw: { x: 250, y: 100, w: 550, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  wasm: { x: 210, y: 230, w: 260, h: 200, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 230, y: 275, w: 220, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
-  rlimit: { x: 230, y: 348, w: 220, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
+  wasm: { x: 210, y: 250, w: 260, h: 200, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 230, y: 295, w: 220, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true },
+  rlimit: { x: 230, y: 368, w: 220, h: 50, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 15, inner: true },
 
-  // IPP container - the focus
-  ipp: { x: 530, y: 210, w: 360, h: 400, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  // IPP container - the focus, centered vertically
+  ipp: { x: 530, y: 240, w: 360, h: 400, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
 
   // Request plugins
-  p_idsec_req: { x: 555, y: 275, w: 310, h: 38, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
-  p_mpr:       { x: 555, y: 320, w: 310, h: 34, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bfth:      { x: 555, y: 360, w: 310, h: 34, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_at_req:    { x: 555, y: 400, w: 310, h: 34, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:       { x: 555, y: 440, w: 310, h: 34, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_idsec_req: { x: 555, y: 305, w: 310, h: 38, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_mpr:       { x: 555, y: 350, w: 310, h: 34, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:      { x: 555, y: 390, w: 310, h: 34, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:    { x: 555, y: 430, w: 310, h: 34, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:       { x: 555, y: 470, w: 310, h: 34, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
 
   // Response plugins
-  p_at_resp:    { x: 555, y: 540, w: 310, h: 34, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  p_at_resp:    { x: 555, y: 570, w: 310, h: 34, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
 
   // External: Model Provider (left, outside cluster)
   anthropic: { x: 20, y: 350, w: 130, h: 50, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 14 },
@@ -452,7 +451,7 @@ function drawBounds() {
   if (N.ipp) {
     ctx.save();
     ctx.beginPath();
-    ctx.roundRect(tx(543), ty(258), ts(335), ts(230), ts(8));
+    ctx.roundRect(tx(543), ty(288), ts(335), ts(230), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -463,11 +462,11 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins (execution order) →', tx(555), ty(270));
+    ctx.fillText('Request Plugins (execution order) →', tx(555), ty(300));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(543), ty(520), ts(335), ts(70), ts(8));
+    ctx.roundRect(tx(543), ty(552), ts(335), ts(70), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -478,7 +477,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(555), ty(532));
+    ctx.fillText('← Response Plugins', tx(555), ty(564));
 
     ctx.restore();
   }
@@ -999,10 +998,10 @@ function inspStep(stepNum) {
 const flow = [
   // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway -> Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
+  { t: '2. Gateway -> Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: 0 },
   { t: '3. Auth (Authorino): validate key, inject identity headers', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant -> Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -80 },
-  { t: '5. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -220 },
+  { t: '4. Kuadrant -> Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 30, toBottom: true, toXOff: -70 },
+  { t: '5. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 80, toTop: true, toXOff: -80 },
 
   // IDENTITY-SECURITY REQUEST (steps 6-8)
   { t: '6. identity-security: READ identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
@@ -1016,18 +1015,18 @@ const flow = [
   { t: '12. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 12 },
 
   // IPP -> GATEWAY -> ANTHROPIC (steps 13-14)
-  { t: '13. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 160 },
+  { t: '13. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 120 },
   { t: '14. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
 
   // RESPONSE PATH
   { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '16. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
+  { t: '16. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 130, toTop: true, toXOff: -30 },
 
   // RESPONSE PLUGINS (identity data read from CycleState, never restored to headers)
   { t: '17. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
 
   // RETURN
-  { t: '18. IPP -> Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -30, toBottom: true, toXOff: 200 },
+  { t: '18. IPP -> Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 170 },
   { t: '19. Response to client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
