@@ -1172,7 +1172,7 @@ const flowBlocked = [
 ];
 
 const flowMap = { simple: flowSimple, agentic: flowAgentic, blocked: flowBlocked };
-const flowLabels = { simple: 'Simple Request (No Tools)', agentic: 'Agentic Loop (Tool Calls)', blocked: 'Input Guardrails Block' };
+const flowLabels = { simple: 'Agentic Loop (Tool Call)', agentic: 'Agentic Loop (Tool Calls)', blocked: 'Input Guardrails Block' };
 const flowOrder = ['simple', 'agentic', 'blocked'];
 let flow = flowSimple;
 
