@@ -54,6 +54,10 @@ body.light .insp-line.del{background:#ffebe9;color:#82071e}
 body.light .insp-line.err{background:#ffebe9;color:#82071e}
 .insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
 body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
+.insp-line.guard{background:#2d1f0f;color:#f0883e;border-left:3px solid #f0883e;animation:pulse .8s}
+body.light .insp-line.guard{background:#fff3e0;color:#8a5700}
+.insp-line.blocked{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:700;animation:pulse .8s}
+body.light .insp-line.blocked{background:#ffebe9;color:#82071e}
 @keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
 .insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
 body.light .insp-plugin{background:#8250df15;color:#8250df}
@@ -786,14 +790,24 @@ function setInspPhase(phase) {
 
 function initInspector() {
   setInspPhase('request');
-  if (activeFlow === 'simple' || activeFlow === 'blocked') {
+  if (activeFlow === 'simple') {
     inspHeaders = [
       { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
       { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
     ];
     inspBody = [
       { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
-      { v: '"input": "What is the weather?"', s: 'keep', id: 'b-input' },
+      { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
+      { v: '"tools": [{"type":"function","name":"get_weather"}]', s: 'keep', id: 'b-tools' },
+    ];
+  } else if (activeFlow === 'blocked') {
+    inspHeaders = [
+      { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
+      { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+    ];
+    inspBody = [
+      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
+      { v: '"input": "How to hack into a bank system"', s: 'keep', id: 'b-input' },
       { v: '"tools": []', s: 'keep', id: 'b-tools' },
     ];
   } else {
@@ -838,23 +852,35 @@ function inspStepSimple(stepNum) {
     case 2: inspStepLabel = 'responses -> Auth'; break;
     case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
     case 4: inspStepLabel = 'Auth -> Input Limit'; break;
-    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
-    case 6:
-      inspStepLabel = 'Hydrate Prompt: expand tools';
+    case 5: inspStepLabel = 'Input Limit -> MCP List Tools'; break;
+    case 6: inspStepLabel = 'MCP returns approved tools'; break;
+    case 7: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
+    case 8:
+      inspStepLabel = 'Hydrate Prompt: expand prompt + function tools';
       inspBody.find(l => l.id === 'b-tools').s = 'del';
-      inspBody.push({ v: '"resolved_tools": []', s: 'add', id: 'b-rtool' });
+      inspBody.push({ v: '"resolved_tools": [{"name":"get_weather"}]', s: 'add', id: 'b-rtool' });
       inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
       break;
-    case 7: inspStepLabel = 'GP input: content filter'; break;
-    case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
-    case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
+    case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
     case 10:
+      inspStepLabel = 'Guardrails Prep: scanning input content...';
+      var bi10s = inspBody.find(l => l.id === 'b-input');
+      if (bi10s) bi10s.s = 'guard';
+      break;
+    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
+    case 12:
+      inspStepLabel = 'Input Guardrails: PASS';
+      var bi12s = inspBody.find(l => l.id === 'b-input');
+      if (bi12s) bi12s.s = 'keep';
+      break;
+    case 13: inspStepLabel = 'Input Guardrails -> Connect to Model Router'; break;
+    case 14:
       inspStepLabel = 'Connect to Model Router';
       inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
       break;
-    case 11: inspStepLabel = 'Convert -> Inference'; break;
-    case 12:
-      inspStepLabel = 'Inference processes';
+    case 15: inspStepLabel = 'Connect -> Inference'; break;
+    case 16:
+      inspStepLabel = 'Inference: first pass';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -866,22 +892,39 @@ function inspStepSimple(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 13: inspStepLabel = 'Inference -> GP output'; break;
-    case 14: inspStepLabel = 'GP output: content filter'; break;
-    case 15: inspStepLabel = 'GP -> Guardrails'; break;
-    case 16: inspStepLabel = 'Guardrails output check'; break;
-    case 17: inspStepLabel = 'Guardrails -> Output Limit'; break;
-    case 18: inspStepLabel = 'Output Limit check'; break;
-    case 19: inspStepLabel = 'Output Limit -> Dehydrate'; break;
-    case 20:
-      inspStepLabel = 'Dehydrate: clean response';
-      const ro = inspBody.find(l => l.id === 'r-output');
-      if (ro) ro.s = 'highlight';
+    case 17: inspStepLabel = 'Inference -> Guardrails Prep'; break;
+    case 18:
+      inspStepLabel = 'Guardrails Prep: scanning output...';
+      var ro18 = inspBody.find(l => l.id === 'r-output');
+      if (ro18) ro18.s = 'guard';
       break;
-    case 21:
+    case 19: inspStepLabel = 'Guardrails Prep -> Guardrails'; break;
+    case 20:
+      inspStepLabel = 'Guardrails: output check PASS';
+      var ro20 = inspBody.find(l => l.id === 'r-output');
+      if (ro20) ro20.s = 'keep';
+      break;
+    case 21: inspStepLabel = 'Guardrails -> Output Limit'; break;
+    case 22: inspStepLabel = 'Output Limit check'; break;
+    case 23: inspStepLabel = 'Output Limit -> Dehydrate'; break;
+    case 24:
+      inspStepLabel = 'Tool Invocation: call MCP server';
+      break;
+    case 25: inspStepLabel = 'Tool -> Assemble'; break;
+    case 26: inspStepLabel = 'Assemble tool results'; break;
+    case 27: inspStepLabel = 'LOOP: back to Connect to Model Router'; break;
+    case 28: inspStepLabel = 'Agentic loop: re-inference pass 1'; break;
+    case 29: inspStepLabel = 'Agentic loop: re-inference pass 2'; break;
+    case 30: inspStepLabel = 'Assemble -> Dehydrate'; break;
+    case 31:
+      inspStepLabel = 'Dehydrate: clean response';
+      var rod = inspBody.find(l => l.id === 'r-output');
+      if (rod) rod.s = 'highlight';
+      break;
+    case 32:
       inspStepLabel = 'Dehydrate -> Client (response)';
-      const rs = inspBody.find(l => l.id === 'r-status2');
-      if (rs) rs.s = 'highlight';
+      var rsd = inspBody.find(l => l.id === 'r-status2');
+      if (rsd) rsd.s = 'highlight';
       break;
   }
 }
@@ -994,14 +1037,24 @@ function inspStepBlocked(stepNum) {
     case 2: inspStepLabel = 'responses -> Auth'; break;
     case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
     case 4: inspStepLabel = 'Auth -> Input Limit'; break;
-    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
-    case 6:
-      inspStepLabel = 'Hydrate Prompt: expand tools';
+    case 5: inspStepLabel = 'Input Limit -> MCP List Tools'; break;
+    case 6: inspStepLabel = 'MCP returns approved tools'; break;
+    case 7: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
+    case 8:
+      inspStepLabel = 'Hydrate Prompt: expand prompt';
       inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
       break;
-    case 7: inspStepLabel = 'GP input: content filter'; break;
-    case 8:
-      inspStepLabel = 'Input Guardrails: BLOCKED';
+    case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
+    case 10:
+      inspStepLabel = 'Guardrails Prep: scanning input content...';
+      var bi10 = inspBody.find(l => l.id === 'b-input');
+      if (bi10) bi10.s = 'guard';
+      break;
+    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
+    case 12:
+      inspStepLabel = 'Input Guardrails: BLOCKED — harmful content';
+      var bi12 = inspBody.find(l => l.id === 'b-input');
+      if (bi12) bi12.s = 'blocked';
       setInspPhase('error');
       inspHeaders = [
         { v: 'HTTP/1.1 403 Forbidden', s: 'err', id: 'r-status' },
@@ -1009,14 +1062,15 @@ function inspStepBlocked(stepNum) {
       ];
       inspBody = [
         { v: '"error": "content_policy_violation"', s: 'err', id: 'r-err' },
-        { v: '"message": "Request blocked by input guardrails"', s: 'err', id: 'r-msg' },
+        { v: '"message": "Request blocked: harmful content detected"', s: 'err', id: 'r-msg' },
+        { v: '"blocked_input": "How to hack into a bank system"', s: 'blocked', id: 'r-blocked' },
       ];
       inspCycle = [];
       break;
-    case 9:
+    case 13:
       inspStepLabel = 'Input Guardrails -> Client: 403 Forbidden';
-      const st = inspHeaders.find(l => l.id === 'r-status');
-      if (st) st.s = 'highlight';
+      var st13 = inspHeaders.find(l => l.id === 'r-status');
+      if (st13) st13.s = 'highlight';
       break;
   }
 }
@@ -1165,26 +1219,27 @@ const flowAgentic = [
 ];
 
 const flowBlocked = [
+  // Same request path as agentic flow
   { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
   { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
   { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
-  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
-    fromBottom: true, toTop: true },
-  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
-  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
-  // 8. Input Guardrails: BLOCKED
-  { t: '8. Input Guardrails: BLOCKED', mode: 'lightup', target: 'input_guard', badge: 'X', errColor: '#f85149' },
-  // 9. Input Guardrails -> Client: 403 Forbidden
-  { t: '9. Input Guardrails -> Client: 403 Forbidden', mode: 'arrow', f: 'input_guard', to: 'client', c: '#f85149', num: 9,
-    fromTop: true,
-    toRight: true,
-    waypoints: [
-      { x: 870, y: 170 },
-      { x: 870, y: 125 },
-      { x: 170, y: 125 },
-    ]
-  },
+  { t: '5. Input Limit -> MCP List Tools', mode: 'arrow', f: 'input_limit', to: 'mcp_list', c: '#d2a8ff', num: 5,
+    fromTop: true, fromXOff: -30, toBottom: true },
+  { t: '6. MCP returns approved tools -> Input Limit', mode: 'arrow', f: 'mcp_list', to: 'input_limit', c: '#d2a8ff', num: 6,
+    fromBottom: true, toTop: true, toXOff: 30 },
+  { t: '7. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#d2a8ff', num: 7,
+    fromTop: true, fromXOff: 50, toBottom: true },
+  { t: '8. Hydrate Prompt: expand prompt', mode: 'lightup', target: 'hydrate', badge: 8 },
+  { t: '9. Hydrate -> Guardrails Prep', mode: 'arrow', f: 'hydrate', to: 'gp_input', c: '#f0883e', num: 9 },
+  { t: '10. Guardrails Prep: scan input content', mode: 'lightup', target: 'gp_input', badge: 10 },
+  { t: '11. Guardrails Prep -> Input Guardrails', mode: 'arrow', f: 'gp_input', to: 'input_guard', c: '#f0883e', num: 11 },
+  // BLOCKED
+  { t: '12. Input Guardrails: BLOCKED — harmful content detected', mode: 'lightup', target: 'input_guard', badge: '✕', errColor: '#f85149' },
+  // Return error to client
+  { t: '13. Input Guardrails -> Client: 403 Forbidden', mode: 'arrow', f: 'input_guard', to: 'client', c: '#f85149', num: 13,
+    fromBottom: true, toRight: true,
+    waypoints: [{ x: 945, y: 150 }, { x: 945, y: 240 }, { x: 120, y: 240 }] },
 ];
 
 const flowMap = { simple: flowSimple, agentic: flowAgentic, blocked: flowBlocked };
