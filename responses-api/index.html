@@ -198,7 +198,7 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1100, LH = 700;
+const LW = 1140, LH = 700;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -213,35 +213,35 @@ function toggleTheme() {
 // ================================================================
 const N = {
   // Row 1 - Hydration (y~70, ABOVE the request row)
-  conn_locker:  { x: 50,  y: 70,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
-  mcp_list:     { x: 220, y: 70,  w: 150, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
-  hydrate:      { x: 430, y: 70,  w: 170, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
-  gp_input:     { x: 660, y: 70,  w: 150, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
-  input_guard:  { x: 870, y: 70,  w: 150, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+  conn_locker:  { x: 90,  y: 70,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
+  mcp_list:     { x: 260, y: 70,  w: 150, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
+  hydrate:      { x: 470, y: 70,  w: 170, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
+  gp_input:     { x: 700, y: 70,  w: 150, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
+  input_guard:  { x: 910, y: 70,  w: 150, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
 
   // Row 2 - Request (y~210)
-  client:       { x: 30,  y: 215, w: 90,  h: 50, label: 'Client', type: 'icon' },
-  responses:    { x: 170, y: 205, w: 150, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 15 },
-  auth:         { x: 370, y: 205, w: 120, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
-  input_limit:  { x: 540, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
+  client:       { x: 70,  y: 215, w: 90,  h: 50, label: 'Client', type: 'icon' },
+  responses:    { x: 210, y: 205, w: 150, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 15 },
+  auth:         { x: 410, y: 205, w: 120, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
+  input_limit:  { x: 580, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
   // Row 3 - Processing (y~360, spread wider)
-  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Connect to Model Router', color: '#3fb950', fs: 11 },
-  inference:    { x: 240, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
-  gp_output:    { x: 430, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
-  guardrails:   { x: 630, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
-  output_limit: { x: 810, y: 350, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+  convert:      { x: 90,  y: 350, w: 150, h: 50, label: 'Connect to Model Router', color: '#3fb950', fs: 11 },
+  inference:    { x: 280, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
+  gp_output:    { x: 470, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
+  guardrails:   { x: 670, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
+  output_limit: { x: 850, y: 350, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
 
   // Agentic loop area (invisible node for lightup targeting)
-  loop_area:    { x: 30, y: 330, w: 930, h: 210, label: '', color: '#f85149', type: 'hidden' },
+  loop_area:    { x: 70, y: 330, w: 930, h: 210, label: '', color: '#f85149', type: 'hidden' },
 
   // Row 4 - Agentic Loop tools (y~480)
-  tool_invoke:  { x: 140, y: 470, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
-  assemble:     { x: 340, y: 470, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
+  tool_invoke:  { x: 180, y: 470, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
+  assemble:     { x: 380, y: 470, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
 
   // Row 5 - Final (y~580)
-  dehydrate:    { x: 600, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
-  client_resp:  { x: 780, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
+  dehydrate:    { x: 640, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
+  client_resp:  { x: 820, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
 };
 
 const tips = {
@@ -422,33 +422,33 @@ function drawBounds() {
   // Agentic Loop boundary (dashed red/coral rectangle)
   var loopBadge = badges['loop_area'];
   var loopGlow = loopBadge != null;
-  var loopPulse = loopGlow ? 0.7 : 0;
+  var loopFlashOn = loopGlow && (Math.floor(Date.now() / 400) % 2 === 0);
   ctx.save();
-  if (loopGlow) {
+  if (loopFlashOn) {
     ctx.shadowColor = '#f85149';
-    ctx.shadowBlur = ts(25 * loopPulse);
+    ctx.shadowBlur = ts(30);
   }
   ctx.beginPath();
-  ctx.strokeStyle = loopGlow ? 'rgba(248,81,73,' + (0.4 + 0.6 * loopPulse) + ')' : '#f8514966';
-  ctx.lineWidth = loopGlow ? ts(2 + 2 * loopPulse) : ts(2);
+  ctx.strokeStyle = loopFlashOn ? '#f85149' : (loopGlow ? '#f85149aa' : '#f8514966');
+  ctx.lineWidth = loopFlashOn ? ts(4) : ts(2);
   ctx.setLineDash([ts(8), ts(5)]);
-  ctx.roundRect(tx(30), ty(330), ts(930), ts(210), ts(12));
+  ctx.roundRect(tx(70), ty(330), ts(930), ts(210), ts(12));
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = loopGlow ? 'rgba(248,81,73,' + (0.07 + 0.15 * loopPulse) + ')' : (isDark ? '#f8514912' : '#f8514908');
+  ctx.fillStyle = loopFlashOn ? '#f8514933' : (loopGlow ? '#f8514920' : (isDark ? '#f8514912' : '#f8514908'));
   ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = '#f85149';
   ctx.font = 'bold ' + ts(11) + 'px system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Agentic Loop', tx(40), ty(345));
+  ctx.fillText('Agentic Loop', tx(80), ty(345));
   // Draw loop badge number on the boundary
   if (loopBadge != null) {
     var lb = Array.isArray(loopBadge) ? loopBadge[loopBadge.length-1] : loopBadge;
     ctx.fillStyle = '#f85149';
     ctx.strokeStyle = '#f85149';
     ctx.beginPath();
-    ctx.arc(tx(500), ty(345), ts(14), 0, Math.PI*2);
+    ctx.arc(tx(540), ty(345), ts(14), 0, Math.PI*2);
     ctx.fillStyle = isDark ? '#0d1117' : '#fff';
     ctx.fill();
     ctx.stroke();
@@ -456,7 +456,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(12)+'px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(lb, tx(500), ty(345));
+    ctx.fillText(lb, tx(540), ty(345));
     ctx.textBaseline = 'alphabetic';
   }
   ctx.restore();
@@ -1135,7 +1135,7 @@ const flowSimple = [
   // 13. Input Guardrails -> Convert (DOWN first, then LEFT along bottom, then DOWN to Convert)
   { t: '13. Input Guardrails -> Connect to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
     fromBottom: true, toLeft: true, speed: 2,
-    waypoints: [{x:945, y:280}, {x:20, y:280}, {x:20, y:375}] },
+    waypoints: [{x:985, y:280}, {x:60, y:280}, {x:60, y:375}] },
   // 14. Connect to Model Router
   { t: '14. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
   // 15. Convert -> Inference
@@ -1157,7 +1157,7 @@ const flowSimple = [
   // 23. Output Limit -> Tool Invocation
   { t: '23. Output Limit -> Tool Invocation', mode: 'arrow', f: 'output_limit', to: 'tool_invoke', c: '#e3b341', num: 23,
     fromBottom: true, toLeft: true, speed: 2,
-    waypoints: [{x:875, y:440}, {x:100, y:440}, {x:100, y:495}] },
+    waypoints: [{x:915, y:440}, {x:140, y:440}, {x:140, y:495}] },
   // 24. Tool Invocation: call MCP server
   { t: '24. Tool Invocation: call MCP / File / Search', mode: 'lightup', target: 'tool_invoke', badge: 24 },
   // 25. Tool Invocation -> Assemble
@@ -1167,7 +1167,7 @@ const flowSimple = [
   // 27. Assemble -> Convert (AGENTIC LOOP - red arrow goes around the loop boundary)
   { t: '27. LOOP: Assemble -> Connect to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
     fromRight: true, toLeft: true, speed: 2,
-    waypoints: [{x:980, y:495}, {x:980, y:310}, {x:20, y:310}, {x:20, y:375}] },
+    waypoints: [{x:1020, y:495}, {x:1020, y:310}, {x:60, y:310}, {x:60, y:375}] },
   // 28. Agentic loop runs (flash the red boundary)
   { t: '28. Agentic loop: re-inference pass 1', mode: 'lightup', target: 'loop_area', badge: '↻' },
   // 29. Second loop iteration
