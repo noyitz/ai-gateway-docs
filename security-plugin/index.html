@@ -201,7 +201,7 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopM
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1100, LH = 780;
+const LW = 1100, LH = 820;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -217,8 +217,8 @@ function toggleTheme() {
 const N = {
   user: { x: 30, y: 130, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  cluster: { x: 160, y: 50, w: 900, h: 680, type: 'boundary' },
-  aigw: { x: 185, y: 75, w: 850, h: 630, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 160, y: 50, w: 900, h: 720, type: 'boundary' },
+  aigw: { x: 185, y: 75, w: 850, h: 670, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
   gw: { x: 250, y: 100, w: 550, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
@@ -239,8 +239,11 @@ const N = {
   // Response plugins
   p_at_resp:    { x: 555, y: 570, w: 310, h: 34, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
 
+  // MaaS API
+  maas: { x: 230, y: 480, w: 220, h: 50, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 14 },
+
   // External: Model Provider (left, outside cluster)
-  anthropic: { x: 20, y: 350, w: 130, h: 50, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 14 },
+  anthropic: { x: 20, y: 380, w: 130, h: 50, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 14 },
 };
 
 const tips = {
@@ -252,7 +255,8 @@ const tips = {
   p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI -> Anthropic Messages API'],['Path Rewrite','/v1/chat/completions -> /v1/messages'],['Phase','Request']] },
   p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Phase','Request']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic -> OpenAI format'],['Phase','Response']] },
-  auth: { t:'Auth (Authorino)', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and injects identity headers onto the request.', dt:[['Protocol','gRPC'],['Headers Injected','x-maas-username, x-maas-group, x-maas-subscription'],['Source','MaaS API key validation']] },
+  auth: { t:'Auth (Authorino)', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key via MaaS API and injects identity headers onto the request.', dt:[['Protocol','gRPC'],['Headers Injected','x-maas-username, x-maas-group, x-maas-subscription'],['Source','MaaS API key validation']] },
+  maas: { t:'MaaS API', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation to resolve the API key into user identity and subscription info.', dt:[['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['Returns','username, group, subscription']] },
   rlimit: { t:'Rate Limit (Limitador)', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting.', dt:[['Protocol','gRPC'],['Policy','TokenRateLimitPolicy']] },
   anthropic: { t:'Anthropic', d:'Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format. MUST NOT receive identity headers.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Security','No identity headers in request (stripped by identity-security)']] },
 };
@@ -855,31 +859,41 @@ function inspStep(stepNum) {
     case 3:
       inspStepLabel = '(3) Auth (Authorino) validates API key';
       inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'highlight';
+      break;
+    case 4:
+      inspStepLabel = '(4) Kuadrant -> MaaS API (key validation)';
+      inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'highlight';
+      break;
+    case 5:
+      inspStepLabel = '(5) MaaS API responds: key valid';
       inspHeaders.push({ v: 'x-maas-username: cluster-admin', s: 'add', id: 'h-maas-user' });
       inspHeaders.push({ v: 'x-maas-group: engineering', s: 'add', id: 'h-maas-group' });
       inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
       break;
-    case 4:
-      inspStepLabel = '(4) Kuadrant -> Gateway (auth complete)';
-      var u4 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
-      var g4 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s4 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
-      if (u4) u4.s = 'highlight';
-      if (g4) g4.s = 'highlight';
-      if (s4) s4.s = 'highlight';
-      break;
-    case 5:
-      inspStepLabel = '(5) Gateway -> IPP (ext_proc)';
-      break;
     case 6:
-      inspStepLabel = '(6) identity-security: READ user + group headers';
+      inspStepLabel = '(6) Rate Limit checks token quota';
+      break;
+    case 7:
+      inspStepLabel = '(7) Kuadrant -> Gateway (auth complete, identity injected)';
+      var u7a = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g7a = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s7a = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u7a) u7a.s = 'highlight';
+      if (g7a) g7a.s = 'highlight';
+      if (s7a) s7a.s = 'highlight';
+      break;
+    case 8:
+      inspStepLabel = '(8) Gateway -> IPP (ext_proc)';
+      break;
+    case 9:
+      inspStepLabel = '(9) identity-security: READ user + group headers';
       var u6 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g6 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
       if (u6) u6.s = 'security-highlight';
       if (g6) g6.s = 'security-highlight';
       break;
-    case 7:
-      inspStepLabel = '(7) identity-security: STORE user + group in CycleState';
+    case 10:
+      inspStepLabel = '(10) identity-security: STORE user + group in CycleState';
       inspCycle = [
         { v: 'username = "cluster-admin"', s: 'add', id: 'c-user' },
         { v: 'group = "engineering"', s: 'add', id: 'c-group' },
@@ -889,8 +903,8 @@ function inspStep(stepNum) {
       if (u7) u7.s = 'security-highlight';
       if (g7) g7.s = 'security-highlight';
       break;
-    case 8:
-      inspStepLabel = '(8) identity-security: STRIP user + group from request';
+    case 11:
+      inspStepLabel = '(11) identity-security: STRIP user + group from request';
       var u8 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g8 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
       if (u8) u8.s = 'del';
@@ -901,28 +915,28 @@ function inspStep(stepNum) {
       // CycleState has user + group
       inspCycle.forEach(function(c) { c.s = 'highlight'; });
       break;
-    case 9:
-      inspStepLabel = '(9) model-provider-resolver';
+    case 12:
+      inspStepLabel = '(12) model-provider-resolver';
       inspCycle.push({ v: 'provider = "anthropic"', s: 'add', id: 'c-prov' });
       inspCycle.push({ v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' });
       break;
-    case 10:
-      inspStepLabel = '(10) body-field-to-header';
+    case 13:
+      inspStepLabel = '(13) body-field-to-header';
       inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5', s: 'add', id: 'h-xmodel' });
       break;
-    case 11:
-      inspStepLabel = '(11) api-translation: OpenAI -> Anthropic';
+    case 14:
+      inspStepLabel = '(14) api-translation: OpenAI -> Anthropic';
       inspHeaders.find(function(l){ return l.id === 'h-path'; }).s = 'del';
       inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'del';
       break;
-    case 12:
-      inspStepLabel = '(12) apikey-injection';
+    case 15:
+      inspStepLabel = '(15) apikey-injection';
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
-    case 13:
-      inspStepLabel = '(13) IPP -> Gateway (user/group stripped, subscription stays)';
+    case 16:
+      inspStepLabel = '(16) IPP -> Gateway (user/group stripped, subscription stays)';
       var u13 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
       var g13 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
       if (u13) u13.s = 'del';
@@ -933,11 +947,11 @@ function inspStep(stepNum) {
       var xapi13 = inspHeaders.find(function(l){ return l.id === 'h-xapi'; });
       if (xapi13) xapi13.s = 'highlight';
       break;
-    case 14:
-      inspStepLabel = '(14) Gateway routes to Anthropic (CLEAN - no identity leakage)';
+    case 17:
+      inspStepLabel = '(17) Gateway routes to Anthropic (no user/group leakage)';
       break;
-    case 15:
-      inspStepLabel = '(15) Anthropic responds';
+    case 18:
+      inspStepLabel = '(18) Anthropic responds';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -956,11 +970,11 @@ function inspStep(stepNum) {
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'keep', id: 'c-model' },
       ];
       break;
-    case 16:
-      inspStepLabel = '(16) Gateway -> IPP (response processing)';
+    case 19:
+      inspStepLabel = '(19) Gateway -> IPP (response processing)';
       break;
-    case 17:
-      inspStepLabel = '(17) api-translation: Anthropic -> OpenAI response';
+    case 20:
+      inspStepLabel = '(20) api-translation: Anthropic -> OpenAI response';
       inspBody.find(function(l){ return l.id === 'r-type'; }).s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(function(l){ return l.id === 'r-content'; }).s = 'del';
@@ -973,14 +987,14 @@ function inspStep(stepNum) {
         if (c.id === 'c-user' || c.id === 'c-group') c.s = 'highlight';
       });
       break;
-    case 18:
-      inspStepLabel = '(18) IPP -> Gateway (translated response)';
+    case 21:
+      inspStepLabel = '(21) IPP -> Gateway (translated response)';
       var robj18 = inspBody.find(function(l){ return l.id === 'r-obj'; });
       if (robj18) robj18.s = 'highlight';
       inspCycle = [];
       break;
-    case 19:
-      inspStepLabel = '(19) Response to client';
+    case 22:
+      inspStepLabel = '(22) Response to client';
       var rch19 = inspBody.find(function(l){ return l.id === 'r-choices'; });
       if (rch19) rch19.s = 'highlight';
       break;
@@ -995,35 +1009,38 @@ const flow = [
   // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway -> Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: 0 },
-  { t: '3. Auth (Authorino): validate key, inject identity headers', mode: 'lightup', target: 'auth', badge: 3 },
-  { t: '4. Kuadrant -> Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 30, toBottom: true, toXOff: -70 },
-  { t: '5. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 80, toTop: true, toXOff: -80 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant -> MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -20, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid, returns identity', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 20 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Kuadrant -> Gateway (auth complete, identity headers injected)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 40, toBottom: true, toXOff: -70 },
+  { t: '8. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 80, toTop: true, toXOff: -80 },
 
-  // IDENTITY-SECURITY REQUEST (steps 6-8)
-  { t: '6. identity-security: READ user + group headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
-  { t: '7. identity-security: STORE user + group in CycleState', mode: 'lightup', target: 'p_idsec_req', badge: 7 },
-  { t: '8. identity-security: STRIP user + group (subscription stays for Limitador)', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
+  // IDENTITY-SECURITY REQUEST (steps 9-11)
+  { t: '9. identity-security: READ user + group headers', mode: 'lightup', target: 'p_idsec_req', badge: 9 },
+  { t: '10. identity-security: STORE user + group in CycleState', mode: 'lightup', target: 'p_idsec_req', badge: 10 },
+  { t: '11. identity-security: STRIP user + group (subscription stays for Limitador)', mode: 'lightup', target: 'p_idsec_req', badge: 11 },
 
-  // OTHER REQUEST PLUGINS (steps 9-12)
-  { t: '9. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 9 },
-  { t: '10. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 10 },
-  { t: '11. api-translation: OpenAI -> Anthropic', mode: 'lightup', target: 'p_at_req', badge: 11 },
-  { t: '12. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 12 },
+  // OTHER REQUEST PLUGINS (steps 12-15)
+  { t: '12. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 12 },
+  { t: '13. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 13 },
+  { t: '14. api-translation: OpenAI -> Anthropic', mode: 'lightup', target: 'p_at_req', badge: 14 },
+  { t: '15. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 15 },
 
-  // IPP -> GATEWAY -> ANTHROPIC (steps 13-14)
-  { t: '13. IPP -> Gateway (user/group stripped, subscription stays)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 120 },
-  { t: '14. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
+  // IPP -> GATEWAY -> ANTHROPIC (steps 16-17)
+  { t: '16. IPP -> Gateway (user/group stripped, subscription stays)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 120 },
+  { t: '17. Gateway routes to Anthropic (clean, no user/group leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 17, fromLeft: true, toRight: true, yOff: -10 },
 
   // RESPONSE PATH
-  { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '16. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 130, toTop: true, toXOff: -30 },
+  { t: '18. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 18, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '19. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 19, fromBottom: true, fromXOff: 130, toTop: true, toXOff: -30 },
 
-  // RESPONSE PLUGINS (identity data read from CycleState, never restored to headers)
-  { t: '17. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
+  // RESPONSE PLUGINS
+  { t: '20. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 20 },
 
   // RETURN
-  { t: '18. IPP -> Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 170 },
-  { t: '19. Response to client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '21. IPP -> Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 21, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 170 },
+  { t: '22. Response to client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 // ================================================================
