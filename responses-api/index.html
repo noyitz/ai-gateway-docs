@@ -193,7 +193,7 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1050, LH = 780;
+const LW = 1100, LH = 680;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -207,41 +207,39 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  // Row 1 - Request (y~100)
-  client:       { x: 30,  y: 100, w: 90,  h: 50, label: 'Client', type: 'icon' },
-  responses:    { x: 180, y: 90,  w: 130, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 16 },
-  auth:         { x: 350, y: 90,  w: 100, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
-  input_limit:  { x: 490, y: 90,  w: 120, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
+  // Row 1 - Hydration (y~80, ABOVE the request row)
+  conn_locker:  { x: 280, y: 75,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
+  mcp_list:     { x: 430, y: 75,  w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
+  hydrate:      { x: 600, y: 75,  w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
+  gp_input:     { x: 790, y: 75,  w: 80,  h: 45, label: 'GP', sublabel: 'input', color: '#f0883e', fs: 14 },
+  input_guard:  { x: 900, y: 75,  w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
 
-  // Row 2 - Hydration (y~220)
-  a_chunk:      { x: 50,  y: 220, w: 100, h: 45, label: 'A/Chunk', color: '#8b949e', fs: 14 },
-  conn_locker:  { x: 180, y: 220, w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
-  mcp_list:     { x: 330, y: 220, w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
-  hydrate:      { x: 500, y: 220, w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
-  gp_input:     { x: 690, y: 220, w: 80,  h: 45, label: 'GP', sublabel: 'input', color: '#f0883e', fs: 14 },
-  input_guard:  { x: 800, y: 220, w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+  // Row 2 - Request (y~200)
+  client:       { x: 30,  y: 200, w: 90,  h: 50, label: 'Client', type: 'icon' },
+  responses:    { x: 170, y: 190, w: 130, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 16 },
+  auth:         { x: 340, y: 190, w: 100, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
+  input_limit:  { x: 480, y: 190, w: 120, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
-  // Row 3 - Processing (y~360)
-  convert:      { x: 50,  y: 360, w: 160, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
-  inference:    { x: 260, y: 360, w: 130, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
-  gp_output:    { x: 420, y: 360, w: 80,  h: 50, label: 'GP', sublabel: 'output', color: '#f0883e', fs: 14 },
-  guardrails:   { x: 530, y: 360, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
-  output_limit: { x: 700, y: 360, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+  // Row 3 - Processing (y~340)
+  convert:      { x: 50,  y: 330, w: 160, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
+  inference:    { x: 260, y: 330, w: 130, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
+  gp_output:    { x: 430, y: 330, w: 80,  h: 50, label: 'GP', sublabel: 'output', color: '#f0883e', fs: 14 },
+  guardrails:   { x: 550, y: 330, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
+  output_limit: { x: 720, y: 330, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
 
-  // Row 4 - Agentic Loop (y~500)
-  tool_invoke:  { x: 120, y: 500, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
-  assemble:     { x: 330, y: 500, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
+  // Row 4 - Agentic Loop (y~470)
+  tool_invoke:  { x: 130, y: 460, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
+  assemble:     { x: 340, y: 460, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
 
-  // Row 5 - Final (y~630)
-  dehydrate:    { x: 500, y: 630, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
-  client_resp:  { x: 680, y: 630, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
+  // Row 5 - Final (y~580)
+  dehydrate:    { x: 520, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
+  client_resp:  { x: 700, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
 };
 
 const tips = {
   responses:   { t: 'responses', d: 'Entry point for the Responses API. Receives POST /v1/responses requests from clients. Parses input, model selection, and tool definitions before passing downstream.', dt: [['Endpoint', 'POST /v1/responses'], ['Input', 'model, input, tools[], instructions'], ['Output', 'Parsed request context'], ['Format', 'OpenAI Responses API']] },
   auth:        { t: 'Auth', d: 'Validates the incoming request credentials. Checks API key validity, permissions, and rate limits before allowing the request to proceed.', dt: [['Validates', 'API Key, Permissions'], ['Error', '401 Unauthorized / 403 Forbidden'], ['Phase', 'Request']] },
   input_limit: { t: 'Input Limit', d: 'Enforces input token limits. Checks that the request does not exceed the maximum allowed input size for the selected model.', dt: [['Check', 'Input token count vs model limit'], ['Error', '400 Bad Request (input too long)'], ['Phase', 'Request']] },
-  a_chunk:     { t: 'A/Chunk', d: 'Handles chunking and assembly of streaming responses. Manages partial message assembly for server-sent events (SSE) streaming.', dt: [['Function', 'Stream chunk assembly'], ['Protocol', 'SSE (Server-Sent Events)'], ['Phase', 'Hydration']] },
   conn_locker: { t: 'Conn Locker', d: 'Connection locking mechanism that ensures request isolation. Prevents concurrent modifications to the same conversation state.', dt: [['Function', 'Connection isolation'], ['Scope', 'Per-conversation lock'], ['Phase', 'Hydration']] },
   mcp_list:    { t: 'MCP List Tools', d: 'Queries available MCP (Model Context Protocol) servers and lists their tools. Applies allow/deny filters to control which tools are available.', dt: [['Protocol', 'MCP (Model Context Protocol)'], ['Filters', 'allow_list / deny_list'], ['Output', 'Available tool definitions'], ['Phase', 'Hydration']] },
   hydrate:     { t: 'Hydrate Prompt', d: 'Expands the prompt with system instructions, conversation history, and resolved tool definitions. Builds the full context for the model.', dt: [['Expands', 'System prompt, history, tools'], ['Resolves', 'Function tool schemas'], ['Output', 'Fully hydrated prompt'], ['Phase', 'Hydration']] },
@@ -413,20 +411,21 @@ function drawBox(key) {
 function drawBounds() {
   const c = C();
 
-  // Agentic Loop boundary (dashed red/coral rectangle)
+  // Agentic Loop boundary (dashed red/coral rectangle wrapping Inference + Tool Invocation + Assemble)
   ctx.save();
   ctx.beginPath();
   ctx.strokeStyle = '#f8514966';
   ctx.lineWidth = ts(2);
   ctx.setLineDash([ts(8), ts(5)]);
-  ctx.roundRect(tx(90), ty(340), ts(400), ts(230), ts(12));
+  ctx.roundRect(tx(100), ty(310), ts(400), ts(220), ts(12));
   ctx.stroke();
   ctx.setLineDash([]);
-  // Label
+  ctx.fillStyle = isDark ? '#f8514912' : '#f8514908';
+  ctx.fill();
   ctx.fillStyle = '#f85149';
   ctx.font = 'bold ' + ts(11) + 'px system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Agentic Loop', tx(100), ty(355));
+  ctx.fillText('Agentic Loop', tx(110), ty(325));
   ctx.restore();
 
   // Row labels (subtle)
@@ -434,10 +433,10 @@ function drawBounds() {
   ctx.font = ts(10) + 'px system-ui';
   ctx.fillStyle = isDark ? '#484f5888' : '#b0b8c188';
   ctx.textAlign = 'left';
-  ctx.fillText('REQUEST', tx(10), ty(78));
-  ctx.fillText('HYDRATION', tx(10), ty(208));
-  ctx.fillText('PROCESSING', tx(10), ty(348));
-  ctx.fillText('FINAL', tx(460), ty(618));
+  ctx.fillText('HYDRATION', tx(10), ty(68));
+  ctx.fillText('REQUEST', tx(10), ty(180));
+  ctx.fillText('PROCESSING', tx(10), ty(320));
+  ctx.fillText('FINAL', tx(480), ty(560));
   ctx.restore();
 }
 
@@ -1088,8 +1087,9 @@ const flowAgentic = [
   { t: '17. Assemble: combine results', mode: 'lightup', target: 'assemble', badge: 17 },
   // 18. Assemble -> Inference (the LOOP - curves right and up)
   { t: '18. Assemble -> Inference (loop back)', mode: 'arrow', f: 'assemble', to: 'inference', c: '#e3b341', num: 18,
-    fromTop: true, fromXOff: 30,
-    toBottom: true, toXOff: 30,
+    fromBottom: true,
+    toBottom: true, toXOff: 40,
+    waypoints: [{x:400, y:530}, {x:120, y:530}, {x:120, y:400}],
     waypoints: [
       { x: 420, y: 470 },
       { x: 470, y: 440 },
