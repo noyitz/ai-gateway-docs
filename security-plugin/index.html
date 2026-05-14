@@ -22,7 +22,9 @@ body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7d
 .flow-bar .rst{border-color:#f0883e;color:#f0883e}
 .flow-bar .flow-label{font-size:13px;color:#8b949e;flex:1;text-align:center;font-weight:600}
 
-.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;overflow-y:auto}
+.steps-section{padding:10px 16px;border-bottom:none;flex:1.5;overflow-y:auto;min-height:60px}
+.divider{height:6px;cursor:row-resize;background:#30363d44;border-top:1px solid #30363d;border-bottom:1px solid #30363d;flex-shrink:0;transition:background .15s}
+.divider:hover{background:#58a6ff44}
 body.light .steps-section{border-color:#d0d7de}
 .steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
 .step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
@@ -41,7 +43,7 @@ body.light .step.pending{color:#b0b8c1}
 .step.security{color:#f85149}
 .step.security .step-mk::before{content:'\25CF'}
 
-.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-section{flex:4;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;min-height:80px}
 .insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
 body.light .insp-title{border-color:#d0d7de}
 .insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
@@ -136,7 +138,6 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <div class="stat red">Security</div>
       <div class="stat green">23 Steps</div>
       <div class="stat gold">Metering</div>
-      <div class="stat purple">CycleState</div>
     </div>
     <div class="laptop-msg">
       <div class="laptop-icon">&#128187;</div>
@@ -161,6 +162,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">&#183; click to jump</span></div>
     <div id="steps-ctr"></div>
   </div>
+  <div class="divider" id="panel-divider"></div>
   <div class="insp-section" id="insp-section">
     <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
     <div id="insp-content"></div>
@@ -225,7 +227,7 @@ const N = {
   rlimit: { x: 195, y: 390, w: 230, h: 55, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
 
   // IPP container - LARGE, this is the focus
-  ipp: { x: 560, y: 230, w: 700, h: 590, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 560, y: 230, w: 380, h: 440, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
 
   // Request plugins (top-to-bottom execution order)
   p_idsec_req: { x: 590, y: 300, w: 310, h: 40, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
@@ -233,39 +235,27 @@ const N = {
   p_bfth:      { x: 590, y: 390, w: 310, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_at_req:    { x: 590, y: 432, w: 310, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_aki:       { x: 590, y: 474, w: 310, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_meter_req: { x: 590, y: 516, w: 310, h: 36, label: 'external-metering', sublabel: '(request)', color: '#e3b341', type: 'plugin', inner: true, fs: 14 },
 
-  // CycleState visual
-  cyclestate: { x: 940, y: 300, w: 280, h: 252, label: 'CycleState', sublabel: '(per-request memory)', color: '#d2a8ff', fs: 16 },
-
-  // Response plugins (reverse execution: identity-security runs LAST but listed first)
-  p_idsec_resp: { x: 590, y: 640, w: 310, h: 40, label: 'identity-security', sublabel: '(response)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
-  p_meter_resp: { x: 590, y: 688, w: 310, h: 36, label: 'external-metering', sublabel: '(response)', color: '#e3b341', type: 'plugin', inner: true, fs: 14 },
-  p_at_resp:    { x: 590, y: 730, w: 310, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  // Response plugins
+  p_idsec_resp: { x: 590, y: 560, w: 310, h: 40, label: 'identity-security', sublabel: '(response)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_at_resp:    { x: 590, y: 608, w: 310, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
 
   // External: Model Provider (left, outside cluster)
   anthropic: { x: -45, y: 360, w: 140, h: 55, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 15 },
-
-  // External: Metering (right, outside cluster)
-  ext_meter: { x: 940, y: 750, w: 280, h: 55, label: 'External Metering', sublabel: 'OpenMeter / Stripe', color: '#e3b341', fs: 14 },
 };
 
 const tips = {
   gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filters for payload processing.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Port','8080 (HTTP), 8443 (HTTPS)']] },
   p_idsec_req: { t:'identity-security (request phase)', d:'FIRST plugin in the request chain. Reads identity headers injected by Authorino (x-maas-username, x-maas-group, x-maas-subscription), stores them in CycleState, then STRIPS them from the request. This prevents identity data from leaking to external model backends like Anthropic or OpenAI.', dt:[['Phase','Request (runs FIRST)'],['Reads','x-maas-username, x-maas-group, x-maas-subscription'],['Stores In','CycleState (per-request in-memory state)'],['Action','REMOVE identity headers from request'],['Why','Prevent identity leakage to model providers'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_idsec_resp: { t:'identity-security (response phase)', d:'Runs on the response path. Restores identity headers from CycleState back onto the response so that downstream internal consumers (like external-metering) can use them for attribution and billing. Before the response leaves the gateway, these headers are stripped again so the client never sees internal identity data.', dt:[['Phase','Response (runs via reverse registration order)'],['Restores','x-maas-username, x-maas-group, x-maas-subscription'],['Source','CycleState (saved during request phase)'],['Consumers','external-metering (CloudEvents attribution)'],['Final Action','STRIP headers before response reaches client'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  cyclestate: { t:'CycleState', d:'Per-request in-memory state shared between all plugins in the IPP chain. Each request gets its own CycleState instance. The identity-security plugin uses CycleState to temporarily store identity headers so they survive the request/response lifecycle without being sent to external backends.', dt:[['Scope','Per-request (not shared across requests)'],['Lifetime','Created on request, destroyed after response'],['Used By','identity-security, model-provider-resolver, api-translation'],['Identity Keys','username, group, subscription'],['Provider Keys','provider, targetModel, endpoint']] },
   p_mpr: { t:'model-provider-resolver', d:'Watches ExternalModel CRDs via a Kubernetes reconciler. Resolves the model name to provider, target model ID, and endpoint URL. Stores results in CycleState.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request']] },
   p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request']] },
   p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI -> Anthropic Messages API'],['Path Rewrite','/v1/chat/completions -> /v1/messages'],['Phase','Request']] },
   p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Phase','Request']] },
-  p_meter_req: { t:'external-metering (request)', d:'Request-phase metering: performs circuit breaker check to ensure the subscription has not exceeded its quota before allowing the request through.', dt:[['Phase','Request'],['Check','Circuit breaker / quota'],['Color','Gold (metering)'],['Fires','Pre-flight quota check']] },
-  p_meter_resp: { t:'external-metering (response)', d:'Response-phase metering: extracts token usage from the response, reads identity headers (restored by identity-security), and fires CloudEvents for billing attribution.', dt:[['Phase','Response'],['Reads','usage.total_tokens from response body'],['Identity','Reads x-maas-username, x-maas-group (restored by identity-security)'],['Emits','CloudEvents to OpenMeter / Stripe'],['Key Dependency','identity-security must restore headers BEFORE this plugin runs']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic -> OpenAI format'],['Phase','Response']] },
   auth: { t:'Auth (Authorino)', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and injects identity headers onto the request.', dt:[['Protocol','gRPC'],['Headers Injected','x-maas-username, x-maas-group, x-maas-subscription'],['Source','MaaS API key validation']] },
   rlimit: { t:'Rate Limit (Limitador)', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting.', dt:[['Protocol','gRPC'],['Policy','TokenRateLimitPolicy']] },
   anthropic: { t:'Anthropic', d:'Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format. MUST NOT receive identity headers.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Security','No identity headers in request (stripped by identity-security)']] },
-  ext_meter: { t:'External Metering', d:'External billing/metering service (OpenMeter or Stripe). Receives CloudEvents from the external-metering plugin containing token usage and identity attribution data.', dt:[['Service','OpenMeter / Stripe'],['Protocol','CloudEvents (HTTP)'],['Data','Token count + user identity + subscription'],['Source','external-metering response plugin']] },
 };
 
 let overlayWasRunning = false, highlightKey = null;
@@ -477,7 +467,7 @@ function drawBounds() {
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(578), ty(620), ts(335), ts(165), ts(8));
+    ctx.roundRect(tx(578), ty(545), ts(335), ts(115), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -488,22 +478,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins (reverse order)', tx(590), ty(634));
-
-    // CycleState section background
-    ctx.beginPath();
-    ctx.roundRect(tx(930), ty(280), ts(300), ts(290), ts(8));
-    ctx.fillStyle = isDark ? '#d2a8ff08' : '#d2a8ff06';
-    ctx.fill();
-    ctx.strokeStyle = isDark ? '#d2a8ff40' : '#d2a8ff30';
-    ctx.lineWidth = ts(2);
-    ctx.setLineDash([ts(6), ts(4)]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = 'bold '+ts(10)+'px system-ui';
-    ctx.fillStyle = isDark ? '#d2a8ff88' : '#d2a8ff99';
-    ctx.textAlign = 'left';
-    ctx.fillText('Per-Request State', tx(942), ty(294));
+    ctx.fillText('← Response Plugins (reverse order)', tx(590), ty(555));
 
     ctx.restore();
   }
@@ -952,31 +927,21 @@ function inspStep(stepNum) {
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
     case 13:
-      inspStepLabel = '(13) external-metering: Circuit Breaker check';
+      inspStepLabel = '(13) IPP -> Gateway (NO identity headers!)';
+      var u13 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g13 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s13 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u13) u13.s = 'del';
+      if (g13) g13.s = 'del';
+      if (s13) s13.s = 'del';
+      var xapi13 = inspHeaders.find(function(l){ return l.id === 'h-xapi'; });
+      if (xapi13) xapi13.s = 'highlight';
       break;
     case 14:
-      inspStepLabel = '(14) IPP -> Gateway (NO identity headers!)';
-      // Highlight that identity headers are GONE
-      var u14 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
-      var g14 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s14 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
-      if (u14) u14.s = 'del';
-      if (g14) g14.s = 'del';
-      if (s14) s14.s = 'del';
-      var xapi14 = inspHeaders.find(function(l){ return l.id === 'h-xapi'; });
-      if (xapi14) xapi14.s = 'highlight';
+      inspStepLabel = '(14) Gateway routes to Anthropic (CLEAN - no identity leakage)';
       break;
     case 15:
-      inspStepLabel = '(15) Gateway routes to Anthropic (CLEAN - no identity leakage)';
-      var u15 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
-      var g15 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
-      var s15 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
-      if (u15) u15.s = 'del';
-      if (g15) g15.s = 'del';
-      if (s15) s15.s = 'del';
-      break;
-    case 16:
-      inspStepLabel = '(16) Anthropic responds';
+      inspStepLabel = '(15) Anthropic responds';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -988,7 +953,6 @@ function inspStep(stepNum) {
         { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
         { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
       ];
-      // CycleState persists across request/response
       inspCycle = [
         { v: 'username = "cluster-admin"', s: 'keep', id: 'c-user' },
         { v: 'group = "engineering"', s: 'keep', id: 'c-group' },
@@ -997,32 +961,20 @@ function inspStep(stepNum) {
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'keep', id: 'c-model' },
       ];
       break;
-    case 17:
-      inspStepLabel = '(17) Gateway -> IPP (response processing)';
+    case 16:
+      inspStepLabel = '(16) Gateway -> IPP (response processing)';
       break;
-    case 18:
-      inspStepLabel = '(18) identity-security: RESTORE identity headers from CycleState';
+    case 17:
+      inspStepLabel = '(17) identity-security: RESTORE headers from CycleState';
       inspHeaders.push({ v: 'x-maas-username: cluster-admin', s: 'add', id: 'r-maas-user' });
       inspHeaders.push({ v: 'x-maas-group: engineering', s: 'add', id: 'r-maas-group' });
       inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'r-maas-sub' });
-      // Highlight CycleState as source
       inspCycle.forEach(function(c) {
         if (c.id === 'c-user' || c.id === 'c-group' || c.id === 'c-sub') c.s = 'highlight';
       });
       break;
-    case 19:
-      inspStepLabel = '(19) external-metering: extract tokens + fire CloudEvents';
-      var ru19 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg19 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs19 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru19) ru19.s = 'meter-highlight';
-      if (rg19) rg19.s = 'meter-highlight';
-      if (rs19) rs19.s = 'meter-highlight';
-      var usage19 = inspBody.find(function(l){ return l.id === 'r-usage'; });
-      if (usage19) usage19.s = 'meter-highlight';
-      break;
-    case 20:
-      inspStepLabel = '(20) api-translation: Anthropic -> OpenAI response';
+    case 18:
+      inspStepLabel = '(18) api-translation: Anthropic -> OpenAI response';
       inspBody.find(function(l){ return l.id === 'r-type'; }).s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(function(l){ return l.id === 'r-content'; }).s = 'del';
@@ -1032,39 +984,31 @@ function inspStep(stepNum) {
       inspBody.find(function(l){ return l.id === 'r-usage'; }).s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       break;
-    case 21:
-      inspStepLabel = '(21) identity-security: STRIP identity headers from response';
-      var ru21 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg21 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs21 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru21) ru21.s = 'del';
-      if (rg21) rg21.s = 'del';
-      if (rs21) rs21.s = 'del';
+    case 19:
+      inspStepLabel = '(19) identity-security: STRIP identity headers from response';
+      var ru19 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg19 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs19 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru19) ru19.s = 'del';
+      if (rg19) rg19.s = 'del';
+      if (rs19) rs19.s = 'del';
       break;
-    case 22:
-      inspStepLabel = '(22) IPP -> Gateway (clean response, identity removed)';
-      var ru22 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg22 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs22 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru22) ru22.s = 'del';
-      if (rg22) rg22.s = 'del';
-      if (rs22) rs22.s = 'del';
-      var robj22 = inspBody.find(function(l){ return l.id === 'r-obj'; });
-      if (robj22) robj22.s = 'highlight';
-      var rch22 = inspBody.find(function(l){ return l.id === 'r-choices'; });
-      if (rch22) rch22.s = 'highlight';
+    case 20:
+      inspStepLabel = '(20) IPP -> Gateway (clean response, identity removed)';
+      var ru20 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg20 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs20 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru20) ru20.s = 'del';
+      if (rg20) rg20.s = 'del';
+      if (rs20) rs20.s = 'del';
+      var robj20 = inspBody.find(function(l){ return l.id === 'r-obj'; });
+      if (robj20) robj20.s = 'highlight';
       inspCycle = [];
       break;
-    case 23:
-      inspStepLabel = '(23) Response to client (clean, no identity headers)';
-      var ru23 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
-      var rg23 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
-      var rs23 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
-      if (ru23) ru23.s = 'del';
-      if (rg23) rg23.s = 'del';
-      if (rs23) rs23.s = 'del';
-      var robj23 = inspBody.find(function(l){ return l.id === 'r-obj'; });
-      if (robj23) robj23.s = 'highlight';
+    case 21:
+      inspStepLabel = '(21) Response to client (clean, no identity headers)';
+      var robj21 = inspBody.find(function(l){ return l.id === 'r-choices'; });
+      if (robj21) robj21.s = 'highlight';
       break;
   }
   renderInsp();
@@ -1083,39 +1027,35 @@ const flow = [
 
   // IDENTITY-SECURITY REQUEST (steps 6-8)
   { t: '6. identity-security: READ identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
-  { t: '7. identity-security: STORE in CycleState', mode: 'lightup', target: 'cyclestate', badge: 7 },
-  { t: '8. identity-security: STRIP identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
+  { t: '7. identity-security: STORE in CycleState', mode: 'lightup', target: 'p_idsec_req', badge: 7 },
+  { t: '8. identity-security: STRIP identity headers from request', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
 
-  // OTHER REQUEST PLUGINS (steps 9-13)
+  // OTHER REQUEST PLUGINS (steps 9-12)
   { t: '9. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 9 },
   { t: '10. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 10 },
   { t: '11. api-translation: OpenAI -> Anthropic', mode: 'lightup', target: 'p_at_req', badge: 11 },
   { t: '12. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 12 },
-  { t: '13. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 13 },
 
-  // IPP -> GATEWAY -> ANTHROPIC (steps 14-16)
-  { t: '14. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -180, toBottom: true, toXOff: 160 },
-  { t: '15. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15, fromLeft: true, toRight: true, yOff: -10 },
+  // IPP -> GATEWAY -> ANTHROPIC (steps 13-14)
+  { t: '13. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 160 },
+  { t: '14. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
 
   // RESPONSE PATH
-  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '17. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 17, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -100 },
+  { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '16. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
 
-  // IDENTITY-SECURITY RESPONSE (step 18)
-  { t: '18. identity-security: RESTORE identity headers from CycleState', mode: 'lightup', target: 'p_idsec_resp', badge: 18 },
+  // IDENTITY-SECURITY RESPONSE
+  { t: '17. identity-security: RESTORE identity headers from CycleState', mode: 'lightup', target: 'p_idsec_resp', badge: 17 },
 
-  // METERING (step 19)
-  { t: '19. external-metering: extract tokens + fire CloudEvents (reads identity!)', mode: 'lightup', target: 'p_meter_resp', badge: 19 },
+  // API TRANSLATION
+  { t: '18. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 18 },
 
-  // API TRANSLATION (step 20)
-  { t: '20. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 20 },
+  // STRIP AGAIN
+  { t: '19. identity-security: STRIP identity headers from response', mode: 'lightup', target: 'p_idsec_resp', badge: 19 },
 
-  // STRIP AGAIN (step 21)
-  { t: '21. identity-security: STRIP identity headers from response', mode: 'lightup', target: 'p_idsec_resp', badge: 21 },
-
-  // RETURN (steps 22-23)
-  { t: '22. IPP -> Gateway (translated response, identity removed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 22, fromTop: true, fromXOff: -50, toBottom: true, toXOff: 280 },
-  { t: '23. Response to client (clean, no identity headers)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 10 },
+  // RETURN
+  { t: '20. IPP -> Gateway (translated response, identity removed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 20, fromTop: true, fromXOff: -30, toBottom: true, toXOff: 280 },
+  { t: '21. Response to client (clean, no identity headers)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 21, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 // ================================================================
@@ -1344,6 +1284,44 @@ resize();
 initSteps();
 draw();
 
+// Resizable divider between steps and inspector
+(function(){
+  var divider=document.getElementById('panel-divider');
+  var steps=document.getElementById('steps-section');
+  var insp=document.getElementById('insp-section');
+  if(!divider||!steps||!insp)return;
+  var dragging=false,startY=0,startStepH=0,startInspH=0;
+  divider.addEventListener('mousedown',function(e){
+    dragging=true;startY=e.clientY;
+    startStepH=steps.getBoundingClientRect().height;
+    startInspH=insp.getBoundingClientRect().height;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!dragging)return;
+    var dy=e.clientY-startY;
+    var newStepH=Math.max(40,startStepH+dy);
+    var newInspH=Math.max(60,startInspH-dy);
+    steps.style.flex='0 0 '+newStepH+'px';
+    insp.style.flex='0 0 '+newInspH+'px';
+  });
+  document.addEventListener('mouseup',function(){dragging=false;});
+  divider.addEventListener('touchstart',function(e){
+    dragging=true;startY=e.touches[0].clientY;
+    startStepH=steps.getBoundingClientRect().height;
+    startInspH=insp.getBoundingClientRect().height;
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    var dy=e.touches[0].clientY-startY;
+    var newStepH=Math.max(40,startStepH+dy);
+    var newInspH=Math.max(60,startInspH-dy);
+    steps.style.flex='0 0 '+newStepH+'px';
+    insp.style.flex='0 0 '+newInspH+'px';
+  },{passive:true});
+  document.addEventListener('touchend',function(){dragging=false;});
+})();
+
 // Auto-start loop mode on page load
 setTimeout(function() { toggleLoop(); }, 500);
 
@@ -1368,7 +1346,7 @@ setTimeout(function() { toggleLoop(); }, 500);
     {x:.85,y:.12,label:'Auth',color:'#f0883e'},
     {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
     {x:.5,y:.32,label:'id-security',color:'#f85149'},
-    {x:.85,y:.35,label:'CycleState',color:'#d2a8ff'},
+    {x:.85,y:.35,label:'Anthropic',color:'#3fb950'},
     {x:.2,y:.7,label:'Anthropic',color:'#3fb950'},
     {x:.5,y:.75,label:'Metering',color:'#e3b341'},
     {x:.8,y:.7,label:'Stripe',color:'#e3b341'},
