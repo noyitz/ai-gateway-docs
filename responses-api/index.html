@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responses API -- Pipeline Flow</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
+body.light{background:#fff;color:#24292f}
+
+/* Right Panel */
+.right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
+body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
+
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+body.light .flow-bar{border-color:#d0d7de}
+.flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:13px;font-family:inherit;cursor:pointer}
+body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
+.flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
+body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.flow-bar button:hover{border-color:#58a6ff}
+.flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
+.flow-bar .rst{border-color:#f0883e;color:#f0883e}
+
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;overflow-y:auto}
+body.light .steps-section{border-color:#d0d7de}
+.steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
+.step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
+body.light .step{color:#b0b8c1}
+.step:hover{background:#58a6ff22;cursor:pointer;color:#58a6ff;transform:translateX(4px);border-left:2px solid #58a6ff;padding-left:6px}
+body.light .step:hover{background:#ddf4ff88;cursor:pointer;color:#0969da;transform:translateX(4px);border-left:2px solid #0969da;padding-left:6px}
+.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step.pending{color:#484f58}
+body.light .step.pending{color:#b0b8c1}
+.step.pending .step-mk::before{content:'\25CB'}
+.step.active{color:#58a6ff}
+.step.active .step-mk::before{content:'\25CF'}
+.step.done{color:#3fb950}
+.step.done .step-mk::before{content:'\2713'}
+.step .step-mk::before{content:'\25CB'}
+
+.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
+body.light .insp-title{border-color:#d0d7de}
+.insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
+.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre;line-height:1.6;transition:all .4s}
+.insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
+body.light .insp-line.add{background:#dafbe1;color:#116329}
+.insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
+body.light .insp-line.del{background:#ffebe9;color:#82071e}
+.insp-line.keep{color:#8b949e;border-left:3px solid transparent}
+.insp-line.err{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:600}
+body.light .insp-line.err{background:#ffebe9;color:#82071e}
+.insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
+body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
+@keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
+.insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
+body.light .insp-plugin{background:#8250df15;color:#8250df}
+
+/* Theme toggle */
+.theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Red Hat logo */
+.rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
+.rh-brand img{height:30px}
+.rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body.light .rh-brand span{color:#1a1a1a}
+
+/* Gradient title */
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+
+/* Legend */
+.legend{position:fixed;bottom:16px;left:16px;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;transition:all .3s}
+body.light .legend{background:#f6f8fa;border-color:#d0d7de}
+.legend-title{font-weight:600;margin-bottom:5px;font-size:14px}
+.legend-item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+
+/* Scrollbar */
+.steps-section::-webkit-scrollbar,.insp-section::-webkit-scrollbar{width:6px}
+.steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
+.steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
+
+/* Mobile splash */
+.mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+.mobile-splash.show{display:flex}
+.mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.mobile-splash-content{position:relative;z-index:1}
+.mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
+.mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
+.mobile-splash .badge span{color:#3fb950;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#58a6ff18,#d2a8ff18);border:2px solid #58a6ff66;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .laptop-msg strong{color:#fff}
+.mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
+@keyframes pulse-border{0%,100%{border-color:#58a6ff66;box-shadow:0 0 20px #58a6ff22}50%{border-color:#58a6ffcc;box-shadow:0 0 30px #58a6ff44}}
+.mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
+.mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
+.mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
+.mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
+.mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
+.mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
+.mobile-splash .stat.gold{color:#e3b341;border-color:#e3b34144}
+.mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
+.mobile-splash .rh-logo img{height:24px}
+.mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
+@media(min-width:800px){.mobile-splash{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mobile-splash show" id="mobile-splash">
+  <canvas id="mobile-canvas"></canvas>
+  <div class="mobile-splash-content">
+    <div class="rh-logo"><img src="../redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>Responses API</span> Pipeline</div>
+    <h1>Responses API<br><span class="grad">Pipeline Flow</span></h1>
+    <p class="sub">Interactive animated pipeline visualizer<br>for the Responses API processing stages</p>
+    <div class="stats">
+      <div class="stat blue">3 Flows</div>
+      <div class="stat green">21 Steps</div>
+      <div class="stat gold">Agentic Loop</div>
+      <div class="stat purple">16 Stages</div>
+    </div>
+    <div class="laptop-msg">
+      <div class="laptop-icon">&#128187;</div>
+      <strong>Open this page on your laptop or desktop</strong><br>to experience the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+    </div>
+  </div>
+</div>
+
+<div class="rh-brand"><img src="../redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+<div class="viz-title">Responses API &mdash; Pipeline Flow <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+
+<div class="right-panel">
+  <div class="flow-bar">
+    <select id="flow-select">
+      <option value="simple">Simple Request (No Tools)</option>
+      <option value="agentic">Agentic Loop (Tool Calls)</option>
+      <option value="blocked">Input Guardrails Block</option>
+    </select>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
+    <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+    <button class="rst" onclick="doReset()">Reset</button>
+  </div>
+  <div class="steps-section" id="steps-section">
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
+    <div id="steps-ctr"></div>
+  </div>
+  <div class="insp-section" id="insp-section">
+    <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
+    <div id="insp-content"></div>
+  </div>
+</div>
+
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
+<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
+  <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">&#10005;</button>
+    <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
+    <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
+    <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
+    <div id="overlay-details" style="font-size:12px;font-family:'SF Mono',Menlo,monospace"></div>
+    <button onclick="closeOverlay()" style="margin-top:14px;padding:7px 20px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:13px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Hydration</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Inference</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Guardrails</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Agentic Loop</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>Tools</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div>Utility</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
+let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
+let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
+let snapshots = [];
+
+const LW = 1050, LH = 780;
+let ox = 0, oy = 0, sc = 1;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  draw();
+}
+
+// ================================================================
+// NODES
+// ================================================================
+const N = {
+  // Row 1 - Request (y~100)
+  client:       { x: 30,  y: 100, w: 90,  h: 50, label: 'Client', type: 'icon' },
+  responses:    { x: 180, y: 90,  w: 130, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 16 },
+  auth:         { x: 350, y: 90,  w: 100, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
+  input_limit:  { x: 490, y: 90,  w: 120, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
+
+  // Row 2 - Hydration (y~220)
+  a_chunk:      { x: 50,  y: 220, w: 100, h: 45, label: 'A/Chunk', color: '#8b949e', fs: 14 },
+  conn_locker:  { x: 180, y: 220, w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
+  mcp_list:     { x: 330, y: 220, w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
+  hydrate:      { x: 500, y: 220, w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
+  gp_input:     { x: 690, y: 220, w: 80,  h: 45, label: 'GP', sublabel: 'input', color: '#f0883e', fs: 14 },
+  input_guard:  { x: 800, y: 220, w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+
+  // Row 3 - Processing (y~360)
+  convert:      { x: 50,  y: 360, w: 160, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
+  inference:    { x: 260, y: 360, w: 130, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
+  gp_output:    { x: 420, y: 360, w: 80,  h: 50, label: 'GP', sublabel: 'output', color: '#f0883e', fs: 14 },
+  guardrails:   { x: 530, y: 360, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
+  output_limit: { x: 700, y: 360, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+
+  // Row 4 - Agentic Loop (y~500)
+  tool_invoke:  { x: 120, y: 500, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
+  assemble:     { x: 330, y: 500, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
+
+  // Row 5 - Final (y~630)
+  dehydrate:    { x: 500, y: 630, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
+  client_resp:  { x: 680, y: 630, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
+};
+
+const tips = {
+  responses:   { t: 'responses', d: 'Entry point for the Responses API. Receives POST /v1/responses requests from clients. Parses input, model selection, and tool definitions before passing downstream.', dt: [['Endpoint', 'POST /v1/responses'], ['Input', 'model, input, tools[], instructions'], ['Output', 'Parsed request context'], ['Format', 'OpenAI Responses API']] },
+  auth:        { t: 'Auth', d: 'Validates the incoming request credentials. Checks API key validity, permissions, and rate limits before allowing the request to proceed.', dt: [['Validates', 'API Key, Permissions'], ['Error', '401 Unauthorized / 403 Forbidden'], ['Phase', 'Request']] },
+  input_limit: { t: 'Input Limit', d: 'Enforces input token limits. Checks that the request does not exceed the maximum allowed input size for the selected model.', dt: [['Check', 'Input token count vs model limit'], ['Error', '400 Bad Request (input too long)'], ['Phase', 'Request']] },
+  a_chunk:     { t: 'A/Chunk', d: 'Handles chunking and assembly of streaming responses. Manages partial message assembly for server-sent events (SSE) streaming.', dt: [['Function', 'Stream chunk assembly'], ['Protocol', 'SSE (Server-Sent Events)'], ['Phase', 'Hydration']] },
+  conn_locker: { t: 'Conn Locker', d: 'Connection locking mechanism that ensures request isolation. Prevents concurrent modifications to the same conversation state.', dt: [['Function', 'Connection isolation'], ['Scope', 'Per-conversation lock'], ['Phase', 'Hydration']] },
+  mcp_list:    { t: 'MCP List Tools', d: 'Queries available MCP (Model Context Protocol) servers and lists their tools. Applies allow/deny filters to control which tools are available.', dt: [['Protocol', 'MCP (Model Context Protocol)'], ['Filters', 'allow_list / deny_list'], ['Output', 'Available tool definitions'], ['Phase', 'Hydration']] },
+  hydrate:     { t: 'Hydrate Prompt', d: 'Expands the prompt with system instructions, conversation history, and resolved tool definitions. Builds the full context for the model.', dt: [['Expands', 'System prompt, history, tools'], ['Resolves', 'Function tool schemas'], ['Output', 'Fully hydrated prompt'], ['Phase', 'Hydration']] },
+  gp_input:    { t: 'GP (Input)', d: 'Guardrails Processing on the input side. Runs content filtering and policy checks on the assembled prompt before it reaches the model.', dt: [['Function', 'Input content filtering'], ['Checks', 'Content policy, PII detection'], ['Phase', 'Pre-inference']] },
+  input_guard: { t: 'Input Guardrails', d: 'Final safety gate before inference. Can block requests that violate content policies, returning 403 Forbidden to the client.', dt: [['Function', 'Safety gate'], ['Action', 'Pass or Block (403)'], ['Checks', 'Content safety, policy compliance'], ['Phase', 'Pre-inference']] },
+  convert:     { t: 'Convert to Model Router', d: 'Translates the request into the format expected by the selected model backend. Routes to the appropriate inference provider.', dt: [['Function', 'Format translation + routing'], ['Supports', 'OpenAI, Anthropic, Azure, etc.'], ['Output', 'Provider-native request'], ['Phase', 'Processing']] },
+  inference:   { t: 'Inference', d: 'Calls the LLM for completion. May return a text response or a tool_use response that triggers the agentic loop.', dt: [['Function', 'LLM completion'], ['Output', 'Text response OR tool_use calls'], ['Loop', 'Re-entered during agentic loop'], ['Phase', 'Processing']] },
+  gp_output:   { t: 'GP (Output)', d: 'Guardrails Processing on the output side. Runs content filtering on the model response before it reaches the client.', dt: [['Function', 'Output content filtering'], ['Checks', 'Content policy, toxicity'], ['Phase', 'Post-inference']] },
+  guardrails:  { t: 'Guardrails (Output)', d: 'Output guardrails that evaluate the model response against safety policies. Can modify or redact content that violates policies.', dt: [['Function', 'Output safety evaluation'], ['Actions', 'Pass, Modify, Redact'], ['Phase', 'Post-inference']] },
+  output_limit:{ t: 'Output Limit (Hard)', d: 'Enforces hard output token limits. Truncates responses that exceed the maximum allowed output length.', dt: [['Function', 'Hard output truncation'], ['Trigger', 'Response exceeds max_output_tokens'], ['Phase', 'Post-inference']] },
+  tool_invoke: { t: 'Tool Invocation', d: 'Executes tool calls returned by the model. Supports MCP server tools, file operations, and web search. Results are passed to Assemble.', dt: [['Supports', 'MCP tools, File I/O, Web Search'], ['Protocol', 'MCP (Model Context Protocol)'], ['Input', 'tool_use calls from Inference'], ['Output', 'Tool execution results'], ['Phase', 'Agentic Loop']] },
+  assemble:    { t: 'Assemble', d: 'Combines tool execution results with the conversation context. Builds the updated prompt for the next inference pass in the agentic loop.', dt: [['Function', 'Context assembly'], ['Input', 'Tool results + conversation history'], ['Output', 'Updated prompt for re-inference'], ['Phase', 'Agentic Loop']] },
+  dehydrate:   { t: 'Dehydrate', d: 'Strips internal metadata and formatting from the response. Produces the clean client-facing response in Responses API format.', dt: [['Function', 'Response cleanup'], ['Removes', 'Internal metadata, debug info'], ['Output', 'Clean Responses API response'], ['Phase', 'Final']] },
+};
+
+let overlayWasRunning = false, highlightKey = null;
+function showOverlay(key) {
+  const tip = tips[key], n = N[key];
+  if (!tip) return;
+  overlayWasRunning = running;
+  highlightKey = key;
+  if (running && !paused) { paused = true; running = false; if (stepTimer) clearTimeout(stepTimer); updatePlayBtn(); }
+  const ov = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
+  document.getElementById('overlay-accent').style.background = n.color || '#58a6ff';
+  document.getElementById('overlay-title').textContent = tip.t;
+  document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
+  document.getElementById('overlay-desc').textContent = tip.d;
+  let dh = '';
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">' + esc(l) + '</span><span style="color:#c9d1d9">' + esc(v) + '</span></div>'; });
+  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += '<a href="' + u + '" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor=\'#58a6ff\'" onmouseout="this.style.borderColor=\'#30363d\'">' + esc(l) + ' &#8599;</a>'; }); dh += '</div>'; }
+  document.getElementById('overlay-details').innerHTML = dh;
+  const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
+  const canvasRight = innerWidth - 380;
+  let cx, cy;
+  if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
+  cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
+  card.style.left = cx + 'px';
+  card.style.top = cy + 'px';
+  ov.style.display = 'block';
+  const hb = document.getElementById('highlight-box');
+  hb.style.left = nx + 'px';
+  hb.style.top = ny + 'px';
+  hb.style.width = nw + 'px';
+  hb.style.height = nh + 'px';
+  hb.style.border = '3px solid ' + (n.color || '#58a6ff');
+  hb.style.boxShadow = '0 0 30px ' + (n.color || '#58a6ff') + '88, inset 0 0 20px ' + (n.color || '#58a6ff') + '22';
+  hb.style.background = isDark ? '#161b22' : '#f6f8fa';
+  hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
+  hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
+  hb.innerHTML = '<div style="font-weight:700;font-size:' + (nw > 150 ? 16 : 13) + 'px">' + esc(n.label) + '</div>' + (n.sublabel ? '<div style="font-size:' + (nw > 150 ? 12 : 10) + 'px;color:#8b949e">' + esc(n.sublabel) + '</div>' : '');
+  hb.style.transform = 'none';
+  draw();
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+  const hb = document.getElementById('highlight-box');
+  hb.style.display = 'none';
+  highlightKey = null;
+  draw();
+  if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
+}
+
+function C() {
+  return isDark
+    ? { bg:'#0d1117', box:'#161b22', boxA:'#1a2332', bdr:'#30363d', txt:'#c9d1d9', dim:'#8b949e', brt:'#fff' }
+    : { bg:'#fff', box:'#f6f8fa', boxA:'#ddf4ff', bdr:'#d0d7de', txt:'#24292f', dim:'#656d76', brt:'#000' };
+}
+
+// ================================================================
+// DRAWING
+// ================================================================
+function resize() {
+  const panelW = 380;
+  W = canvas.width = innerWidth - panelW;
+  H = canvas.height = innerHeight;
+  sc = Math.min(W / LW, H / LH) * 0.92;
+  ox = (W - LW * sc) / 2;
+  oy = (H - LH * sc) * 0.12;
+  draw();
+}
+addEventListener('resize', resize);
+
+function tx(x) { return ox + x * sc; }
+function ty(y) { return oy + y * sc; }
+function ts(s) { return s * sc; }
+
+function drawBox(key) {
+  const n = N[key], c = C();
+  if (!n) return;
+  const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
+  const isA = activeNodes.has(key), hasBadge = badges[key] != null;
+  ctx.save();
+
+  if (n.type === 'icon') {
+    ctx.font = ts(32) + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
+    ctx.font = 'bold ' + ts(16) + 'px system-ui';
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + w / 2, y + ts(46));
+    if (n.sublabel) {
+      ctx.font = ts(11) + 'px system-ui';
+      ctx.fillStyle = c.dim;
+      ctx.fillText(n.sublabel, x + w / 2, y + ts(58));
+    }
+    ctx.restore();
+    return;
+  }
+
+  let fadeA = 1;
+  if (fading[key]) {
+    const el = Date.now() - fading[key];
+    fadeA = Math.min(el / 500, 1);
+    if (el > 500) delete fading[key];
+  }
+
+  if (isA || hasBadge) {
+    ctx.shadowColor = n.color;
+    ctx.shadowBlur = ts(18) * fadeA;
+    ctx.globalAlpha = 0.3 + 0.7 * fadeA;
+  }
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, ts(8));
+  ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+  ctx.fill();
+  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
+  ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
+  ctx.stroke();
+
+  const fs = n.fs || 16;
+  ctx.fillStyle = c.txt;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (n.sublabel) {
+    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
+    ctx.font = ts(Math.max(fs - 3, 10)) + 'px system-ui';
+    ctx.fillStyle = c.dim;
+    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+  } else {
+    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
+    ctx.fillText(n.label, x + w / 2, y + h / 2);
+  }
+
+  // Badges
+  if (hasBadge) {
+    const bList = Array.isArray(badges[key]) ? badges[key] : [badges[key]];
+    bList.forEach((bNum, idx) => {
+      const bx = x + ts(8) + idx * ts(22), by = y + ts(5), br = ts(9);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.fill();
+      ctx.font = 'bold ' + ts(10) + 'px system-ui';
+      ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(bNum), bx + br, by + br);
+    });
+  }
+  ctx.restore();
+}
+
+function drawBounds() {
+  const c = C();
+
+  // Agentic Loop boundary (dashed red/coral rectangle)
+  ctx.save();
+  ctx.beginPath();
+  ctx.strokeStyle = '#f8514966';
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(8), ts(5)]);
+  ctx.roundRect(tx(90), ty(340), ts(400), ts(230), ts(12));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Label
+  ctx.fillStyle = '#f85149';
+  ctx.font = 'bold ' + ts(11) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillText('Agentic Loop', tx(100), ty(355));
+  ctx.restore();
+
+  // Row labels (subtle)
+  ctx.save();
+  ctx.font = ts(10) + 'px system-ui';
+  ctx.fillStyle = isDark ? '#484f5888' : '#b0b8c188';
+  ctx.textAlign = 'left';
+  ctx.fillText('REQUEST', tx(10), ty(78));
+  ctx.fillText('HYDRATION', tx(10), ty(208));
+  ctx.fillText('PROCESSING', tx(10), ty(348));
+  ctx.fillText('FINAL', tx(460), ty(618));
+  ctx.restore();
+}
+
+function edgePt(n, targetX, targetY, yOff) {
+  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  const dx = targetX - cx_, dy = targetY - cy_;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: cx_, y: cy_ };
+  const hw = n.w / 2, hh = n.h / 2;
+  let ex, ey;
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    ex = cx_ + (dx > 0 ? hw : -hw);
+    ey = cy_ + dy * (hw / Math.abs(dx));
+  } else {
+    ey = cy_ + (dy > 0 ? hh : -hh);
+    ex = cx_ + dx * (hh / Math.abs(dy));
+  }
+  return { x: ex, y: ey + (yOff || 0) };
+}
+
+function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  ctx.moveTo(tx(x1), ty(y1));
+  ctx.lineTo(tx(x2), ty(y2));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = ts(2.5);
+  ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
+  ctx.beginPath();
+  ctx.moveTo(tx(x2), ty(y2));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang + 0.4), ty(y2) - sz * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  if (num != null) {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    ctx.beginPath();
+    ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.font = 'bold ' + ts(10) + 'px system-ui';
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), tx(mx), ty(my));
+  }
+  ctx.restore();
+}
+
+function drawLines() {
+  lines.forEach(l => {
+    const fn = N[l.from], tn = N[l.to];
+    if (!fn || !tn) return;
+    if (l.waypoints) {
+      const fp = resolveEdge(fn, l, true);
+      const tp = resolveEdge(tn, l, false);
+      const pts = [fp, ...l.waypoints, tp];
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      ctx.strokeStyle = l.color;
+      ctx.lineWidth = ts(2.5);
+      ctx.stroke();
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      const ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
+      ctx.beginPath();
+      ctx.moveTo(tx(last.x), ty(last.y));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang - 0.4), ty(last.y) - sz * Math.sin(ang - 0.4));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang + 0.4), ty(last.y) - sz * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = l.color;
+      ctx.fill();
+      if (l.num != null) {
+        const mid = pts[Math.floor(pts.length / 2)];
+        const r = ts(12);
+        ctx.beginPath();
+        ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
+        ctx.fillStyle = l.color;
+        ctx.fill();
+        ctx.font = 'bold ' + ts(10) + 'px system-ui';
+        ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(l.num), tx(mid.x), ty(mid.y));
+      }
+      ctx.restore();
+    } else {
+      let fp = resolveEdge(fn, l, true);
+      let tp = resolveEdge(tn, l, false);
+      if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
+        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+      }
+      if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
+        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp = edgePt(tn, fc, fy, l.yOff || 0);
+      }
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+    }
+  });
+}
+
+function resolveEdge(n, l, isFrom) {
+  const yo = l.yOff || 0;
+  if (isFrom) {
+    if (l.fromLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.fromRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.fromBottom) return { x: n.x + n.w / 2 + (l.fromXOff || l.xOff || 0), y: n.y + n.h + yo };
+    if (l.fromTop) return { x: n.x + n.w / 2 + (l.fromXOff || 0), y: n.y + yo };
+    if (l.waypoints) return edgePt(n, l.waypoints[0].x, l.waypoints[0].y, yo);
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  } else {
+    if (l.toLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.toTop) return { x: n.x + n.w / 2 + (l.toXOff || l.xOff || 0), y: n.y + yo };
+    if (l.toRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.toBottom) return { x: n.x + n.w / 2 + (l.toXOff || 0), y: n.y + n.h + yo };
+    if (l.waypoints) { const wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  }
+}
+
+// Click handler
+canvas.addEventListener('click', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
+      showOverlay(k);
+      return;
+    }
+  }
+});
+canvas.addEventListener('mousemove', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  let found = false;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
+  }
+  canvas.style.cursor = found ? 'pointer' : 'default';
+});
+
+// ================================================================
+// ANIMATED DOT
+// ================================================================
+class Dot {
+  constructor(fKey, tKey, color, speed, cb, opts) {
+    this.color = color;
+    this.speed = speed || 0.012;
+    this.t = 0;
+    this.cb = cb;
+    this.alive = true;
+    const fn = N[fKey], tn = N[tKey];
+    const yo = (opts && opts.yOff) || 0;
+    let fp, tp;
+    const lo = opts || {};
+    fp = resolveEdge(fn, lo, true);
+    tp = resolveEdge(tn, lo, false);
+    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
+      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+      fp = edgePt(fn, tc, tcy, yo);
+    }
+    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+      tp = edgePt(tn, fc, fy, yo);
+    }
+    if (opts && opts.waypoints) {
+      this.pts = [fp, ...opts.waypoints, tp];
+    } else {
+      this.pts = [fp, tp];
+    }
+    this.segLens = [];
+    this.totalLen = 0;
+    for (let i = 1; i < this.pts.length; i++) {
+      const dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      this.segLens.push(len);
+      this.totalLen += len;
+    }
+    this.segIdx = 0;
+    this.x = this.pts[0].x;
+    this.y = this.pts[0].y;
+    const pxPerFrame = 4;
+    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
+  }
+  update() {
+    this.t += this.speed;
+    if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
+    const dist = this.t * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
+        this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
+        this.segIdx = i;
+        return;
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    this.x = last.x;
+    this.y = last.y;
+    this.segIdx = this.segLens.length - 1;
+  }
+  posAt(t) {
+    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    return { x: last.x, y: last.y };
+  }
+  draw() {
+    ctx.save();
+    // Progressive trail
+    ctx.beginPath();
+    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
+    ctx.lineTo(tx(this.x), ty(this.y));
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = ts(2);
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    // Trailing data stream
+    for (let j = 4; j >= 1; j--) {
+      const bt = this.t - j * 0.06;
+      if (bt <= 0) continue;
+      const p = this.posAt(bt);
+      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+      ctx.beginPath();
+      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+    // Leading packet
+    ctx.globalAlpha = 1;
+    const si = Math.min(this.segIdx, this.pts.length - 2);
+    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
+    ctx.save();
+    ctx.translate(tx(this.x), ty(this.y));
+    ctx.rotate(ang);
+    const pw = ts(13), ph = ts(7);
+    ctx.beginPath();
+    ctx.moveTo(pw / 2, 0);
+    ctx.lineTo(pw / 6, -ph / 2);
+    ctx.lineTo(-pw / 2, -ph / 2);
+    ctx.lineTo(-pw / 2, ph / 2);
+    ctx.lineTo(pw / 6, ph / 2);
+    ctx.closePath();
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = ts(16);
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+// ================================================================
+// MAIN DRAW LOOP
+// ================================================================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBounds();
+  drawLines();
+  Object.keys(N).forEach(k => drawBox(k));
+  dots.forEach(d => { d.update(); d.draw(); });
+  dots = dots.filter(d => d.alive);
+  if (highlightKey && N[highlightKey]) {
+    const n = N[highlightKey];
+    const pad = 8;
+    ctx.save();
+    ctx.shadowColor = n.color || '#58a6ff';
+    ctx.shadowBlur = ts(30);
+    ctx.strokeStyle = n.color || '#58a6ff';
+    ctx.lineWidth = ts(3);
+    ctx.beginPath();
+    ctx.roundRect(tx(n.x) - pad, ty(n.y) - pad, ts(n.w) + pad * 2, ts(n.h) + pad * 2, ts(10));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function animate() { draw(); animFrame = requestAnimationFrame(animate); }
+
+// ================================================================
+// STEPS PANEL
+// ================================================================
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function initSteps() {
+  const ctr = document.getElementById('steps-ctr');
+  ctr.innerHTML = '';
+  flow.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'step pending';
+    d.id = 'step-' + i;
+    d.innerHTML = '<span class="step-mk"></span><span>' + esc(s.t) + '</span>';
+    d.onclick = () => jumpToStep(i);
+    ctr.appendChild(d);
+  });
+}
+
+// ================================================================
+// INSPECTOR
+// ================================================================
+function setInspPhase(phase) {
+  const el = document.getElementById('insp-title');
+  if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
+  else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
+}
+
+function initInspector() {
+  setInspPhase('request');
+  if (activeFlow === 'simple' || activeFlow === 'blocked') {
+    inspHeaders = [
+      { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
+      { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+    ];
+    inspBody = [
+      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
+      { v: '"input": "What is the weather?"', s: 'keep', id: 'b-input' },
+      { v: '"tools": []', s: 'keep', id: 'b-tools' },
+    ];
+  } else {
+    inspHeaders = [
+      { v: 'POST /v1/responses', s: 'keep', id: 'h-path' },
+      { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+    ];
+    inspBody = [
+      { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
+      { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
+      { v: '"tools": [{"type":"function","name":"get_weather"}]', s: 'keep', id: 'b-tools' },
+    ];
+  }
+  inspCycle = [];
+  inspStepLabel = 'Initial Request';
+  renderInsp();
+}
+
+function renderInsp() {
+  const el = document.getElementById('insp-content');
+  let h = '<div class="insp-plugin">' + esc(inspStepLabel) + '</div>';
+  h += '<div class="insp-sec">Headers:</div>';
+  inspHeaders.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+  h += '<div class="insp-sec">Body:</div>';
+  inspBody.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+  if (inspCycle.length) {
+    h += '<div class="insp-sec">CycleState:</div>';
+    inspCycle.forEach(l => { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
+  }
+  el.innerHTML = h;
+}
+
+function resetStyles() {
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+}
+
+function inspStepSimple(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = 'Client -> responses'; break;
+    case 2: inspStepLabel = 'responses -> Auth'; break;
+    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
+    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
+    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
+    case 6:
+      inspStepLabel = 'Hydrate Prompt: expand tools';
+      inspBody.find(l => l.id === 'b-tools').s = 'del';
+      inspBody.push({ v: '"resolved_tools": []', s: 'add', id: 'b-rtool' });
+      inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
+      break;
+    case 7: inspStepLabel = 'GP input: content filter'; break;
+    case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
+    case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
+    case 10:
+      inspStepLabel = 'Convert to Model Router';
+      inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
+      break;
+    case 11: inspStepLabel = 'Convert -> Inference'; break;
+    case 12:
+      inspStepLabel = 'Inference processes';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"output": [{"type":"message","content":[{"type":"text","text":"The weather..."}]}]', s: 'add', id: 'r-output' },
+        { v: '"status": "completed"', s: 'add', id: 'r-status2' },
+      ];
+      inspCycle = [];
+      break;
+    case 13: inspStepLabel = 'Inference -> GP output'; break;
+    case 14: inspStepLabel = 'GP output: content filter'; break;
+    case 15: inspStepLabel = 'GP -> Guardrails'; break;
+    case 16: inspStepLabel = 'Guardrails output check'; break;
+    case 17: inspStepLabel = 'Guardrails -> Output Limit'; break;
+    case 18: inspStepLabel = 'Output Limit check'; break;
+    case 19: inspStepLabel = 'Output Limit -> Dehydrate'; break;
+    case 20:
+      inspStepLabel = 'Dehydrate: clean response';
+      const ro = inspBody.find(l => l.id === 'r-output');
+      if (ro) ro.s = 'highlight';
+      break;
+    case 21:
+      inspStepLabel = 'Dehydrate -> Client (response)';
+      const rs = inspBody.find(l => l.id === 'r-status2');
+      if (rs) rs.s = 'highlight';
+      break;
+  }
+}
+
+function inspStepAgentic(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = 'Client -> responses'; break;
+    case 2: inspStepLabel = 'responses -> Auth'; break;
+    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
+    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
+    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
+    case 6:
+      inspStepLabel = 'Hydrate Prompt: expand tools';
+      inspBody.find(l => l.id === 'b-tools').s = 'highlight';
+      inspCycle = [
+        { v: 'system_prompt: expanded', s: 'add', id: 'c-sys' },
+        { v: 'tools: [get_weather]', s: 'add', id: 'c-tools' },
+      ];
+      break;
+    case 7: inspStepLabel = 'GP input: content filter'; break;
+    case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
+    case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
+    case 10:
+      inspStepLabel = 'Convert to Model Router';
+      inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
+      break;
+    case 11: inspStepLabel = 'Convert -> Inference'; break;
+    case 12:
+      inspStepLabel = 'Inference: first pass';
+      inspBody = [
+        { v: '"model": "gpt-4o"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What\'s the weather in NYC?"', s: 'keep', id: 'b-input' },
+      ];
+      break;
+    case 13:
+      inspStepLabel = 'Inference returns tool_use';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+      ];
+      inspBody = [
+        { v: '"output": [{"type":"function_call","name":"get_weather","arguments":"{\\"city\\":\\"NYC\\"}"}]', s: 'add', id: 'r-tool-call' },
+        { v: '"status": "incomplete"', s: 'add', id: 'r-status2' },
+      ];
+      inspCycle = [{ v: 'tool_use: get_weather(city=NYC)', s: 'add', id: 'c-tu' }];
+      break;
+    case 14: inspStepLabel = 'Inference -> Tool Invocation'; break;
+    case 15:
+      inspStepLabel = 'Tool Invocation: call MCP server';
+      inspCycle.push({ v: 'mcp_call: get_weather({city:NYC})', s: 'add', id: 'c-mcp' });
+      break;
+    case 16:
+      inspStepLabel = 'Tool Invocation -> Assemble';
+      inspCycle.push({ v: 'tool_result: "72F, partly cloudy"', s: 'add', id: 'c-res' });
+      break;
+    case 17:
+      inspStepLabel = 'Assemble: combine results';
+      inspBody = [
+        { v: '"output": [{"type":"function_call_output","call_id":"...","output":"72F, partly cloudy"}]', s: 'add', id: 'r-assembled' },
+      ];
+      const cr = inspCycle.find(l => l.id === 'c-res');
+      if (cr) cr.s = 'highlight';
+      break;
+    case 18:
+      inspStepLabel = 'Assemble -> Inference (loop back)';
+      setInspPhase('request');
+      inspHeaders = [
+        { v: 'POST /v1/responses (loop iteration 2)', s: 'highlight', id: 'h-path' },
+      ];
+      inspBody = [
+        { v: '"input": [...conversation + tool_result]', s: 'add', id: 'b-loop' },
+      ];
+      break;
+    case 19:
+      inspStepLabel = 'Inference: second pass with tool results';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"output": [{"type":"message","content":[{"type":"text","text":"The weather in NYC is 72F, partly cloudy."}]}]', s: 'add', id: 'r-output' },
+        { v: '"status": "completed"', s: 'add', id: 'r-status2' },
+      ];
+      inspCycle = [];
+      break;
+    case 20: inspStepLabel = 'Inference -> GP output'; break;
+    case 21: inspStepLabel = 'GP output: content filter'; break;
+    case 22: inspStepLabel = 'GP -> Guardrails'; break;
+    case 23: inspStepLabel = 'Guardrails output check'; break;
+    case 24: inspStepLabel = 'Guardrails -> Output Limit'; break;
+    case 25: inspStepLabel = 'Output Limit check'; break;
+    case 26: inspStepLabel = 'Output Limit -> Dehydrate'; break;
+    case 27:
+      inspStepLabel = 'Dehydrate: clean response';
+      const ro2 = inspBody.find(l => l.id === 'r-output');
+      if (ro2) ro2.s = 'highlight';
+      break;
+    case 28:
+      inspStepLabel = 'Dehydrate -> Client (response)';
+      const rs2 = inspBody.find(l => l.id === 'r-status2');
+      if (rs2) rs2.s = 'highlight';
+      break;
+  }
+}
+
+function inspStepBlocked(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = 'Client -> responses'; break;
+    case 2: inspStepLabel = 'responses -> Auth'; break;
+    case 3: inspStepLabel = 'Auth validates'; inspHeaders.find(l => l.id === 'h-path').s = 'highlight'; break;
+    case 4: inspStepLabel = 'Auth -> Input Limit'; break;
+    case 5: inspStepLabel = 'Input Limit -> Hydrate Prompt'; break;
+    case 6:
+      inspStepLabel = 'Hydrate Prompt: expand tools';
+      inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
+      break;
+    case 7: inspStepLabel = 'GP input: content filter'; break;
+    case 8:
+      inspStepLabel = 'Input Guardrails: BLOCKED';
+      setInspPhase('error');
+      inspHeaders = [
+        { v: 'HTTP/1.1 403 Forbidden', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "content_policy_violation"', s: 'err', id: 'r-err' },
+        { v: '"message": "Request blocked by input guardrails"', s: 'err', id: 'r-msg' },
+      ];
+      inspCycle = [];
+      break;
+    case 9:
+      inspStepLabel = 'Input Guardrails -> Client: 403 Forbidden';
+      const st = inspHeaders.find(l => l.id === 'r-status');
+      if (st) st.s = 'highlight';
+      break;
+  }
+}
+
+function inspStep(stepNum) {
+  resetStyles();
+  if (activeFlow === 'simple') inspStepSimple(stepNum);
+  else if (activeFlow === 'agentic') inspStepAgentic(stepNum);
+  else if (activeFlow === 'blocked') inspStepBlocked(stepNum);
+  renderInsp();
+}
+
+// ================================================================
+// FLOW DEFINITIONS
+// ================================================================
+let activeFlow = 'simple';
+
+const flowSimple = [
+  // 1. Client -> responses
+  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  // 2. responses -> Auth
+  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
+  // 3. Auth validates
+  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
+  // 4. Auth -> Input Limit
+  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
+  // 5. Input Limit -> Hydrate Prompt
+  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
+    fromBottom: true, toTop: true },
+  // 6. Hydrate Prompt: expand tools
+  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
+  // 7. GP input
+  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
+  // 8. Input Guardrails: check
+  { t: '8. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 8 },
+  // 9. Input Guardrails -> Convert
+  { t: '9. Input Guardrails -> Convert to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 9,
+    fromBottom: true, toTop: true },
+  // 10. Convert to Model Router
+  { t: '10. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
+  // 11. Convert -> Inference
+  { t: '11. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 11 },
+  // 12. Inference processes
+  { t: '12. Inference processes', mode: 'lightup', target: 'inference', badge: 12 },
+  // 13. Inference -> GP output
+  { t: '13. Inference -> GP output', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 13 },
+  // 14. GP output
+  { t: '14. GP output: content filter', mode: 'lightup', target: 'gp_output', badge: 14 },
+  // 15. GP -> Guardrails
+  { t: '15. GP -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 15 },
+  // 16. Guardrails output check
+  { t: '16. Guardrails output check', mode: 'lightup', target: 'guardrails', badge: 16 },
+  // 17. Guardrails -> Output Limit
+  { t: '17. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 17 },
+  // 18. Output Limit
+  { t: '18. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 18 },
+  // 19. Output Limit -> Dehydrate
+  { t: '19. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 19,
+    fromBottom: true, toTop: true },
+  // 20. Dehydrate
+  { t: '20. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 20 },
+  // 21. Dehydrate -> Client
+  { t: '21. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 21 },
+];
+
+const flowAgentic = [
+  // Steps 1-12 same as simple
+  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
+  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
+  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
+    fromBottom: true, toTop: true },
+  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
+  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
+  { t: '8. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 8 },
+  { t: '9. Input Guardrails -> Convert', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 9,
+    fromBottom: true, toTop: true },
+  { t: '10. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
+  { t: '11. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 11 },
+  { t: '12. Inference: first pass', mode: 'lightup', target: 'inference', badge: 12 },
+  // 13. Inference returns tool_use
+  { t: '13. Inference returns tool_use', mode: 'lightup', target: 'inference', badge: 'T', errColor: '#e3b341' },
+  // 14. Inference -> Tool Invocation (goes DOWN)
+  { t: '14. Inference -> Tool Invocation', mode: 'arrow', f: 'inference', to: 'tool_invoke', c: '#e3b341', num: 14,
+    fromBottom: true, toTop: true },
+  // 15. Tool Invocation: call MCP server
+  { t: '15. Tool Invocation: call MCP server', mode: 'lightup', target: 'tool_invoke', badge: 15 },
+  // 16. Tool Invocation -> Assemble
+  { t: '16. Tool Invocation -> Assemble', mode: 'arrow', f: 'tool_invoke', to: 'assemble', c: '#e3b341', num: 16 },
+  // 17. Assemble: combine results
+  { t: '17. Assemble: combine results', mode: 'lightup', target: 'assemble', badge: 17 },
+  // 18. Assemble -> Inference (the LOOP - curves right and up)
+  { t: '18. Assemble -> Inference (loop back)', mode: 'arrow', f: 'assemble', to: 'inference', c: '#e3b341', num: 18,
+    fromTop: true, fromXOff: 30,
+    toBottom: true, toXOff: 30,
+    waypoints: [
+      { x: 420, y: 470 },
+      { x: 470, y: 440 },
+      { x: 470, y: 420 },
+    ]
+  },
+  // 19. Inference: second pass with tool results
+  { t: '19. Inference: second pass (with tool results)', mode: 'lightup', target: 'inference', badge: 19 },
+  // 20-28: same as simple 13-21
+  { t: '20. Inference -> GP output', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 20 },
+  { t: '21. GP output: content filter', mode: 'lightup', target: 'gp_output', badge: 21 },
+  { t: '22. GP -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 22 },
+  { t: '23. Guardrails output check', mode: 'lightup', target: 'guardrails', badge: 23 },
+  { t: '24. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 24 },
+  { t: '25. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 25 },
+  { t: '26. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 26,
+    fromBottom: true, toTop: true },
+  { t: '27. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 27 },
+  { t: '28. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 28 },
+];
+
+const flowBlocked = [
+  { t: '1. Client -> responses', mode: 'arrow', f: 'client', to: 'responses', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. responses -> Auth', mode: 'arrow', f: 'responses', to: 'auth', c: '#58a6ff', num: 2 },
+  { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
+  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
+    fromBottom: true, toTop: true },
+  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
+  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
+  // 8. Input Guardrails: BLOCKED
+  { t: '8. Input Guardrails: BLOCKED', mode: 'lightup', target: 'input_guard', badge: 'X', errColor: '#f85149' },
+  // 9. Input Guardrails -> Client: 403 Forbidden
+  { t: '9. Input Guardrails -> Client: 403 Forbidden', mode: 'arrow', f: 'input_guard', to: 'client', c: '#f85149', num: 9,
+    fromTop: true,
+    toRight: true,
+    waypoints: [
+      { x: 870, y: 170 },
+      { x: 870, y: 125 },
+      { x: 170, y: 125 },
+    ]
+  },
+];
+
+const flowMap = { simple: flowSimple, agentic: flowAgentic, blocked: flowBlocked };
+const flowLabels = { simple: 'Simple Request (No Tools)', agentic: 'Agentic Loop (Tool Calls)', blocked: 'Input Guardrails Block' };
+const flowOrder = ['simple', 'agentic', 'blocked'];
+let flow = flowSimple;
+
+function updateTitle() {
+  document.getElementById('flow-label').textContent = '- ' + flowLabels[activeFlow];
+}
+
+// ================================================================
+// RUN / RESET
+// ================================================================
+function updatePlayBtn() {
+  const btn = document.querySelector('.start');
+  if (paused) btn.innerHTML = '&#9654; Resume';
+  else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
+  else btn.innerHTML = '&#9654; Start';
+}
+
+function cycleSpeed() {
+  const speeds = [0.5, 1, 2];
+  const idx = speeds.indexOf(playbackSpeed);
+  playbackSpeed = speeds[(idx + 1) % speeds.length];
+  document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function stepOpts(s) {
+  return {
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function stepLine(s) {
+  return {
+    from: s.f, to: s.to, color: s.c, num: s.num,
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+let stepOnceMode = false;
+
+function stepOnce() {
+  if (running && !paused) {
+    paused = true; running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  const f = flowMap[activeFlow];
+  if (runStepIndex === 0) {
+    initInspector();
+  }
+  if (runStepIndex >= f.length) {
+    doReset();
+    return;
+  }
+  stepOnceMode = true;
+  running = true; paused = false;
+  if (!animFrame) animate();
+  execStep();
+}
+
+function run() {
+  if (paused) {
+    paused = false;
+    running = true;
+    updatePlayBtn();
+    if (!animFrame) animate();
+    stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+    return;
+  }
+  if (running) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  doReset();
+  running = true;
+  paused = false;
+  runStepIndex = 0;
+  currentStepDone = 0;
+  initInspector();
+  updatePlayBtn();
+  stepTimer = setTimeout(execStep, 300);
+  if (!animFrame) animate();
+}
+
+function execStep() {
+  if (!running || paused || runStepIndex >= flow.length) {
+    if (runStepIndex >= flow.length) {
+      running = false; paused = false; updatePlayBtn();
+    }
+    return;
+  }
+  const si = runStepIndex;
+  const s = flow[si];
+  for (let j = 0; j < si; j++) {
+    const prev = document.getElementById('step-' + j);
+    if (prev) prev.className = 'step done';
+  }
+  const el = document.getElementById('step-' + si);
+  el.className = 'step active';
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  inspStep(si + 1);
+
+  if (s.mode === 'arrow') {
+    if (s.f) activeNodes.add(s.f);
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+      el.className = 'step done';
+      currentStepDone = si + 1;
+      saveSnapshot(si);
+      runStepIndex++;
+      if (stepOnceMode) {
+        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+      } else if (running && !paused) {
+        stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+      }
+    }, stepOpts(s)));
+  } else if (s.mode === 'lightup') {
+    fading[s.target] = Date.now();
+    activeNodes.add(s.target);
+    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+    if (badges[s.target] != null) {
+      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      existing.push(s.badge);
+      badges[s.target] = existing;
+    } else {
+      badges[s.target] = s.badge;
+    }
+    el.className = 'step done';
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (stepOnceMode) {
+      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+    } else if (running && !paused) {
+      stepTimer = setTimeout(execStep, 800 / playbackSpeed);
+    }
+  }
+}
+
+function saveSnapshot(stepIdx) {
+  snapshots[stepIdx] = {
+    activeNodes: new Set(activeNodes),
+    badges: JSON.parse(JSON.stringify(badges)),
+    lines: JSON.parse(JSON.stringify(lines)),
+    glowing: new Set(glowing),
+  };
+}
+
+function restoreSnapshot(stepIdx) {
+  if (stepIdx < 0) {
+    activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+    return;
+  }
+  const snap = snapshots[stepIdx];
+  if (!snap) return;
+  activeNodes = new Set(snap.activeNodes);
+  badges = JSON.parse(JSON.stringify(snap.badges));
+  lines = JSON.parse(JSON.stringify(snap.lines));
+  glowing = new Set(snap.glowing);
+}
+
+function simulateUpTo(targetStep) {
+  activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+  for (let i = 0; i <= targetStep; i++) {
+    const s = flow[i];
+    if (s.mode === 'arrow') {
+      if (s.f) activeNodes.add(s.f);
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+    } else if (s.mode === 'lightup') {
+      activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
+    }
+    saveSnapshot(i);
+  }
+}
+
+function jumpToStep(targetStep) {
+  if (running) {
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  }
+  // Reset errColor state before simulating
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  if (!snapshots[targetStep]) simulateUpTo(targetStep);
+  restoreSnapshot(targetStep);
+  currentStepDone = targetStep + 1;
+  runStepIndex = targetStep + 1;
+  document.querySelectorAll('.step').forEach((el, i) => {
+    if (i <= targetStep) el.className = 'step done';
+    else el.className = 'step pending';
+  });
+  const clickedEl = document.getElementById('step-' + targetStep);
+  if (clickedEl) clickedEl.className = 'step active';
+  initInspector();
+  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  dots = [];
+  fading = {};
+  paused = true;
+  updatePlayBtn();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(() => { draw(); draw(); });
+}
+
+function doReset() {
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  running = false;
+  paused = false;
+  runStepIndex = 0;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  dots = [];
+  activeNodes.clear();
+  badges = {};
+  lines = [];
+  glowing.clear();
+  fading = {};
+  currentStepDone = 0;
+  snapshots = [];
+  inspHeaders = [];
+  inspBody = [];
+  inspCycle = [];
+  initSteps();
+  updatePlayBtn();
+  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the pipeline flow</div>';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  draw();
+}
+
+document.getElementById('flow-select').addEventListener('change', function() {
+  activeFlow = this.value;
+  flow = flowMap[activeFlow];
+  updateTitle();
+  doReset();
+});
+
+resize();
+initSteps();
+updateTitle();
+draw();
+
+// Mobile splash animation
+(function(){
+  if(window.innerWidth>=800)return;
+  const mc=document.getElementById('mobile-canvas');
+  if(!mc)return;
+  const mx=mc.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  let mW,mH;
+  function mResize(){
+    const r=mc.getBoundingClientRect();
+    mW=r.width;mH=r.height;
+    mc.width=mW*dpr;mc.height=mH*dpr;
+    mx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  mResize();
+  const boxes=[
+    {x:.15,y:.12,label:'Client',color:'#58a6ff'},
+    {x:.5,y:.08,label:'Auth',color:'#58a6ff'},
+    {x:.85,y:.12,label:'Hydrate',color:'#d2a8ff'},
+    {x:.15,y:.35,label:'Inference',color:'#3fb950'},
+    {x:.5,y:.32,label:'GP',color:'#f0883e'},
+    {x:.85,y:.35,label:'Guardrails',color:'#f0883e'},
+    {x:.2,y:.7,label:'Tool Invoke',color:'#e3b341'},
+    {x:.5,y:.75,label:'Assemble',color:'#e3b341'},
+    {x:.8,y:.7,label:'Dehydrate',color:'#8b949e'},
+  ];
+  let particles=[];
+  function spawn(){
+    const fi=Math.floor(Math.random()*boxes.length);
+    let ti=Math.floor(Math.random()*boxes.length);
+    while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
+    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#e3b341','#f85149'];
+    particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      sz:2+Math.random()*3,a:.3+Math.random()*.4});
+  }
+  for(let i=0;i<12;i++)spawn();
+  function mDraw(){
+    mx.clearRect(0,0,mW,mH);
+    boxes.forEach(b=>{
+      mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
+      mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
+      mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
+      mx.fillText(b.label,b.x*mW,b.y*mH+3);
+      mx.restore();
+    });
+    particles.forEach(p=>{
+      const f=boxes[p.f],t=boxes[p.t];
+      const px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      const py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      const fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+      mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
+      mx.shadowColor=p.c;mx.shadowBlur=8;
+      mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
+      mx.restore();
+      p.p+=p.sp;
+    });
+    particles=particles.filter(p=>p.p<1);
+    if(Math.random()<.2)spawn();
+    requestAnimationFrame(mDraw);
+  }
+  mDraw();
+})();
+</script>
+</body>
+</html>
