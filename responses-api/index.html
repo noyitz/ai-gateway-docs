@@ -1021,7 +1021,7 @@ const flowSimple = [
   { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
   // 5. Input Limit -> Hydrate Prompt
   { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
-    fromBottom: true, toTop: true },
+    fromTop: true, toBottom: true },
   // 6. Hydrate Prompt: expand tools
   { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
   // 7. GP input
