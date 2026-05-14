@@ -222,11 +222,14 @@ const N = {
   input_limit:  { x: 540, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
   // Row 3 - Processing (y~360, spread wider)
-  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Connect to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
+  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Connect to Model Router', color: '#3fb950', fs: 11 },
   inference:    { x: 240, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
   gp_output:    { x: 430, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
   guardrails:   { x: 630, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
   output_limit: { x: 810, y: 350, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+
+  // Agentic loop area (invisible node for lightup targeting)
+  loop_area:    { x: 30, y: 330, w: 930, h: 210, label: '', color: '#f85149', type: 'hidden' },
 
   // Row 4 - Agentic Loop tools (y~480)
   tool_invoke:  { x: 140, y: 470, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
@@ -330,7 +333,7 @@ function ts(s) { return s * sc; }
 
 function drawBox(key) {
   const n = N[key], c = C();
-  if (!n) return;
+  if (!n || n.type === 'hidden') return;
   const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
   const isA = activeNodes.has(key), hasBadge = badges[key] != null;
   ctx.save();
@@ -413,7 +416,7 @@ function drawBounds() {
   const c = C();
 
   // Agentic Loop boundary (dashed red/coral rectangle)
-  var loopGlow = badges['convert'] && (badges['convert'] === '↻' || badges['convert'] === '↻↻' || (Array.isArray(badges['convert']) && badges['convert'].some(function(b){return b==='↻'||b==='↻↻';})));
+  var loopGlow = fading['loop_area'] && (Date.now() - fading['loop_area'] < 1500);
   ctx.save();
   if (loopGlow) {
     ctx.shadowColor = '#f85149';
@@ -1090,12 +1093,12 @@ const flowSimple = [
   { t: '26. Assemble: combine tool results', mode: 'lightup', target: 'assemble', badge: 26 },
   // 27. Assemble -> Convert (AGENTIC LOOP - red arrow goes around the loop boundary)
   { t: '27. LOOP: Assemble -> Connect to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
-    fromRight: true, toLeft: true,
+    fromRight: true, toLeft: true, speed: 2,
     waypoints: [{x:980, y:495}, {x:980, y:310}, {x:20, y:310}, {x:20, y:375}] },
-  // 28. Agentic loop runs (flash the loop - lightup convert to trigger full loop glow)
-  { t: '28. Agentic loop: re-inference pass 1', mode: 'lightup', target: 'convert', badge: '↻' },
+  // 28. Agentic loop runs (flash the red boundary)
+  { t: '28. Agentic loop: re-inference pass 1', mode: 'lightup', target: 'loop_area', badge: '↻' },
   // 29. Second loop iteration
-  { t: '29. Agentic loop: re-inference pass 2', mode: 'lightup', target: 'convert', badge: '↻↻' },
+  { t: '29. Agentic loop: re-inference pass 2', mode: 'lightup', target: 'loop_area', badge: '↻↻' },
   // 30. Assemble -> Dehydrate (final output)
   { t: '30. Assemble -> Dehydrate', mode: 'arrow', f: 'assemble', to: 'dehydrate', c: '#8b949e', num: 30,
     fromRight: true, toLeft: true },
@@ -1294,7 +1297,7 @@ function execStep() {
 
   if (s.mode === 'arrow') {
     if (s.f) activeNodes.add(s.f);
-    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed * (s.speed || 1), () => {
       lines.push(stepLine(s));
       if (s.glow) glowing.add(s.glow);
       activeNodes.add(s.to);
