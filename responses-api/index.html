@@ -420,10 +420,8 @@ function drawBounds() {
   const c = C();
 
   // Agentic Loop boundary (dashed red/coral rectangle)
-  var loopStart = fading['loop_area'] || 0;
-  var loopAge = loopStart ? Date.now() - loopStart : 99999;
-  var loopGlow = loopAge < 1600;
-  var loopPulse = loopGlow ? Math.max(0, Math.sin(loopAge / 1600 * Math.PI * 2)) : 0;
+  var loopGlow = activeNodes.has('loop_area');
+  var loopPulse = loopGlow ? 0.7 : 0;
   ctx.save();
   if (loopGlow) {
     ctx.shadowColor = '#f85149';
