@@ -860,12 +860,12 @@ function inspStepSimple(stepNum) {
       inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
       break;
     case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
-    case 10:
-      inspStepLabel = 'Guardrails Prep: scanning input content...';
-      var bi10s = inspBody.find(l => l.id === 'b-input');
-      if (bi10s) bi10s.s = 'guard';
+    case 10: inspStepLabel = 'Guardrails Prep: prepare input checks'; break;
+    case 11:
+      inspStepLabel = 'Guardrails Prep -> Input Guardrails';
+      var bi11s = inspBody.find(l => l.id === 'b-input');
+      if (bi11s) bi11s.s = 'guard';
       break;
-    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
     case 12:
       inspStepLabel = 'Input Guardrails: PASS';
       var bi12s = inspBody.find(l => l.id === 'b-input');
@@ -1043,12 +1043,12 @@ function inspStepBlocked(stepNum) {
       inspCycle = [{ v: 'system_prompt: expanded', s: 'add', id: 'c-sys' }];
       break;
     case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
-    case 10:
-      inspStepLabel = 'Guardrails Prep: scanning input content...';
-      var bi10 = inspBody.find(l => l.id === 'b-input');
-      if (bi10) bi10.s = 'guard';
+    case 10: inspStepLabel = 'Guardrails Prep: scan input content'; break;
+    case 11:
+      inspStepLabel = 'Guardrails Prep -> Input Guardrails';
+      var bi11b = inspBody.find(l => l.id === 'b-input');
+      if (bi11b) bi11b.s = 'guard';
       break;
-    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
     case 12:
       inspStepLabel = 'Input Guardrails: BLOCKED — harmful content';
       var bi12 = inspBody.find(l => l.id === 'b-input');
