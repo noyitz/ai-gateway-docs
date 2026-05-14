@@ -222,7 +222,7 @@ const N = {
   input_limit:  { x: 540, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
   // Row 3 - Processing (y~360, spread wider)
-  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
+  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Connect to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
   inference:    { x: 240, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
   gp_output:    { x: 430, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
   guardrails:   { x: 630, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
@@ -246,7 +246,7 @@ const tips = {
   hydrate:     { t: 'Hydrate Prompt', d: 'Expands the prompt with system instructions, conversation history, and resolved tool definitions. Builds the full context for the model.', dt: [['Expands', 'System prompt, history, tools'], ['Resolves', 'Function tool schemas'], ['Output', 'Fully hydrated prompt'], ['Phase', 'Hydration']] },
   gp_input:    { t: 'GP (Input)', d: 'Guardrails Processing on the input side. Runs content filtering and policy checks on the assembled prompt before it reaches the model.', dt: [['Function', 'Input content filtering'], ['Checks', 'Content policy, PII detection'], ['Phase', 'Pre-inference']] },
   input_guard: { t: 'Input Guardrails', d: 'Final safety gate before inference. Can block requests that violate content policies, returning 403 Forbidden to the client.', dt: [['Function', 'Safety gate'], ['Action', 'Pass or Block (403)'], ['Checks', 'Content safety, policy compliance'], ['Phase', 'Pre-inference']] },
-  convert:     { t: 'Convert to Model Router', d: 'Translates the request into the format expected by the selected model backend. Routes to the appropriate inference provider.', dt: [['Function', 'Format translation + routing'], ['Supports', 'OpenAI, Anthropic, Azure, etc.'], ['Output', 'Provider-native request'], ['Phase', 'Processing']] },
+  convert:     { t: 'Connect to Model Router', d: 'Translates the request into the format expected by the selected model backend. Routes to the appropriate inference provider.', dt: [['Function', 'Format translation + routing'], ['Supports', 'OpenAI, Anthropic, Azure, etc.'], ['Output', 'Provider-native request'], ['Phase', 'Processing']] },
   inference:   { t: 'Inference', d: 'Calls the LLM for completion. May return a text response or a tool_use response that triggers the agentic loop.', dt: [['Function', 'LLM completion'], ['Output', 'Text response OR tool_use calls'], ['Loop', 'Re-entered during agentic loop'], ['Phase', 'Processing']] },
   gp_output:   { t: 'GP (Output)', d: 'Guardrails Processing on the output side. Runs content filtering on the model response before it reaches the client.', dt: [['Function', 'Output content filtering'], ['Checks', 'Content policy, toxicity'], ['Phase', 'Post-inference']] },
   guardrails:  { t: 'Guardrails (Output)', d: 'Output guardrails that evaluate the model response against safety policies. Can modify or redact content that violates policies.', dt: [['Function', 'Output safety evaluation'], ['Actions', 'Pass, Modify, Redact'], ['Phase', 'Post-inference']] },
@@ -837,7 +837,7 @@ function inspStepSimple(stepNum) {
     case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
     case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
     case 10:
-      inspStepLabel = 'Convert to Model Router';
+      inspStepLabel = 'Connect to Model Router';
       inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
       break;
     case 11: inspStepLabel = 'Convert -> Inference'; break;
@@ -893,7 +893,7 @@ function inspStepAgentic(stepNum) {
     case 8: inspStepLabel = 'Input Guardrails: PASS'; break;
     case 9: inspStepLabel = 'Input Guardrails -> Convert'; break;
     case 10:
-      inspStepLabel = 'Convert to Model Router';
+      inspStepLabel = 'Connect to Model Router';
       inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
       break;
     case 11: inspStepLabel = 'Convert -> Inference'; break;
@@ -1051,11 +1051,11 @@ const flowSimple = [
   // 12. Input Guardrails: check
   { t: '12. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 12 },
   // 13. Input Guardrails -> Convert (DOWN first, then LEFT along bottom, then DOWN to Convert)
-  { t: '13. Input Guardrails -> Convert to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
+  { t: '13. Input Guardrails -> Connect to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
     fromBottom: true, toLeft: true,
     waypoints: [{x:945, y:280}, {x:20, y:280}, {x:20, y:375}] },
-  // 14. Convert to Model Router
-  { t: '14. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
+  // 14. Connect to Model Router
+  { t: '14. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
   // 15. Convert -> Inference
   { t: '15. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 15 },
   // 16. Inference processes
@@ -1074,8 +1074,8 @@ const flowSimple = [
   { t: '22. Output Limit: tool_use detected', mode: 'lightup', target: 'output_limit', badge: 22 },
   // 23. Output Limit -> Tool Invocation
   { t: '23. Output Limit -> Tool Invocation', mode: 'arrow', f: 'output_limit', to: 'tool_invoke', c: '#e3b341', num: 23,
-    fromBottom: true, toTop: true,
-    waypoints: [{x:875, y:460}, {x:290, y:460}] },
+    fromBottom: true, toLeft: true,
+    waypoints: [{x:875, y:440}, {x:100, y:440}, {x:100, y:495}] },
   // 24. Tool Invocation: call MCP server
   { t: '24. Tool Invocation: call MCP / File / Search', mode: 'lightup', target: 'tool_invoke', badge: 24 },
   // 25. Tool Invocation -> Assemble
@@ -1083,16 +1083,20 @@ const flowSimple = [
   // 26. Assemble: combine results
   { t: '26. Assemble: combine tool results', mode: 'lightup', target: 'assemble', badge: 26 },
   // 27. Assemble -> Convert (AGENTIC LOOP - red arrow goes around the loop boundary)
-  { t: '27. LOOP: Assemble -> Convert to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
-    fromBottom: true, toBottom: true,
-    waypoints: [{x:400, y:550}, {x:960, y:550}, {x:960, y:420}, {x:20, y:420}, {x:20, y:400}] },
-  // 28. Assemble -> Dehydrate (final output)
-  { t: '28. Assemble -> Dehydrate', mode: 'arrow', f: 'assemble', to: 'dehydrate', c: '#8b949e', num: 28,
+  { t: '27. LOOP: Assemble -> Connect to Model Router', mode: 'arrow', f: 'assemble', to: 'convert', c: '#f85149', num: 27,
+    fromTop: true, toLeft: true,
+    waypoints: [{x:400, y:310}, {x:20, y:310}, {x:20, y:375}] },
+  // 28. Agentic loop runs (flash all loop nodes)
+  { t: '28. Agentic loop: re-inference with tool results', mode: 'lightup', target: 'inference', badge: '↻' },
+  // 29. Second loop iteration
+  { t: '29. Agentic loop: second pass complete', mode: 'lightup', target: 'output_limit', badge: '↻' },
+  // 30. Assemble -> Dehydrate (final output)
+  { t: '30. Assemble -> Dehydrate', mode: 'arrow', f: 'assemble', to: 'dehydrate', c: '#8b949e', num: 30,
     fromRight: true, toLeft: true },
-  // 29. Dehydrate
-  { t: '29. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 29 },
-  // 30. Dehydrate -> Client
-  { t: '30. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 30 },
+  // 31. Dehydrate
+  { t: '31. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 31 },
+  // 32. Dehydrate -> Client
+  { t: '32. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 32 },
 ];
 
 const flowAgentic = [
@@ -1108,7 +1112,7 @@ const flowAgentic = [
   { t: '8. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 8 },
   { t: '9. Input Guardrails -> Convert', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 9,
     fromBottom: true, toTop: true },
-  { t: '10. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
+  { t: '10. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
   { t: '11. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 11 },
   { t: '12. Inference: first pass', mode: 'lightup', target: 'inference', badge: 12 },
   // 13. Inference returns tool_use
