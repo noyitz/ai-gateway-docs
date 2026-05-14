@@ -839,8 +839,8 @@ function renderInsp() {
 }
 
 function resetStyles() {
-  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
-  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err' && l.s !== 'guard' && l.s !== 'blocked') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err' && l.s !== 'guard' && l.s !== 'blocked') l.s = 'keep'; });
   inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
 }
 
