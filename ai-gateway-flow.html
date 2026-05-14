@@ -144,6 +144,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <option value="rl">Rate Limit (429)</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
+    <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9654;&#9646;</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
     <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
@@ -1419,6 +1420,29 @@ function stepLine(s) {
   };
 }
 
+let stepOnceMode = false;
+
+function stepOnce() {
+  if (running && !paused) {
+    paused = true; running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  const flow = flowMap[activeFlow];
+  if (runStepIndex === 0) {
+    initInspector();
+  }
+  if (runStepIndex >= flow.length) {
+    doReset();
+    return;
+  }
+  stepOnceMode = true;
+  running = true; paused = false;
+  if (!animFrame) animate();
+  execStep();
+}
+
 function run() {
   if (paused) {
     paused = false;
@@ -1484,7 +1508,9 @@ function execStep() {
       currentStepDone = si + 1;
       saveSnapshot(si);
       runStepIndex++;
-      if (running && !paused) {
+      if (stepOnceMode) {
+        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+      } else if (running && !paused) {
         stepTimer = setTimeout(execStep, 300 / playbackSpeed);
       }
     }, stepOpts(s)));
@@ -1503,7 +1529,9 @@ function execStep() {
     currentStepDone = si + 1;
     saveSnapshot(si);
     runStepIndex++;
-    if (running && !paused) {
+    if (stepOnceMode) {
+      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+    } else if (running && !paused) {
       stepTimer = setTimeout(execStep, 800 / playbackSpeed);
     }
   }
