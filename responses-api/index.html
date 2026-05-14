@@ -207,23 +207,23 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  // Row 1 - Hydration (y~80, ABOVE the request row)
-  conn_locker:  { x: 280, y: 75,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
-  mcp_list:     { x: 430, y: 75,  w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
-  hydrate:      { x: 600, y: 75,  w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
-  gp_input:     { x: 790, y: 75,  w: 80,  h: 45, label: 'GP', sublabel: 'input', color: '#f0883e', fs: 14 },
-  input_guard:  { x: 900, y: 75,  w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+  // Row 1 - Hydration (y~75, ABOVE the request row, left-to-right flow order)
+  conn_locker:  { x: 170, y: 75,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
+  mcp_list:     { x: 330, y: 75,  w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
+  hydrate:      { x: 510, y: 75,  w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
+  gp_input:     { x: 710, y: 75,  w: 130, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
+  input_guard:  { x: 880, y: 75,  w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
 
-  // Row 2 - Request (y~200)
-  client:       { x: 30,  y: 200, w: 90,  h: 50, label: 'Client', type: 'icon' },
-  responses:    { x: 170, y: 190, w: 180, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 16 },
-  auth:         { x: 430, y: 190, w: 160, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
-  input_limit:  { x: 680, y: 190, w: 170, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
+  // Row 2 - Request (y~210)
+  client:       { x: 30,  y: 215, w: 90,  h: 50, label: 'Client', type: 'icon' },
+  responses:    { x: 170, y: 205, w: 150, h: 50, label: 'responses', sublabel: 'POST /v1/responses', color: '#58a6ff', fs: 15 },
+  auth:         { x: 370, y: 205, w: 120, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
+  input_limit:  { x: 540, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
   // Row 3 - Processing (y~340)
   convert:      { x: 50,  y: 330, w: 160, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
   inference:    { x: 260, y: 330, w: 130, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
-  gp_output:    { x: 430, y: 330, w: 80,  h: 50, label: 'GP', sublabel: 'output', color: '#f0883e', fs: 14 },
+  gp_output:    { x: 430, y: 330, w: 130, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
   guardrails:   { x: 550, y: 330, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
   output_limit: { x: 720, y: 330, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
 
@@ -1019,43 +1019,52 @@ const flowSimple = [
   { t: '3. Auth validates', mode: 'lightup', target: 'auth', badge: 3 },
   // 4. Auth -> Input Limit
   { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
-  // 5. Input Limit -> Hydrate Prompt
-  { t: '5. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#58a6ff', num: 5,
+  // 5. Input Limit -> MCP List Tools (goes UP)
+  { t: '5. Input Limit -> MCP List Tools', mode: 'arrow', f: 'input_limit', to: 'mcp_list', c: '#d2a8ff', num: 5,
     fromTop: true, toBottom: true },
-  // 6. Hydrate Prompt: expand tools
-  { t: '6. Hydrate Prompt: expand tools', mode: 'lightup', target: 'hydrate', badge: 6 },
-  // 7. GP input
-  { t: '7. GP input', mode: 'lightup', target: 'gp_input', badge: 7 },
-  // 8. Input Guardrails: check
-  { t: '8. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 8 },
-  // 9. Input Guardrails -> Convert
-  { t: '9. Input Guardrails -> Convert to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 9,
+  // 6. MCP List Tools: get approved tools
+  { t: '6. MCP List Tools: get approved tools', mode: 'lightup', target: 'mcp_list', badge: 6 },
+  // 7. MCP -> Hydrate Prompt
+  { t: '7. MCP -> Hydrate Prompt', mode: 'arrow', f: 'mcp_list', to: 'hydrate', c: '#d2a8ff', num: 7 },
+  // 8. Hydrate Prompt: expand tools
+  { t: '8. Hydrate Prompt: expand prompt + function tools', mode: 'lightup', target: 'hydrate', badge: 8 },
+  // 9. Hydrate -> Guardrails Prep
+  { t: '9. Hydrate -> Guardrails Prep', mode: 'arrow', f: 'hydrate', to: 'gp_input', c: '#f0883e', num: 9 },
+  // 10. Guardrails Prep input
+  { t: '10. Guardrails Prep: prepare input checks', mode: 'lightup', target: 'gp_input', badge: 10 },
+  // 11. GP -> Input Guardrails
+  { t: '11. Guardrails Prep -> Input Guardrails', mode: 'arrow', f: 'gp_input', to: 'input_guard', c: '#f0883e', num: 11 },
+  // 12. Input Guardrails: check
+  { t: '12. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 12 },
+  // 13. Input Guardrails -> Convert (waypoints: right, down between rows, left, down, right)
+  { t: '13. Input Guardrails -> Convert to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
+    fromLeft: true, toTop: true,
+    waypoints: [{x:60, y:97}, {x:60, y:310}] },
+  // 14. Convert to Model Router
+  { t: '14. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
+  // 15. Convert -> Inference
+  { t: '15. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 15 },
+  // 16. Inference processes
+  { t: '16. Inference: first pass', mode: 'lightup', target: 'inference', badge: 16 },
+  // 17. Inference -> Guardrails Prep output
+  { t: '17. Inference -> Guardrails Prep', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 17 },
+  // 18. Guardrails Prep output
+  { t: '18. Guardrails Prep: output content filter', mode: 'lightup', target: 'gp_output', badge: 18 },
+  // 19. GP -> Guardrails
+  { t: '19. Guardrails Prep -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 19 },
+  // 20. Guardrails output check
+  { t: '20. Guardrails: output check', mode: 'lightup', target: 'guardrails', badge: 20 },
+  // 21. Guardrails -> Output Limit
+  { t: '21. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 21 },
+  // 22. Output Limit
+  { t: '22. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 22 },
+  // 23. Output Limit -> Dehydrate
+  { t: '23. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 23,
     fromBottom: true, toTop: true },
-  // 10. Convert to Model Router
-  { t: '10. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 10 },
-  // 11. Convert -> Inference
-  { t: '11. Convert -> Inference', mode: 'arrow', f: 'convert', to: 'inference', c: '#3fb950', num: 11 },
-  // 12. Inference processes
-  { t: '12. Inference processes', mode: 'lightup', target: 'inference', badge: 12 },
-  // 13. Inference -> GP output
-  { t: '13. Inference -> GP output', mode: 'arrow', f: 'inference', to: 'gp_output', c: '#3fb950', num: 13 },
-  // 14. GP output
-  { t: '14. GP output: content filter', mode: 'lightup', target: 'gp_output', badge: 14 },
-  // 15. GP -> Guardrails
-  { t: '15. GP -> Guardrails', mode: 'arrow', f: 'gp_output', to: 'guardrails', c: '#f0883e', num: 15 },
-  // 16. Guardrails output check
-  { t: '16. Guardrails output check', mode: 'lightup', target: 'guardrails', badge: 16 },
-  // 17. Guardrails -> Output Limit
-  { t: '17. Guardrails -> Output Limit', mode: 'arrow', f: 'guardrails', to: 'output_limit', c: '#58a6ff', num: 17 },
-  // 18. Output Limit
-  { t: '18. Output Limit check', mode: 'lightup', target: 'output_limit', badge: 18 },
-  // 19. Output Limit -> Dehydrate
-  { t: '19. Output Limit -> Dehydrate', mode: 'arrow', f: 'output_limit', to: 'dehydrate', c: '#8b949e', num: 19,
-    fromBottom: true, toTop: true },
-  // 20. Dehydrate
-  { t: '20. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 20 },
-  // 21. Dehydrate -> Client
-  { t: '21. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 21 },
+  // 24. Dehydrate
+  { t: '24. Dehydrate: clean response', mode: 'lightup', target: 'dehydrate', badge: 24 },
+  // 25. Dehydrate -> Client
+  { t: '25. Dehydrate -> Client (response)', mode: 'arrow', f: 'dehydrate', to: 'client_resp', c: '#3fb950', num: 25 },
 ];
 
 const flowAgentic = [
@@ -1392,6 +1401,9 @@ resize();
 initSteps();
 updateTitle();
 draw();
+
+// Auto-start play (no loop)
+setTimeout(function() { run(); }, 500);
 
 // Mobile splash animation
 (function(){
