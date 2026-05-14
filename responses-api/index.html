@@ -416,20 +416,22 @@ function drawBounds() {
   const c = C();
 
   // Agentic Loop boundary (dashed red/coral rectangle)
-  var loopGlow = fading['loop_area'] && (Date.now() - fading['loop_area'] < 1500);
+  var loopElapsed = fading['loop_area'] ? (Date.now() - fading['loop_area']) : 99999;
+  var loopGlow = loopElapsed < 2000;
+  var loopPulse = loopGlow ? 0.4 + 0.6 * Math.abs(Math.sin(loopElapsed / 200)) : 0;
   ctx.save();
   if (loopGlow) {
     ctx.shadowColor = '#f85149';
-    ctx.shadowBlur = ts(25);
+    ctx.shadowBlur = ts(25 * loopPulse);
   }
   ctx.beginPath();
-  ctx.strokeStyle = loopGlow ? '#f85149cc' : '#f8514966';
-  ctx.lineWidth = loopGlow ? ts(3) : ts(2);
+  ctx.strokeStyle = loopGlow ? 'rgba(248,81,73,' + (0.4 + 0.6 * loopPulse) + ')' : '#f8514966';
+  ctx.lineWidth = loopGlow ? ts(2 + 2 * loopPulse) : ts(2);
   ctx.setLineDash([ts(8), ts(5)]);
   ctx.roundRect(tx(30), ty(330), ts(930), ts(210), ts(12));
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = loopGlow ? (isDark ? '#f8514930' : '#f8514918') : (isDark ? '#f8514912' : '#f8514908');
+  ctx.fillStyle = loopGlow ? 'rgba(248,81,73,' + (0.07 + 0.15 * loopPulse) + ')' : (isDark ? '#f8514912' : '#f8514908');
   ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = '#f85149';
