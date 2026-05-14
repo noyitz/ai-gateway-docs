@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Identity Security Plugin -- Header Lifecycle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
+body.light{background:#fff;color:#24292f}
+
+/* Right Panel */
+.right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
+body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
+
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+body.light .flow-bar{border-color:#d0d7de}
+.flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
+body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.flow-bar button:hover{border-color:#58a6ff}
+.flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
+.flow-bar .rst{border-color:#f0883e;color:#f0883e}
+.flow-bar .flow-label{font-size:13px;color:#8b949e;flex:1;text-align:center;font-weight:600}
+
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;overflow-y:auto}
+body.light .steps-section{border-color:#d0d7de}
+.steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
+.step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
+body.light .step{color:#b0b8c1}
+.step:hover{background:#58a6ff22;cursor:pointer;color:#58a6ff;transform:translateX(4px);border-left:2px solid #58a6ff;padding-left:6px}
+body.light .step:hover{background:#ddf4ff88;cursor:pointer;color:#0969da;transform:translateX(4px);border-left:2px solid #0969da;padding-left:6px}
+.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step.pending{color:#484f58}
+body.light .step.pending{color:#b0b8c1}
+.step.pending .step-mk::before{content:'\25CB'}
+.step.active{color:#58a6ff}
+.step.active .step-mk::before{content:'\25CF'}
+.step.done{color:#3fb950}
+.step.done .step-mk::before{content:'\2713'}
+.step .step-mk::before{content:'\25CB'}
+.step.security{color:#f85149}
+.step.security .step-mk::before{content:'\25CF'}
+
+.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
+body.light .insp-title{border-color:#d0d7de}
+.insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
+.insp-sec.security{color:#f85149}
+.insp-sec.metering{color:#e3b341}
+.insp-sec.cyclestate{color:#d2a8ff}
+.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre;line-height:1.6;transition:all .4s}
+.insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
+body.light .insp-line.add{background:#dafbe1;color:#116329}
+.insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
+body.light .insp-line.del{background:#ffebe9;color:#82071e}
+.insp-line.keep{color:#8b949e;border-left:3px solid transparent}
+.insp-line.err{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:600}
+body.light .insp-line.err{background:#ffebe9;color:#82071e}
+.insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
+body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
+.insp-line.security-highlight{background:#2d151788;color:#f85149;border-left:3px solid #f85149;animation:pulse-sec .8s;font-weight:600}
+body.light .insp-line.security-highlight{background:#ffebe988;color:#82071e}
+.insp-line.meter-highlight{background:#2d2517;color:#e3b341;border-left:3px solid #e3b341;animation:pulse .8s}
+body.light .insp-line.meter-highlight{background:#fff8e1;color:#7a6100}
+@keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
+@keyframes pulse-sec{0%{opacity:.3;transform:translateX(-4px)}50%{opacity:1;transform:translateX(0)}100%{opacity:1;transform:translateX(0)}}
+.insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
+body.light .insp-plugin{background:#8250df15;color:#8250df}
+.insp-plugin.security{background:#f8514922;color:#f85149}
+body.light .insp-plugin.security{background:#f8514915;color:#cf222e}
+.insp-plugin.metering{background:#e3b34122;color:#e3b341}
+body.light .insp-plugin.metering{background:#e3b34115;color:#7a6100}
+
+/* Theme toggle */
+.theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Red Hat branding */
+.rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
+.rh-brand img{height:30px}
+.rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body.light .rh-brand span{color:#1a1a1a}
+
+/* Gradient title */
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:20px;font-weight:700;background:linear-gradient(135deg,#f85149,#d2a8ff,#e3b341);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+
+/* Legend */
+.legend{position:fixed;bottom:16px;left:16px;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;transition:all .3s}
+body.light .legend{background:#f6f8fa;border-color:#d0d7de}
+.legend-title{font-weight:600;margin-bottom:5px;font-size:14px}
+.legend-item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+
+/* Scrollbar */
+.steps-section::-webkit-scrollbar,.insp-section::-webkit-scrollbar{width:6px}
+.steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
+.steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
+
+/* Mobile splash */
+.mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+.mobile-splash.show{display:flex}
+.mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.mobile-splash-content{position:relative;z-index:1}
+.mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#f85149,#d2a8ff,#e3b341);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
+.mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
+.mobile-splash .badge span{color:#f85149;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#f8514918,#d2a8ff18);border:2px solid #f8514966;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .laptop-msg strong{color:#fff}
+.mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
+@keyframes pulse-border{0%,100%{border-color:#f8514966;box-shadow:0 0 20px #f8514922}50%{border-color:#f85149cc;box-shadow:0 0 30px #f8514944}}
+.mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
+.mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
+.mobile-splash .stat.red{color:#f85149;border-color:#f8514944}
+.mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
+.mobile-splash .stat.gold{color:#e3b341;border-color:#e3b34144}
+.mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
+.mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
+.mobile-splash .rh-logo img{height:24px}
+.mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
+@media(min-width:800px){.mobile-splash{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mobile-splash show" id="mobile-splash">
+  <canvas id="mobile-canvas"></canvas>
+  <div class="mobile-splash-content">
+    <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>Security</span> Plugin</div>
+    <h1>Identity Security<br><span class="grad">Header Lifecycle</span></h1>
+    <p class="sub">How identity headers are protected<br>from leaking to model backends</p>
+    <div class="stats">
+      <div class="stat red">Security</div>
+      <div class="stat green">23 Steps</div>
+      <div class="stat gold">Metering</div>
+      <div class="stat purple">CycleState</div>
+    </div>
+    <div class="laptop-msg">
+      <div class="laptop-icon">&#128187;</div>
+      <strong>Open this page on your laptop or desktop</strong><br>to experience the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+    </div>
+  </div>
+</div>
+
+<div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+<div class="viz-title">Identity Security Plugin &mdash; Header Lifecycle</div>
+
+<div class="right-panel">
+  <div class="flow-bar">
+    <span class="flow-label">Identity Security Flow</span>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
+    <button class="rst" onclick="doReset()">Reset</button>
+  </div>
+  <div class="steps-section" id="steps-section">
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">&#183; click to jump</span></div>
+    <div id="steps-ctr"></div>
+  </div>
+  <div class="insp-section" id="insp-section">
+    <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
+    <div id="insp-content"></div>
+  </div>
+</div>
+
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
+<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
+  <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">&#10005;</button>
+    <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
+    <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
+    <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
+    <div id="overlay-details" style="font-size:12px;font-family:'SF Mono',Menlo,monospace"></div>
+    <button onclick="closeOverlay()" style="margin-top:14px;padding:7px 20px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:13px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Security (identity-security)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>Metering</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
+let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopMode = false;
+let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
+let snapshots = [];
+
+const LW = 1350, LH = 950;
+let ox = 0, oy = 0, sc = 1;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  draw();
+}
+
+// ================================================================
+// NODES
+// ================================================================
+const N = {
+  user: { x: -30, y: 130, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
+
+  cluster: { x: 110, y: 60, w: 1200, h: 870, type: 'boundary' },
+  aigw: { x: 145, y: 90, w: 1140, h: 780, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+
+  gw: { x: 230, y: 115, w: 780, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
+
+  wasm: { x: 170, y: 260, w: 280, h: 220, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 195, y: 310, w: 230, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
+  rlimit: { x: 195, y: 390, w: 230, h: 55, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
+
+  // IPP container - LARGE, this is the focus
+  ipp: { x: 560, y: 230, w: 700, h: 590, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+
+  // Request plugins (top-to-bottom execution order)
+  p_idsec_req: { x: 590, y: 300, w: 310, h: 40, label: 'identity-security', sublabel: '(request)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_mpr:       { x: 590, y: 348, w: 310, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:      { x: 590, y: 390, w: 310, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:    { x: 590, y: 432, w: 310, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:       { x: 590, y: 474, w: 310, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_meter_req: { x: 590, y: 516, w: 310, h: 36, label: 'external-metering', sublabel: '(request)', color: '#e3b341', type: 'plugin', inner: true, fs: 14 },
+
+  // CycleState visual
+  cyclestate: { x: 940, y: 300, w: 280, h: 252, label: 'CycleState', sublabel: '(per-request memory)', color: '#d2a8ff', fs: 16 },
+
+  // Response plugins (reverse execution: identity-security runs LAST but listed first)
+  p_idsec_resp: { x: 590, y: 640, w: 310, h: 40, label: 'identity-security', sublabel: '(response)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_meter_resp: { x: 590, y: 688, w: 310, h: 36, label: 'external-metering', sublabel: '(response)', color: '#e3b341', type: 'plugin', inner: true, fs: 14 },
+  p_at_resp:    { x: 590, y: 730, w: 310, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+
+  // External: Model Provider (left, outside cluster)
+  anthropic: { x: -45, y: 360, w: 140, h: 55, label: 'Anthropic', sublabel: 'claude-haiku-4-5', color: '#3fb950', fs: 15 },
+
+  // External: Metering (right, outside cluster)
+  ext_meter: { x: 940, y: 750, w: 280, h: 55, label: 'External Metering', sublabel: 'OpenMeter / Stripe', color: '#e3b341', fs: 14 },
+};
+
+const tips = {
+  gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filters for payload processing.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Port','8080 (HTTP), 8443 (HTTPS)']] },
+  p_idsec_req: { t:'identity-security (request phase)', d:'FIRST plugin in the request chain. Reads identity headers injected by Authorino (x-maas-username, x-maas-group, x-maas-subscription), stores them in CycleState, then STRIPS them from the request. This prevents identity data from leaking to external model backends like Anthropic or OpenAI.', dt:[['Phase','Request (runs FIRST)'],['Reads','x-maas-username, x-maas-group, x-maas-subscription'],['Stores In','CycleState (per-request in-memory state)'],['Action','REMOVE identity headers from request'],['Why','Prevent identity leakage to model providers'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_idsec_resp: { t:'identity-security (response phase)', d:'Runs on the response path. Restores identity headers from CycleState back onto the response so that downstream internal consumers (like external-metering) can use them for attribution and billing. Before the response leaves the gateway, these headers are stripped again so the client never sees internal identity data.', dt:[['Phase','Response (runs via reverse registration order)'],['Restores','x-maas-username, x-maas-group, x-maas-subscription'],['Source','CycleState (saved during request phase)'],['Consumers','external-metering (CloudEvents attribution)'],['Final Action','STRIP headers before response reaches client'],['PR','#645 (identity-security plugin)']], links:[['IPP Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  cyclestate: { t:'CycleState', d:'Per-request in-memory state shared between all plugins in the IPP chain. Each request gets its own CycleState instance. The identity-security plugin uses CycleState to temporarily store identity headers so they survive the request/response lifecycle without being sent to external backends.', dt:[['Scope','Per-request (not shared across requests)'],['Lifetime','Created on request, destroyed after response'],['Used By','identity-security, model-provider-resolver, api-translation'],['Identity Keys','username, group, subscription'],['Provider Keys','provider, targetModel, endpoint']] },
+  p_mpr: { t:'model-provider-resolver', d:'Watches ExternalModel CRDs via a Kubernetes reconciler. Resolves the model name to provider, target model ID, and endpoint URL. Stores results in CycleState.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request']] },
+  p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request']] },
+  p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI -> Anthropic Messages API'],['Path Rewrite','/v1/chat/completions -> /v1/messages'],['Phase','Request']] },
+  p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Phase','Request']] },
+  p_meter_req: { t:'external-metering (request)', d:'Request-phase metering: performs circuit breaker check to ensure the subscription has not exceeded its quota before allowing the request through.', dt:[['Phase','Request'],['Check','Circuit breaker / quota'],['Color','Gold (metering)'],['Fires','Pre-flight quota check']] },
+  p_meter_resp: { t:'external-metering (response)', d:'Response-phase metering: extracts token usage from the response, reads identity headers (restored by identity-security), and fires CloudEvents for billing attribution.', dt:[['Phase','Response'],['Reads','usage.total_tokens from response body'],['Identity','Reads x-maas-username, x-maas-group (restored by identity-security)'],['Emits','CloudEvents to OpenMeter / Stripe'],['Key Dependency','identity-security must restore headers BEFORE this plugin runs']] },
+  p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic -> OpenAI format'],['Phase','Response']] },
+  auth: { t:'Auth (Authorino)', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and injects identity headers onto the request.', dt:[['Protocol','gRPC'],['Headers Injected','x-maas-username, x-maas-group, x-maas-subscription'],['Source','MaaS API key validation']] },
+  rlimit: { t:'Rate Limit (Limitador)', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting.', dt:[['Protocol','gRPC'],['Policy','TokenRateLimitPolicy']] },
+  anthropic: { t:'Anthropic', d:'Claude API endpoint. Receives requests translated from OpenAI format to Anthropic Messages API format. MUST NOT receive identity headers.', dt:[['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Security','No identity headers in request (stripped by identity-security)']] },
+  ext_meter: { t:'External Metering', d:'External billing/metering service (OpenMeter or Stripe). Receives CloudEvents from the external-metering plugin containing token usage and identity attribution data.', dt:[['Service','OpenMeter / Stripe'],['Protocol','CloudEvents (HTTP)'],['Data','Token count + user identity + subscription'],['Source','external-metering response plugin']] },
+};
+
+let overlayWasRunning = false, highlightKey = null;
+function showOverlay(key) {
+  const tip = tips[key], n = N[key];
+  if (!tip) return;
+  overlayWasRunning = running;
+  highlightKey = key;
+  if (running && !paused) { paused = true; running = false; if (stepTimer) clearTimeout(stepTimer); updatePlayBtn(); }
+  const ov = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
+  document.getElementById('overlay-accent').style.background = n.color || '#58a6ff';
+  document.getElementById('overlay-title').textContent = tip.t;
+  document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
+  document.getElementById('overlay-desc').textContent = tip.d;
+  let dh = '';
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">'+esc(l)+'</span><span style="color:#c9d1d9">'+esc(v)+'</span></div>'; });
+  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += '<a href="'+u+'" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor=\'#58a6ff\'" onmouseout="this.style.borderColor=\'#30363d\'">'+esc(l)+' &#8599;</a>'; }); dh += '</div>'; }
+  document.getElementById('overlay-details').innerHTML = dh;
+  const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
+  const canvasRight = innerWidth - 380;
+  let cx, cy;
+  if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
+  cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
+  card.style.left = cx + 'px';
+  card.style.top = cy + 'px';
+  ov.style.display = 'block';
+  const hb = document.getElementById('highlight-box');
+  hb.style.left = nx + 'px';
+  hb.style.top = ny + 'px';
+  hb.style.width = nw + 'px';
+  hb.style.height = nh + 'px';
+  hb.style.border = '3px solid '+(n.color || '#58a6ff');
+  hb.style.boxShadow = '0 0 30px '+(n.color || '#58a6ff')+'88, inset 0 0 20px '+(n.color || '#58a6ff')+'22';
+  hb.style.background = isDark ? '#161b22' : '#f6f8fa';
+  hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
+  hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
+  hb.innerHTML = '<div style="font-weight:700;font-size:'+(nw > 150 ? 16 : 13)+'px">'+esc(n.label)+'</div>'+(n.sublabel ? '<div style="font-size:'+(nw > 150 ? 12 : 10)+'px;color:#8b949e">'+esc(n.sublabel)+'</div>' : '');
+  hb.style.transform = 'none';
+  draw();
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+  const hb = document.getElementById('highlight-box');
+  hb.style.display = 'none';
+  highlightKey = null;
+  draw();
+  if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
+}
+
+function C() {
+  return isDark
+    ? { bg:'#0d1117', box:'#161b22', boxA:'#1a2332', bdr:'#30363d', txt:'#c9d1d9', dim:'#8b949e', brt:'#fff' }
+    : { bg:'#fff', box:'#f6f8fa', boxA:'#ddf4ff', bdr:'#d0d7de', txt:'#24292f', dim:'#656d76', brt:'#000' };
+}
+
+// ================================================================
+// DRAWING
+// ================================================================
+function resize() {
+  const panelW = 380;
+  W = canvas.width = innerWidth - panelW;
+  H = canvas.height = innerHeight;
+  sc = Math.min(W / LW, H / LH) * 0.98;
+  ox = (W - LW * sc) / 2;
+  oy = (H - LH * sc) * 0.04;
+  draw();
+}
+addEventListener('resize', resize);
+
+function tx(x) { return ox + x * sc; }
+function ty(y) { return oy + y * sc; }
+function ts(s) { return s * sc; }
+
+function drawBox(key) {
+  const n = N[key], c = C();
+  if (!n || n.type === 'boundary' || n.type === 'container') return;
+  const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
+  const isA = activeNodes.has(key), hasBadge = badges[key] != null;
+  ctx.save();
+
+  if (n.type === 'icon') {
+    ctx.font = ts(32)+'px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
+    ctx.font = 'bold '+ts(16)+'px system-ui';
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + w / 2, y + ts(46));
+    ctx.restore();
+    return;
+  }
+
+  let fadeA = 1;
+  if (fading[key]) {
+    const el = Date.now() - fading[key];
+    fadeA = Math.min(el / 500, 1);
+    if (el > 500) delete fading[key];
+  }
+
+  if (isA || hasBadge) {
+    ctx.shadowColor = n.color;
+    ctx.shadowBlur = ts(18) * fadeA;
+    ctx.globalAlpha = 0.3 + 0.7 * fadeA;
+  }
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, ts(8));
+  ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+  ctx.fill();
+  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
+  ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
+  if (n.type === 'plugin') { ctx.setLineDash([ts(5), ts(4)]); }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const fs = n.fs || 16;
+  ctx.fillStyle = c.txt;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (n.sublabel) {
+    ctx.font = 'bold '+ts(fs)+'px system-ui';
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
+    ctx.font = ts(Math.max(fs - 3, 11))+'px system-ui';
+    ctx.fillStyle = c.dim;
+    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+  } else {
+    ctx.font = 'bold '+ts(fs)+'px system-ui';
+    ctx.fillText(n.label, x + w / 2, y + h / 2);
+  }
+
+  // Badges
+  if (hasBadge) {
+    const bList = Array.isArray(badges[key]) ? badges[key] : [badges[key]];
+    bList.forEach((bNum, idx) => {
+      const bx = x + ts(8) + idx * ts(22), by = y + ts(5), br = ts(9);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.fill();
+      ctx.font = 'bold '+ts(10)+'px system-ui';
+      ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(bNum), bx + br, by + br);
+    });
+  }
+  ctx.restore();
+}
+
+function drawContainer(key, isGlow) {
+  const n = N[key], c = C();
+  if (!n || n.type !== 'container') return;
+  ctx.save();
+  if (isGlow) { ctx.shadowColor = n.color; ctx.shadowBlur = ts(22); }
+  ctx.beginPath();
+  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
+  const a = isGlow ? 'cc' : '55';
+  ctx.strokeStyle = n.color + a;
+  ctx.lineWidth = ts(isGlow ? 3 : 2.5);
+  ctx.setLineDash([ts(7), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = 'bold '+ts(12)+'px system-ui';
+  ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
+  ctx.textAlign = 'left';
+  ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
+  ctx.restore();
+}
+
+function drawBounds() {
+  const c = C();
+  // Cluster boundary
+  const cb = N.cluster;
+  ctx.beginPath();
+  ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2.5);
+  ctx.setLineDash([ts(10), ts(8)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = ts(13)+'px system-ui';
+  ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+
+  drawContainer('aigw', false);
+  drawContainer('wasm', glowing.has('wasm'));
+  drawContainer('ipp', glowing.has('ipp'));
+
+  // IPP request plugins section
+  if (N.ipp) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(tx(578), ty(280), ts(335), ts(290), ts(8));
+    ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold '+ts(10)+'px system-ui';
+    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Request Plugins (execution order) →', tx(590), ty(294));
+
+    // Response plugins section
+    ctx.beginPath();
+    ctx.roundRect(tx(578), ty(620), ts(335), ts(165), ts(8));
+    ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold '+ts(10)+'px system-ui';
+    ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
+    ctx.textAlign = 'left';
+    ctx.fillText('← Response Plugins (reverse order)', tx(590), ty(634));
+
+    // CycleState section background
+    ctx.beginPath();
+    ctx.roundRect(tx(930), ty(280), ts(300), ts(290), ts(8));
+    ctx.fillStyle = isDark ? '#d2a8ff08' : '#d2a8ff06';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#d2a8ff40' : '#d2a8ff30';
+    ctx.lineWidth = ts(2);
+    ctx.setLineDash([ts(6), ts(4)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold '+ts(10)+'px system-ui';
+    ctx.fillStyle = isDark ? '#d2a8ff88' : '#d2a8ff99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Per-Request State', tx(942), ty(294));
+
+    ctx.restore();
+  }
+}
+
+function edgePt(n, targetX, targetY, yOff) {
+  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  const dx = targetX - cx_, dy = targetY - cy_;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: cx_, y: cy_ };
+  const hw = n.w / 2, hh = n.h / 2;
+  let ex, ey;
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    ex = cx_ + (dx > 0 ? hw : -hw);
+    ey = cy_ + dy * (hw / Math.abs(dx));
+  } else {
+    ey = cy_ + (dy > 0 ? hh : -hh);
+    ex = cx_ + dx * (hh / Math.abs(dy));
+  }
+  return { x: ex, y: ey + (yOff || 0) };
+}
+
+function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  ctx.moveTo(tx(x1), ty(y1));
+  ctx.lineTo(tx(x2), ty(y2));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = ts(2.5);
+  ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
+  ctx.beginPath();
+  ctx.moveTo(tx(x2), ty(y2));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang + 0.4), ty(y2) - sz * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  if (num != null) {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    ctx.beginPath();
+    ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.font = 'bold '+ts(10)+'px system-ui';
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), tx(mx), ty(my));
+  }
+  ctx.restore();
+}
+
+function drawLines() {
+  lines.forEach(function(l) {
+    const fn = N[l.from], tn = N[l.to];
+    if (!fn || !tn) return;
+    if (l.waypoints) {
+      const fp = resolveEdge(fn, l, true);
+      const tp = resolveEdge(tn, l, false);
+      const pts = [fp].concat(l.waypoints, [tp]);
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      ctx.strokeStyle = l.color;
+      ctx.lineWidth = ts(2.5);
+      ctx.stroke();
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      const ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
+      ctx.beginPath();
+      ctx.moveTo(tx(last.x), ty(last.y));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang - 0.4), ty(last.y) - sz * Math.sin(ang - 0.4));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang + 0.4), ty(last.y) - sz * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = l.color;
+      ctx.fill();
+      if (l.num != null) {
+        const mid = pts[Math.floor(pts.length / 2)];
+        const r = ts(12);
+        ctx.beginPath();
+        ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
+        ctx.fillStyle = l.color;
+        ctx.fill();
+        ctx.font = 'bold '+ts(10)+'px system-ui';
+        ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(l.num), tx(mid.x), ty(mid.y));
+      }
+      ctx.restore();
+    } else {
+      let fp = resolveEdge(fn, l, true);
+      let tp = resolveEdge(tn, l, false);
+      if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
+        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+      }
+      if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
+        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp = edgePt(tn, fc, fy, l.yOff || 0);
+      }
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+    }
+  });
+}
+
+function resolveEdge(n, l, isFrom) {
+  const yo = l.yOff || 0;
+  if (isFrom) {
+    if (l.fromLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.fromRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.fromBottom) return { x: n.x + n.w / 2 + (l.fromXOff || l.xOff || 0), y: n.y + n.h + yo };
+    if (l.fromTop) return { x: n.x + n.w / 2 + (l.fromXOff || 0), y: n.y + yo };
+    if (l.waypoints) return edgePt(n, l.waypoints[0].x, l.waypoints[0].y, yo);
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  } else {
+    if (l.toLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.toTop) return { x: n.x + n.w / 2 + (l.toXOff || l.xOff || 0), y: n.y + yo };
+    if (l.toRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.toBottom) return { x: n.x + n.w / 2 + (l.toXOff || 0), y: n.y + n.h + yo };
+    if (l.waypoints) { const wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  }
+}
+
+// Click handler
+canvas.addEventListener('click', function(e) {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
+      showOverlay(k);
+      return;
+    }
+  }
+});
+canvas.addEventListener('mousemove', function(e) {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  let found = false;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
+  }
+  canvas.style.cursor = found ? 'pointer' : 'default';
+});
+
+// ================================================================
+// ANIMATED DOT
+// ================================================================
+class Dot {
+  constructor(fKey, tKey, color, speed, cb, opts) {
+    this.color = color;
+    this.speed = speed || 0.012;
+    this.t = 0;
+    this.cb = cb;
+    this.alive = true;
+    const fn = N[fKey], tn = N[tKey];
+    const yo = (opts && opts.yOff) || 0;
+    let fp, tp;
+    const lo = opts || {};
+    fp = resolveEdge(fn, lo, true);
+    tp = resolveEdge(tn, lo, false);
+    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
+      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+      fp = edgePt(fn, tc, tcy, yo);
+    }
+    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+      tp = edgePt(tn, fc, fy, yo);
+    }
+    if (opts && opts.waypoints) {
+      this.pts = [fp].concat(opts.waypoints, [tp]);
+    } else {
+      this.pts = [fp, tp];
+    }
+    this.segLens = [];
+    this.totalLen = 0;
+    for (let i = 1; i < this.pts.length; i++) {
+      const dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      this.segLens.push(len);
+      this.totalLen += len;
+    }
+    this.segIdx = 0;
+    this.x = this.pts[0].x;
+    this.y = this.pts[0].y;
+    const pxPerFrame = 4;
+    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
+  }
+  update() {
+    this.t += this.speed;
+    if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
+    const dist = this.t * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
+        this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
+        this.segIdx = i;
+        return;
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    this.x = last.x;
+    this.y = last.y;
+    this.segIdx = this.segLens.length - 1;
+  }
+  posAt(t) {
+    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    return { x: last.x, y: last.y };
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
+    ctx.lineTo(tx(this.x), ty(this.y));
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = ts(2);
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    for (let j = 4; j >= 1; j--) {
+      const bt = this.t - j * 0.06;
+      if (bt <= 0) continue;
+      const p = this.posAt(bt);
+      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+      ctx.beginPath();
+      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const si = Math.min(this.segIdx, this.pts.length - 2);
+    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
+    ctx.save();
+    ctx.translate(tx(this.x), ty(this.y));
+    ctx.rotate(ang);
+    const pw = ts(13), ph = ts(7);
+    ctx.beginPath();
+    ctx.moveTo(pw / 2, 0);
+    ctx.lineTo(pw / 6, -ph / 2);
+    ctx.lineTo(-pw / 2, -ph / 2);
+    ctx.lineTo(-pw / 2, ph / 2);
+    ctx.lineTo(pw / 6, ph / 2);
+    ctx.closePath();
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = ts(16);
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+// ================================================================
+// MAIN DRAW LOOP
+// ================================================================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBounds();
+  drawLines();
+  Object.keys(N).forEach(function(k) { drawBox(k); });
+  dots.forEach(function(d) { d.update(); d.draw(); });
+  dots = dots.filter(function(d) { return d.alive; });
+  if (highlightKey && N[highlightKey]) {
+    const n = N[highlightKey];
+    const pad = 8;
+    ctx.save();
+    ctx.shadowColor = n.color || '#58a6ff';
+    ctx.shadowBlur = ts(30);
+    ctx.strokeStyle = n.color || '#58a6ff';
+    ctx.lineWidth = ts(3);
+    ctx.beginPath();
+    ctx.roundRect(tx(n.x) - pad, ty(n.y) - pad, ts(n.w) + pad * 2, ts(n.h) + pad * 2, ts(10));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function animate() { draw(); animFrame = requestAnimationFrame(animate); }
+
+// ================================================================
+// STEPS PANEL
+// ================================================================
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function initSteps() {
+  const ctr = document.getElementById('steps-ctr');
+  ctr.innerHTML = '';
+  flow.forEach(function(s, i) {
+    const d = document.createElement('div');
+    d.className = 'step pending';
+    d.id = 'step-' + i;
+    d.innerHTML = '<span class="step-mk"></span><span>'+esc(s.t)+'</span>';
+    d.onclick = function() { jumpToStep(i); };
+    ctr.appendChild(d);
+  });
+}
+
+// ================================================================
+// INSPECTOR
+// ================================================================
+function setInspPhase(phase) {
+  const el = document.getElementById('insp-title');
+  if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
+  else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
+}
+
+function initInspector() {
+  setInspPhase('request');
+  inspHeaders = [
+    { v: 'POST /v1/chat/completions', s: 'keep', id: 'h-path' },
+    { v: 'Authorization: Bearer sk-...', s: 'keep', id: 'h-auth' },
+    { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+  ];
+  inspBody = [
+    { v: '"model": "claude-haiku-4-5"', s: 'keep', id: 'b-model' },
+    { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep', id: 'b-msgs' },
+    { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+  ];
+  inspCycle = [];
+  inspStepLabel = 'Initial Request';
+  renderInsp();
+}
+
+function renderInsp() {
+  const el = document.getElementById('insp-content');
+  let h = '';
+  // Plugin label
+  const isSec = inspStepLabel.indexOf('identity-security') >= 0 || inspStepLabel.indexOf('STRIP') >= 0 || inspStepLabel.indexOf('RESTORE') >= 0;
+  const isMeter = inspStepLabel.indexOf('metering') >= 0 || inspStepLabel.indexOf('CloudEvents') >= 0;
+  const pluginCls = isSec ? ' security' : (isMeter ? ' metering' : '');
+  h += '<div class="insp-plugin'+pluginCls+'">'+esc(inspStepLabel)+'</div>';
+  h += '<div class="insp-sec">Headers:</div>';
+  inspHeaders.forEach(function(l) { h += '<div class="insp-line '+l.s+'">'+esc(l.v)+'</div>'; });
+  h += '<div class="insp-sec">Body:</div>';
+  inspBody.forEach(function(l) { h += '<div class="insp-line '+l.s+'">'+esc(l.v)+'</div>'; });
+  if (inspCycle.length) {
+    h += '<div class="insp-sec cyclestate">CycleState:</div>';
+    inspCycle.forEach(function(l) { h += '<div class="insp-line '+l.s+'">'+esc(l.v)+'</div>'; });
+  }
+  el.innerHTML = h;
+}
+
+function resetStyles() {
+  inspHeaders.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+}
+
+function inspStep(stepNum) {
+  resetStyles();
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '(1) Client sends POST /v1/chat/completions';
+      break;
+    case 2:
+      inspStepLabel = '(2) Gateway -> Kuadrant Wasm Shim';
+      inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'highlight';
+      break;
+    case 3:
+      inspStepLabel = '(3) Auth (Authorino) validates API key';
+      inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'highlight';
+      inspHeaders.push({ v: 'x-maas-username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'x-maas-group: engineering', s: 'add', id: 'h-maas-group' });
+      inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
+      break;
+    case 4:
+      inspStepLabel = '(4) Kuadrant -> Gateway (auth complete)';
+      var u4 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g4 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s4 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u4) u4.s = 'highlight';
+      if (g4) g4.s = 'highlight';
+      if (s4) s4.s = 'highlight';
+      break;
+    case 5:
+      inspStepLabel = '(5) Gateway -> IPP (ext_proc)';
+      break;
+    case 6:
+      inspStepLabel = '(6) identity-security: READ identity headers';
+      var u6 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g6 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s6 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u6) u6.s = 'security-highlight';
+      if (g6) g6.s = 'security-highlight';
+      if (s6) s6.s = 'security-highlight';
+      break;
+    case 7:
+      inspStepLabel = '(7) identity-security: STORE in CycleState';
+      inspCycle = [
+        { v: 'username = "cluster-admin"', s: 'add', id: 'c-user' },
+        { v: 'group = "engineering"', s: 'add', id: 'c-group' },
+        { v: 'subscription = "ext-models-sub"', s: 'add', id: 'c-sub' },
+      ];
+      var u7 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g7 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s7 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u7) u7.s = 'security-highlight';
+      if (g7) g7.s = 'security-highlight';
+      if (s7) s7.s = 'security-highlight';
+      break;
+    case 8:
+      inspStepLabel = '(8) identity-security: STRIP identity headers from request';
+      var u8 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g8 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s8 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u8) u8.s = 'del';
+      if (g8) g8.s = 'del';
+      if (s8) s8.s = 'del';
+      // CycleState still has them
+      inspCycle.forEach(function(c) { c.s = 'highlight'; });
+      break;
+    case 9:
+      inspStepLabel = '(9) model-provider-resolver';
+      inspCycle.push({ v: 'provider = "anthropic"', s: 'add', id: 'c-prov' });
+      inspCycle.push({ v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' });
+      break;
+    case 10:
+      inspStepLabel = '(10) body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 11:
+      inspStepLabel = '(11) api-translation: OpenAI -> Anthropic';
+      inspHeaders.find(function(l){ return l.id === 'h-path'; }).s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      inspHeaders.find(function(l){ return l.id === 'h-auth'; }).s = 'del';
+      break;
+    case 12:
+      inspStepLabel = '(12) apikey-injection';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 13:
+      inspStepLabel = '(13) external-metering: Circuit Breaker check';
+      break;
+    case 14:
+      inspStepLabel = '(14) IPP -> Gateway (NO identity headers!)';
+      // Highlight that identity headers are GONE
+      var u14 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g14 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s14 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u14) u14.s = 'del';
+      if (g14) g14.s = 'del';
+      if (s14) s14.s = 'del';
+      var xapi14 = inspHeaders.find(function(l){ return l.id === 'h-xapi'; });
+      if (xapi14) xapi14.s = 'highlight';
+      break;
+    case 15:
+      inspStepLabel = '(15) Gateway routes to Anthropic (CLEAN - no identity leakage)';
+      var u15 = inspHeaders.find(function(l){ return l.id === 'h-maas-user'; });
+      var g15 = inspHeaders.find(function(l){ return l.id === 'h-maas-group'; });
+      var s15 = inspHeaders.find(function(l){ return l.id === 'h-maas-sub'; });
+      if (u15) u15.s = 'del';
+      if (g15) g15.s = 'del';
+      if (s15) s15.s = 'del';
+      break;
+    case 16:
+      inspStepLabel = '(16) Anthropic responds';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+      ];
+      // CycleState persists across request/response
+      inspCycle = [
+        { v: 'username = "cluster-admin"', s: 'keep', id: 'c-user' },
+        { v: 'group = "engineering"', s: 'keep', id: 'c-group' },
+        { v: 'subscription = "ext-models-sub"', s: 'keep', id: 'c-sub' },
+        { v: 'provider = "anthropic"', s: 'keep', id: 'c-prov' },
+        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'keep', id: 'c-model' },
+      ];
+      break;
+    case 17:
+      inspStepLabel = '(17) Gateway -> IPP (response processing)';
+      break;
+    case 18:
+      inspStepLabel = '(18) identity-security: RESTORE identity headers from CycleState';
+      inspHeaders.push({ v: 'x-maas-username: cluster-admin', s: 'add', id: 'r-maas-user' });
+      inspHeaders.push({ v: 'x-maas-group: engineering', s: 'add', id: 'r-maas-group' });
+      inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'r-maas-sub' });
+      // Highlight CycleState as source
+      inspCycle.forEach(function(c) {
+        if (c.id === 'c-user' || c.id === 'c-group' || c.id === 'c-sub') c.s = 'highlight';
+      });
+      break;
+    case 19:
+      inspStepLabel = '(19) external-metering: extract tokens + fire CloudEvents';
+      var ru19 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg19 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs19 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru19) ru19.s = 'meter-highlight';
+      if (rg19) rg19.s = 'meter-highlight';
+      if (rs19) rs19.s = 'meter-highlight';
+      var usage19 = inspBody.find(function(l){ return l.id === 'r-usage'; });
+      if (usage19) usage19.s = 'meter-highlight';
+      break;
+    case 20:
+      inspStepLabel = '(20) api-translation: Anthropic -> OpenAI response';
+      inspBody.find(function(l){ return l.id === 'r-type'; }).s = 'del';
+      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
+      inspBody.find(function(l){ return l.id === 'r-content'; }).s = 'del';
+      inspBody.push({ v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add', id: 'r-choices' });
+      inspBody.find(function(l){ return l.id === 'r-stop'; }).s = 'del';
+      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
+      inspBody.find(function(l){ return l.id === 'r-usage'; }).s = 'del';
+      inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
+      break;
+    case 21:
+      inspStepLabel = '(21) identity-security: STRIP identity headers from response';
+      var ru21 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg21 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs21 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru21) ru21.s = 'del';
+      if (rg21) rg21.s = 'del';
+      if (rs21) rs21.s = 'del';
+      break;
+    case 22:
+      inspStepLabel = '(22) IPP -> Gateway (clean response, identity removed)';
+      var ru22 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg22 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs22 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru22) ru22.s = 'del';
+      if (rg22) rg22.s = 'del';
+      if (rs22) rs22.s = 'del';
+      var robj22 = inspBody.find(function(l){ return l.id === 'r-obj'; });
+      if (robj22) robj22.s = 'highlight';
+      var rch22 = inspBody.find(function(l){ return l.id === 'r-choices'; });
+      if (rch22) rch22.s = 'highlight';
+      inspCycle = [];
+      break;
+    case 23:
+      inspStepLabel = '(23) Response to client (clean, no identity headers)';
+      var ru23 = inspHeaders.find(function(l){ return l.id === 'r-maas-user'; });
+      var rg23 = inspHeaders.find(function(l){ return l.id === 'r-maas-group'; });
+      var rs23 = inspHeaders.find(function(l){ return l.id === 'r-maas-sub'; });
+      if (ru23) ru23.s = 'del';
+      if (rg23) rg23.s = 'del';
+      if (rs23) rs23.s = 'del';
+      var robj23 = inspBody.find(function(l){ return l.id === 'r-obj'; });
+      if (robj23) robj23.s = 'highlight';
+      break;
+  }
+  renderInsp();
+}
+
+// ================================================================
+// FLOW DEFINITION
+// ================================================================
+const flow = [
+  // REQUEST PATH
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway -> Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
+  { t: '3. Auth (Authorino): validate key, inject identity headers', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant -> Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -80 },
+  { t: '5. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -220 },
+
+  // IDENTITY-SECURITY REQUEST (steps 6-8)
+  { t: '6. identity-security: READ identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 6 },
+  { t: '7. identity-security: STORE in CycleState', mode: 'lightup', target: 'cyclestate', badge: 7 },
+  { t: '8. identity-security: STRIP identity headers', mode: 'lightup', target: 'p_idsec_req', badge: 8 },
+
+  // OTHER REQUEST PLUGINS (steps 9-13)
+  { t: '9. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 9 },
+  { t: '10. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 10 },
+  { t: '11. api-translation: OpenAI -> Anthropic', mode: 'lightup', target: 'p_at_req', badge: 11 },
+  { t: '12. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 12 },
+  { t: '13. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 13 },
+
+  // IPP -> GATEWAY -> ANTHROPIC (steps 14-16)
+  { t: '14. IPP -> Gateway (NO identity headers!)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -180, toBottom: true, toXOff: 160 },
+  { t: '15. Gateway routes to Anthropic (clean, no identity leakage)', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15, fromLeft: true, toRight: true, yOff: -10 },
+
+  // RESPONSE PATH
+  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '17. Gateway -> IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 17, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -100 },
+
+  // IDENTITY-SECURITY RESPONSE (step 18)
+  { t: '18. identity-security: RESTORE identity headers from CycleState', mode: 'lightup', target: 'p_idsec_resp', badge: 18 },
+
+  // METERING (step 19)
+  { t: '19. external-metering: extract tokens + fire CloudEvents (reads identity!)', mode: 'lightup', target: 'p_meter_resp', badge: 19 },
+
+  // API TRANSLATION (step 20)
+  { t: '20. api-translation: Anthropic -> OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 20 },
+
+  // STRIP AGAIN (step 21)
+  { t: '21. identity-security: STRIP identity headers from response', mode: 'lightup', target: 'p_idsec_resp', badge: 21 },
+
+  // RETURN (steps 22-23)
+  { t: '22. IPP -> Gateway (translated response, identity removed)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 22, fromTop: true, fromXOff: -50, toBottom: true, toXOff: 280 },
+  { t: '23. Response to client (clean, no identity headers)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// ================================================================
+// RUN / RESET
+// ================================================================
+function updatePlayBtn() {
+  const btn = document.querySelector('.start');
+  if (paused) btn.innerHTML = '&#9654; Resume';
+  else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
+  else btn.innerHTML = '&#9654; Start';
+}
+
+function cycleSpeed() {
+  const speeds = [0.5, 1, 2];
+  const idx = speeds.indexOf(playbackSpeed);
+  playbackSpeed = speeds[(idx + 1) % speeds.length];
+  document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function toggleLoop() {
+  loopMode = !loopMode;
+  const btn = document.getElementById('loop-btn');
+  btn.style.background = loopMode ? (isDark ? '#79c0ff22' : '#79c0ff18') : 'transparent';
+  btn.textContent = loopMode ? '⟳ Loop ON' : '⟳ Loop';
+  if (loopMode && !running && !paused) run();
+}
+
+function stepOpts(s) {
+  return {
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function stepLine(s) {
+  return {
+    from: s.f, to: s.to, color: s.c, num: s.num,
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function run() {
+  if (paused) {
+    paused = false;
+    running = true;
+    updatePlayBtn();
+    if (!animFrame) animate();
+    stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+    return;
+  }
+  if (running) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  doReset();
+  running = true;
+  paused = false;
+  runStepIndex = 0;
+  currentStepDone = 0;
+  initInspector();
+  updatePlayBtn();
+  stepTimer = setTimeout(execStep, 300);
+  if (!animFrame) animate();
+}
+
+function execStep() {
+  if (!running || paused || runStepIndex >= flow.length) {
+    if (runStepIndex >= flow.length) {
+      running = false; paused = false; updatePlayBtn();
+      if (loopMode) {
+        stepTimer = setTimeout(function() {
+          doReset(); run();
+        }, 3000 / playbackSpeed);
+      }
+    }
+    return;
+  }
+  const si = runStepIndex;
+  const s = flow[si];
+  for (let j = 0; j < si; j++) {
+    const prev = document.getElementById('step-' + j);
+    if (prev) prev.className = 'step done';
+  }
+  const el = document.getElementById('step-' + si);
+  el.className = 'step active';
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  inspStep(si + 1);
+
+  if (s.mode === 'arrow') {
+    if (s.f) activeNodes.add(s.f);
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, function() {
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+      el.className = 'step done';
+      currentStepDone = si + 1;
+      saveSnapshot(si);
+      runStepIndex++;
+      if (running && !paused) {
+        stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+      }
+    }, stepOpts(s)));
+  } else if (s.mode === 'lightup') {
+    fading[s.target] = Date.now();
+    activeNodes.add(s.target);
+    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+    if (badges[s.target] != null) {
+      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      existing.push(s.badge);
+      badges[s.target] = existing;
+    } else {
+      badges[s.target] = s.badge;
+    }
+    el.className = 'step done';
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (running && !paused) {
+      stepTimer = setTimeout(execStep, 800 / playbackSpeed);
+    }
+  }
+}
+
+function saveSnapshot(stepIdx) {
+  snapshots[stepIdx] = {
+    activeNodes: new Set(activeNodes),
+    badges: JSON.parse(JSON.stringify(badges)),
+    lines: JSON.parse(JSON.stringify(lines)),
+    glowing: new Set(glowing),
+  };
+}
+
+function restoreSnapshot(stepIdx) {
+  if (stepIdx < 0) {
+    activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+    return;
+  }
+  const snap = snapshots[stepIdx];
+  if (!snap) return;
+  activeNodes = new Set(snap.activeNodes);
+  badges = JSON.parse(JSON.stringify(snap.badges));
+  lines = JSON.parse(JSON.stringify(snap.lines));
+  glowing = new Set(snap.glowing);
+}
+
+function simulateUpTo(targetStep) {
+  activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+  for (let i = 0; i <= targetStep; i++) {
+    const s = flow[i];
+    if (s.mode === 'arrow') {
+      if (s.f) activeNodes.add(s.f);
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+    } else if (s.mode === 'lightup') {
+      activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
+    }
+    saveSnapshot(i);
+  }
+}
+
+function jumpToStep(targetStep) {
+  if (running) {
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  }
+  if (!snapshots[targetStep]) simulateUpTo(targetStep);
+  restoreSnapshot(targetStep);
+  currentStepDone = targetStep + 1;
+  runStepIndex = targetStep + 1;
+  document.querySelectorAll('.step').forEach(function(el, i) {
+    if (i <= targetStep) el.className = 'step done';
+    else el.className = 'step pending';
+  });
+  const clickedEl = document.getElementById('step-' + targetStep);
+  if (clickedEl) clickedEl.className = 'step active';
+  initInspector();
+  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  dots = [];
+  fading = {};
+  paused = true;
+  updatePlayBtn();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(function() { draw(); draw(); });
+}
+
+function doReset() {
+  Object.keys(N).forEach(function(k) { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  running = false;
+  paused = false;
+  runStepIndex = 0;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  dots = [];
+  activeNodes.clear();
+  badges = {};
+  lines = [];
+  glowing.clear();
+  fading = {};
+  currentStepDone = 0;
+  snapshots = [];
+  inspHeaders = [];
+  inspBody = [];
+  inspCycle = [];
+  initSteps();
+  updatePlayBtn();
+  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the identity security flow</div>';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  draw();
+}
+
+resize();
+initSteps();
+draw();
+
+// Auto-start loop mode on page load
+setTimeout(function() { toggleLoop(); }, 500);
+
+// Mobile splash animation
+(function(){
+  if(window.innerWidth>=800)return;
+  var mc=document.getElementById('mobile-canvas');
+  if(!mc)return;
+  var mx=mc.getContext('2d');
+  var dpr=window.devicePixelRatio||1;
+  var mW,mH;
+  function mResize(){
+    var r=mc.getBoundingClientRect();
+    mW=r.width;mH=r.height;
+    mc.width=mW*dpr;mc.height=mH*dpr;
+    mx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  mResize();
+  var boxes=[
+    {x:.15,y:.12,label:'Client',color:'#58a6ff'},
+    {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
+    {x:.85,y:.12,label:'Auth',color:'#f0883e'},
+    {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
+    {x:.5,y:.32,label:'id-security',color:'#f85149'},
+    {x:.85,y:.35,label:'CycleState',color:'#d2a8ff'},
+    {x:.2,y:.7,label:'Anthropic',color:'#3fb950'},
+    {x:.5,y:.75,label:'Metering',color:'#e3b341'},
+    {x:.8,y:.7,label:'Stripe',color:'#e3b341'},
+  ];
+  var particles=[];
+  function spawn(){
+    var fi=Math.floor(Math.random()*boxes.length);
+    var ti=Math.floor(Math.random()*boxes.length);
+    while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
+    var colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#f85149','#e3b341'];
+    particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      sz:2+Math.random()*3,a:.3+Math.random()*.4});
+  }
+  for(var i=0;i<12;i++)spawn();
+  function mDraw(){
+    mx.clearRect(0,0,mW,mH);
+    boxes.forEach(function(b){
+      mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
+      mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
+      mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
+      mx.fillText(b.label,b.x*mW,b.y*mH+3);
+      mx.restore();
+    });
+    particles.forEach(function(p){
+      var f=boxes[p.f],t=boxes[p.t];
+      var px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      var py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      var fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+      mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
+      mx.shadowColor=p.c;mx.shadowBlur=8;
+      mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
+      mx.restore();
+      p.p+=p.sp;
+    });
+    particles=particles.filter(function(p){return p.p<1;});
+    if(Math.random()<.2)spawn();
+    requestAnimationFrame(mDraw);
+  }
+  mDraw();
+})();
+</script>
+</body>
+</html>

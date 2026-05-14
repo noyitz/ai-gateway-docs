@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Inference Gateway — Flow Visualizers</title>
+<style>
+:root{--bg:#0a0a0f;--bg2:#161b22;--border:#21262d;--text:#e2e8f0;--dim:#8b949e;--accent:#58a6ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:48px 24px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:40px}
+.brand img{height:28px}
+.brand span{font-size:18px;font-weight:700}
+h1{font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tagline{font-size:16px;color:var(--dim);margin-bottom:48px}
+.card{display:block;text-decoration:none;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px;transition:all .2s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 32px rgba(88,166,255,.12)}
+.card-header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-title{font-size:18px;font-weight:700}
+.card-subtitle{font-size:12px;color:var(--dim);margin-top:2px}
+.card-desc{font-size:14px;color:var(--dim);line-height:1.6;margin-bottom:14px}
+.card-stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid}
+.stat-blue{color:#58a6ff;border-color:#58a6ff44;background:#58a6ff11}
+.stat-green{color:#3fb950;border-color:#3fb95044;background:#3fb95011}
+.stat-orange{color:#f0883e;border-color:#f0883e44;background:#f0883e11}
+.stat-gold{color:#e3b341;border-color:#e3b34144;background:#e3b34111}
+.stat-red{color:#f85149;border-color:#f8514944;background:#f8514911}
+.stat-purple{color:#d2a8ff;border-color:#d2a8ff44;background:#d2a8ff11}
+footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--border);text-align:center;font-size:13px;color:#484f58}
+footer a{color:#484f58;text-decoration:none}
+footer a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+
+<h1>AI Inference Gateway<br><span class="grad">Flow Visualizers</span></h1>
+<p class="tagline">Interactive animated architecture flows for the AI Inference Gateway — RHOAI 3.4 GA</p>
+
+<a href="ai-gateway-flow.html" class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:#58a6ff22;border:1px solid #58a6ff44">&#9654;</div>
+    <div>
+      <div class="card-title">AI Inference Gateway — Full Architecture</div>
+      <div class="card-subtitle">MaaS in Action</div>
+    </div>
+  </div>
+  <div class="card-desc">Complete end-to-end flow through the gateway: Kuadrant auth, rate limiting, IPP payload processing, external provider routing (Anthropic, OpenAI, Azure, Bedrock, Vertex), and llm-d on-cluster inference with P/D disaggregation.</div>
+  <div class="card-stats">
+    <span class="stat stat-blue">4 Flows</span>
+    <span class="stat stat-green">5 Providers</span>
+    <span class="stat stat-orange">35 Steps</span>
+    <span class="stat stat-purple">30+ Components</span>
+  </div>
+</a>
+
+<a href="metering/" class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:#e3b34122;border:1px solid #e3b34144">&#128176;</div>
+    <div>
+      <div class="card-title">External Metering Plugin — Chargeback Flow</div>
+      <div class="card-subtitle">Circuit Breaker + Token Usage Reporting</div>
+    </div>
+  </div>
+  <div class="card-desc">How the external-metering plugin enables enterprise chargeback: pre-request budget validation via circuit breaker, and post-response token usage reporting via CloudEvents to OpenMeter, Stripe, or custom billing systems.</div>
+  <div class="card-stats">
+    <span class="stat stat-gold">3 Flows</span>
+    <span class="stat stat-green">Happy Path</span>
+    <span class="stat stat-red">Budget Exhausted</span>
+    <span class="stat stat-orange">Fail-Open</span>
+  </div>
+</a>
+
+<a href="security-plugin/" class="card">
+  <div class="card-header">
+    <div class="card-icon" style="background:#f8514922;border:1px solid #f8514944">&#128274;</div>
+    <div>
+      <div class="card-title">Identity Security Plugin — Header Lifecycle</div>
+      <div class="card-subtitle">CycleState Store → Strip → Restore → Strip</div>
+    </div>
+  </div>
+  <div class="card-desc">How identity headers (x-maas-username, x-maas-group, x-maas-subscription) are securely managed: stored in CycleState, stripped from requests to prevent leakage to model backends, restored on responses for internal consumers (metering, Loki), and stripped again before reaching the client.</div>
+  <div class="card-stats">
+    <span class="stat stat-red">Security</span>
+    <span class="stat stat-blue">CycleState</span>
+    <span class="stat stat-gold">Metering</span>
+    <span class="stat stat-purple">23 Steps</span>
+  </div>
+</a>
+
+<footer>
+  <p>Built with <a href="https://noyitz.github.io/flowstory/">FlowStory</a> — AI-agent-first animated flow diagrams</p>
+</footer>
+
+</div>
+</body>
+</html>
