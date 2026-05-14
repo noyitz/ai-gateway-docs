@@ -193,7 +193,7 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1100, LH = 680;
+const LW = 1100, LH = 700;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -207,12 +207,12 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  // Row 1 - Hydration (y~75, ABOVE the request row, left-to-right flow order)
-  conn_locker:  { x: 170, y: 75,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
-  mcp_list:     { x: 330, y: 75,  w: 140, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
-  hydrate:      { x: 510, y: 75,  w: 160, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
-  gp_input:     { x: 710, y: 75,  w: 130, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
-  input_guard:  { x: 880, y: 75,  w: 140, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
+  // Row 1 - Hydration (y~70, ABOVE the request row)
+  conn_locker:  { x: 50,  y: 70,  w: 120, h: 45, label: 'Conn Locker', color: '#8b949e', fs: 13 },
+  mcp_list:     { x: 220, y: 70,  w: 150, h: 45, label: 'MCP List Tools', sublabel: 'allow/deny', color: '#d2a8ff', fs: 13 },
+  hydrate:      { x: 430, y: 70,  w: 170, h: 45, label: 'Hydrate Prompt', sublabel: '+ function tools', color: '#d2a8ff', fs: 13 },
+  gp_input:     { x: 660, y: 70,  w: 150, h: 45, label: 'Guardrails Prep', sublabel: 'input', color: '#f0883e', fs: 12 },
+  input_guard:  { x: 870, y: 70,  w: 150, h: 45, label: 'Input Guardrails', color: '#f0883e', fs: 12 },
 
   // Row 2 - Request (y~210)
   client:       { x: 30,  y: 215, w: 90,  h: 50, label: 'Client', type: 'icon' },
@@ -220,20 +220,20 @@ const N = {
   auth:         { x: 370, y: 205, w: 120, h: 50, label: 'Auth', color: '#58a6ff', fs: 16 },
   input_limit:  { x: 540, y: 205, w: 140, h: 50, label: 'Input Limit', color: '#58a6ff', fs: 14 },
 
-  // Row 3 - Processing (y~340)
-  convert:      { x: 50,  y: 330, w: 160, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
-  inference:    { x: 260, y: 330, w: 130, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
-  gp_output:    { x: 430, y: 330, w: 130, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
-  guardrails:   { x: 550, y: 330, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
-  output_limit: { x: 720, y: 330, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
+  // Row 3 - Processing (y~360, spread wider)
+  convert:      { x: 50,  y: 350, w: 150, h: 50, label: 'Convert to', sublabel: 'Model Router', color: '#3fb950', fs: 14 },
+  inference:    { x: 240, y: 350, w: 140, h: 50, label: 'Inference', color: '#3fb950', fs: 18 },
+  gp_output:    { x: 430, y: 350, w: 150, h: 50, label: 'Guardrails Prep', sublabel: 'output', color: '#f0883e', fs: 12 },
+  guardrails:   { x: 630, y: 350, w: 130, h: 50, label: 'Guardrails', sublabel: 'output', color: '#f0883e', fs: 14 },
+  output_limit: { x: 810, y: 350, w: 130, h: 50, label: 'Output Limit', sublabel: '(hard)', color: '#58a6ff', fs: 14 },
 
-  // Row 4 - Agentic Loop (y~470)
-  tool_invoke:  { x: 130, y: 460, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
-  assemble:     { x: 340, y: 460, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
+  // Row 4 - Agentic Loop tools (y~480)
+  tool_invoke:  { x: 140, y: 470, w: 150, h: 50, label: 'Tool Invocation', sublabel: 'MCP / File / Search', color: '#e3b341', fs: 13 },
+  assemble:     { x: 340, y: 470, w: 120, h: 50, label: 'Assemble', color: '#e3b341', fs: 16 },
 
   // Row 5 - Final (y~580)
-  dehydrate:    { x: 520, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
-  client_resp:  { x: 700, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
+  dehydrate:    { x: 600, y: 570, w: 120, h: 50, label: 'Dehydrate', color: '#8b949e', fs: 16 },
+  client_resp:  { x: 780, y: 570, w: 90,  h: 50, label: 'Client', sublabel: 'response', type: 'icon' },
 };
 
 const tips = {
@@ -417,7 +417,7 @@ function drawBounds() {
   ctx.strokeStyle = '#f8514966';
   ctx.lineWidth = ts(2);
   ctx.setLineDash([ts(8), ts(5)]);
-  ctx.roundRect(tx(100), ty(310), ts(400), ts(220), ts(12));
+  ctx.roundRect(tx(30), ty(330), ts(930), ts(210), ts(12));
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = isDark ? '#f8514912' : '#f8514908';
@@ -425,7 +425,28 @@ function drawBounds() {
   ctx.fillStyle = '#f85149';
   ctx.font = 'bold ' + ts(11) + 'px system-ui';
   ctx.textAlign = 'left';
-  ctx.fillText('Agentic Loop', tx(110), ty(325));
+  ctx.fillText('Agentic Loop', tx(40), ty(345));
+  ctx.restore();
+
+  // Permanent arrow: Conn Locker -> MCP List Tools (always visible)
+  ctx.save();
+  ctx.strokeStyle = isDark ? '#8b949e66' : '#8b949e44';
+  ctx.lineWidth = ts(2);
+  ctx.setLineDash([ts(4), ts(3)]);
+  var cl = N.conn_locker, ml = N.mcp_list;
+  ctx.beginPath();
+  ctx.moveTo(tx(cl.x + cl.w), ty(cl.y + cl.h/2));
+  ctx.lineTo(tx(ml.x), ty(ml.y + ml.h/2));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // arrowhead
+  var aAng = Math.atan2(0, 1);
+  ctx.fillStyle = isDark ? '#8b949e66' : '#8b949e44';
+  ctx.beginPath();
+  ctx.moveTo(tx(ml.x), ty(ml.y + ml.h/2));
+  ctx.lineTo(tx(ml.x - 8), ty(ml.y + ml.h/2 - 5));
+  ctx.lineTo(tx(ml.x - 8), ty(ml.y + ml.h/2 + 5));
+  ctx.fill();
   ctx.restore();
 
   // Row labels (subtle)
@@ -1021,11 +1042,13 @@ const flowSimple = [
   { t: '4. Auth -> Input Limit', mode: 'arrow', f: 'auth', to: 'input_limit', c: '#58a6ff', num: 4 },
   // 5. Input Limit -> MCP List Tools (goes UP)
   { t: '5. Input Limit -> MCP List Tools', mode: 'arrow', f: 'input_limit', to: 'mcp_list', c: '#d2a8ff', num: 5,
-    fromTop: true, toBottom: true },
-  // 6. MCP List Tools: get approved tools
-  { t: '6. MCP List Tools: get approved tools', mode: 'lightup', target: 'mcp_list', badge: 6 },
-  // 7. MCP -> Hydrate Prompt
-  { t: '7. MCP -> Hydrate Prompt', mode: 'arrow', f: 'mcp_list', to: 'hydrate', c: '#d2a8ff', num: 7 },
+    fromTop: true, fromXOff: -30, toBottom: true },
+  // 6. MCP returns approved tools -> Input Limit (goes DOWN)
+  { t: '6. MCP returns approved tools -> Input Limit', mode: 'arrow', f: 'mcp_list', to: 'input_limit', c: '#d2a8ff', num: 6,
+    fromBottom: true, toTop: true, toXOff: 30 },
+  // 7. Input Limit -> Hydrate Prompt (goes UP)
+  { t: '7. Input Limit -> Hydrate Prompt', mode: 'arrow', f: 'input_limit', to: 'hydrate', c: '#d2a8ff', num: 7,
+    fromTop: true, fromXOff: 50, toBottom: true },
   // 8. Hydrate Prompt: expand tools
   { t: '8. Hydrate Prompt: expand prompt + function tools', mode: 'lightup', target: 'hydrate', badge: 8 },
   // 9. Hydrate -> Guardrails Prep
@@ -1036,10 +1059,10 @@ const flowSimple = [
   { t: '11. Guardrails Prep -> Input Guardrails', mode: 'arrow', f: 'gp_input', to: 'input_guard', c: '#f0883e', num: 11 },
   // 12. Input Guardrails: check
   { t: '12. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 12 },
-  // 13. Input Guardrails -> Convert (waypoints: right, down between rows, left, down, right)
+  // 13. Input Guardrails -> Convert (DOWN first, then LEFT along bottom, then DOWN to Convert)
   { t: '13. Input Guardrails -> Convert to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
-    fromLeft: true, toTop: true,
-    waypoints: [{x:60, y:97}, {x:60, y:310}] },
+    fromBottom: true, toTop: true,
+    waypoints: [{x:945, y:280}, {x:20, y:280}, {x:20, y:340}] },
   // 14. Convert to Model Router
   { t: '14. Convert to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
   // 15. Convert -> Inference
