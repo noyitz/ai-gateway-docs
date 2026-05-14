@@ -1353,7 +1353,7 @@ function execStep() {
 
   if (s.mode === 'arrow') {
     if (s.f) activeNodes.add(s.f);
-    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed * (s.speed || 1), () => {
+    dots.push(new Dot(s.f, s.to, s.c, 0.04 * playbackSpeed * (s.speed || 1), () => {
       lines.push(stepLine(s));
       if (s.glow) glowing.add(s.glow);
       activeNodes.add(s.to);
