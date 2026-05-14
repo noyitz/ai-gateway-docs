@@ -420,7 +420,8 @@ function drawBounds() {
   const c = C();
 
   // Agentic Loop boundary (dashed red/coral rectangle)
-  var loopGlow = activeNodes.has('loop_area');
+  var loopBadge = badges['loop_area'];
+  var loopGlow = loopBadge != null;
   var loopPulse = loopGlow ? 0.7 : 0;
   ctx.save();
   if (loopGlow) {
@@ -441,6 +442,23 @@ function drawBounds() {
   ctx.font = 'bold ' + ts(11) + 'px system-ui';
   ctx.textAlign = 'left';
   ctx.fillText('Agentic Loop', tx(40), ty(345));
+  // Draw loop badge number on the boundary
+  if (loopBadge != null) {
+    var lb = Array.isArray(loopBadge) ? loopBadge[loopBadge.length-1] : loopBadge;
+    ctx.fillStyle = '#f85149';
+    ctx.strokeStyle = '#f85149';
+    ctx.beginPath();
+    ctx.arc(tx(500), ty(345), ts(14), 0, Math.PI*2);
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f85149';
+    ctx.font = 'bold '+ts(12)+'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lb, tx(500), ty(345));
+    ctx.textBaseline = 'alphabetic';
+  }
   ctx.restore();
 
   // Permanent arrow: Conn Locker -> MCP List Tools (always visible)
@@ -861,17 +879,17 @@ function inspStepSimple(stepNum) {
       break;
     case 9: inspStepLabel = 'Hydrate -> Guardrails Prep'; break;
     case 10: inspStepLabel = 'Guardrails Prep: prepare input checks'; break;
-    case 11:
-      inspStepLabel = 'Guardrails Prep -> Input Guardrails';
-      var bi11s = inspBody.find(l => l.id === 'b-input');
-      if (bi11s) bi11s.s = 'guard';
-      break;
+    case 11: inspStepLabel = 'Guardrails Prep -> Input Guardrails'; break;
     case 12:
       inspStepLabel = 'Input Guardrails: PASS';
       var bi12s = inspBody.find(l => l.id === 'b-input');
-      if (bi12s) bi12s.s = 'keep';
+      if (bi12s) bi12s.s = 'guard';
       break;
-    case 13: inspStepLabel = 'Input Guardrails -> Connect to Model Router'; break;
+    case 13:
+      inspStepLabel = 'Input Guardrails -> Connect to Model Router';
+      var bi13s = inspBody.find(l => l.id === 'b-input');
+      if (bi13s) bi13s.s = 'keep';
+      break;
     case 14:
       inspStepLabel = 'Connect to Model Router';
       inspCycle.push({ v: 'routed_to: openai/gpt-4o', s: 'add', id: 'c-route' });
@@ -891,18 +909,18 @@ function inspStepSimple(stepNum) {
       inspCycle = [];
       break;
     case 17: inspStepLabel = 'Inference -> Guardrails Prep'; break;
-    case 18:
-      inspStepLabel = 'Guardrails Prep: scanning output...';
-      var ro18 = inspBody.find(l => l.id === 'r-output');
-      if (ro18) ro18.s = 'guard';
-      break;
+    case 18: inspStepLabel = 'Guardrails Prep: output content filter'; break;
     case 19: inspStepLabel = 'Guardrails Prep -> Guardrails'; break;
     case 20:
       inspStepLabel = 'Guardrails: output check PASS';
       var ro20 = inspBody.find(l => l.id === 'r-output');
-      if (ro20) ro20.s = 'keep';
+      if (ro20) ro20.s = 'guard';
       break;
-    case 21: inspStepLabel = 'Guardrails -> Output Limit'; break;
+    case 21:
+      inspStepLabel = 'Guardrails -> Output Limit';
+      var ro21 = inspBody.find(l => l.id === 'r-output');
+      if (ro21) ro21.s = 'keep';
+      break;
     case 22: inspStepLabel = 'Output Limit check'; break;
     case 23: inspStepLabel = 'Output Limit -> Dehydrate'; break;
     case 24:
@@ -1116,7 +1134,7 @@ const flowSimple = [
   { t: '12. Input Guardrails: PASS', mode: 'lightup', target: 'input_guard', badge: 12 },
   // 13. Input Guardrails -> Convert (DOWN first, then LEFT along bottom, then DOWN to Convert)
   { t: '13. Input Guardrails -> Connect to Model Router', mode: 'arrow', f: 'input_guard', to: 'convert', c: '#58a6ff', num: 13,
-    fromBottom: true, toLeft: true,
+    fromBottom: true, toLeft: true, speed: 2,
     waypoints: [{x:945, y:280}, {x:20, y:280}, {x:20, y:375}] },
   // 14. Connect to Model Router
   { t: '14. Connect to Model Router', mode: 'lightup', target: 'convert', badge: 14 },
@@ -1138,7 +1156,7 @@ const flowSimple = [
   { t: '22. Output Limit: tool_use detected', mode: 'lightup', target: 'output_limit', badge: 22 },
   // 23. Output Limit -> Tool Invocation
   { t: '23. Output Limit -> Tool Invocation', mode: 'arrow', f: 'output_limit', to: 'tool_invoke', c: '#e3b341', num: 23,
-    fromBottom: true, toLeft: true,
+    fromBottom: true, toLeft: true, speed: 2,
     waypoints: [{x:875, y:440}, {x:100, y:440}, {x:100, y:495}] },
   // 24. Tool Invocation: call MCP server
   { t: '24. Tool Invocation: call MCP / File / Search', mode: 'lightup', target: 'tool_invoke', badge: 24 },
