@@ -1,7 +1,6 @@
 # Responses API — Plugin Pipeline Design
 
 **Date:** May 15, 2026
-**Author:** Noy Itzikowitz
 
 ---
 

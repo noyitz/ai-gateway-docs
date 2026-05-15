@@ -1,7 +1,6 @@
 # Responses API — Request Flow Strategy
 
 **Date:** May 15, 2026
-**Author:** Noy Itzikowitz
 
 ---
 

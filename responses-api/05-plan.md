@@ -1,7 +1,6 @@
 # Responses API — Implementation Plan
 
 **Date:** May 15, 2026
-**Author:** Noy Itzikowitz
 
 ---
 
