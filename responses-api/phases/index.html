@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responses API — Implementation Phases</title>
+<style>
+:root{--bg:#0a0a0f;--bg2:#161b22;--border:#21262d;--text:#e2e8f0;--dim:#8b949e;--accent:#58a6ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1000px;margin:0 auto;padding:48px 24px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.brand img{height:28px}
+.brand span{font-size:18px;font-weight:700}
+.back{color:var(--dim);font-size:13px;text-decoration:none;margin-bottom:24px;display:inline-block}
+.back:hover{color:var(--accent)}
+h1{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tagline{font-size:15px;color:var(--dim);margin-bottom:40px}
+.timeline{position:relative;padding-left:40px}
+.timeline::before{content:'';position:absolute;left:15px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#58a6ff,#d2a8ff,#f0883e,#3fb950,#e3b341,#f85149)}
+.phase{position:relative;margin-bottom:24px}
+.phase-dot{position:absolute;left:-33px;top:16px;width:14px;height:14px;border-radius:50%;border:2px solid}
+.phase a{display:block;text-decoration:none;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;transition:all .2s}
+.phase a:hover{border-color:var(--accent);transform:translateX(4px);box-shadow:0 4px 20px rgba(88,166,255,.1)}
+.phase-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.phase-num{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.phase-title{font-size:17px;font-weight:700}
+.phase-time{font-size:12px;color:var(--dim);margin-left:auto;flex-shrink:0}
+.phase-desc{font-size:13px;color:var(--dim);margin-bottom:10px}
+.phase-flows{display:flex;gap:6px;flex-wrap:wrap}
+.flow-tag{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<a href="../" class="back">&larr; Back to Responses API</a>
+
+<h1>Implementation <span class="grad">Phases</span></h1>
+<p class="tagline">6 phases across 18 months — from stateless pass-through to unified Praxis gateway</p>
+
+<div class="timeline">
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#58a6ff;background:#58a6ff"></div>
+  <a href="phase1.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#58a6ff22;color:#58a6ff">Phase 1</span>
+      <span class="phase-title">Foundation — Internal Pass-Through</span>
+      <span class="phase-time">Weeks 1-4</span>
+    </div>
+    <div class="phase-desc">Stateless Responses API requests reach internal vLLM models with zero translation. Auth, rate limiting, request validation.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">Flow 1: Stateless Internal</span>
+    </div>
+  </a>
+</div>
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#d2a8ff;background:#d2a8ff"></div>
+  <a href="phase2.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#d2a8ff22;color:#d2a8ff">Phase 2</span>
+      <span class="phase-title">External Models — API Translation</span>
+      <span class="phase-time">Weeks 4-8</span>
+    </div>
+    <div class="phase-desc">Route Responses API to external providers (OpenAI, Anthropic, Azure, Bedrock, Vertex) via bidirectional translation.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">Flow 1: Stateless Internal</span>
+      <span class="flow-tag" style="color:#d2a8ff;border-color:#d2a8ff44">Flow 3: External Translation</span>
+    </div>
+  </a>
+</div>
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#f0883e;background:#f0883e"></div>
+  <a href="phase3.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#f0883e22;color:#f0883e">Phase 3</span>
+      <span class="phase-title">Agentic Loop — MCP Tools & State</span>
+      <span class="phase-time">Weeks 8-16</span>
+    </div>
+    <div class="phase-desc">Multi-turn tool-calling orchestration with MCP, conversation state via OGX, response persistence.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">Flow 1</span>
+      <span class="flow-tag" style="color:#f0883e;border-color:#f0883e44">Flow 2: Agentic Loop</span>
+      <span class="flow-tag" style="color:#d2a8ff;border-color:#d2a8ff44">Flow 3</span>
+      <span class="flow-tag" style="color:#3fb950;border-color:#3fb95044">Flow 5: Multi-Turn</span>
+    </div>
+  </a>
+</div>
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#3fb950;background:#3fb950"></div>
+  <a href="phase4.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#3fb95022;color:#3fb950">Phase 4</span>
+      <span class="phase-title">Praxis Migration — Rust Filters</span>
+      <span class="phase-time">Months 6-12</span>
+    </div>
+    <div class="phase-desc">Replace Envoy + ext_proc Go plugins with inline Praxis Rust filters. StreamBuffer body inspection, re-entrant chains.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">Flow 1</span>
+      <span class="flow-tag" style="color:#f0883e;border-color:#f0883e44">Flow 2</span>
+      <span class="flow-tag" style="color:#d2a8ff;border-color:#d2a8ff44">Flow 3</span>
+      <span class="flow-tag" style="color:#3fb950;border-color:#3fb95044">Flow 5</span>
+    </div>
+  </a>
+</div>
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#e3b341;background:#e3b341"></div>
+  <a href="phase5.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#e3b34122;color:#e3b341">Phase 5</span>
+      <span class="phase-title">Full Agentic Platform — All Tools</span>
+      <span class="phase-time">Months 9-15</span>
+    </div>
+    <div class="phase-desc">Built-in tools (file_search, web_search, code_interpreter), background mode, function tool round-trip, multi-tenancy.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">Flow 1</span>
+      <span class="flow-tag" style="color:#f0883e;border-color:#f0883e44">Flow 2</span>
+      <span class="flow-tag" style="color:#d2a8ff;border-color:#d2a8ff44">Flow 3</span>
+      <span class="flow-tag" style="color:#e3b341;border-color:#e3b34144">Flow 4: External Agentic</span>
+      <span class="flow-tag" style="color:#3fb950;border-color:#3fb95044">Flow 5</span>
+      <span class="flow-tag" style="color:#79c0ff;border-color:#79c0ff44">Flow 6: Function Round-Trip</span>
+      <span class="flow-tag" style="color:#8b949e;border-color:#8b949e44">Flow 7: Background</span>
+    </div>
+  </a>
+</div>
+
+<div class="phase">
+  <div class="phase-dot" style="border-color:#f85149;background:#f85149"></div>
+  <a href="phase6.html">
+    <div class="phase-header">
+      <span class="phase-num" style="background:#f8514922;color:#f85149">Phase 6</span>
+      <span class="phase-title">Unified Gateway — Single Praxis Runtime</span>
+      <span class="phase-time">Months 12-18</span>
+    </div>
+    <div class="phase-desc">Consolidated architecture: single Praxis proxy with inline Rust filters, MCP gateway, pluggable state backends.</div>
+    <div class="phase-flows">
+      <span class="flow-tag" style="color:#58a6ff;border-color:#58a6ff44">All 7 Flows</span>
+    </div>
+  </a>
+</div>
+
+</div>
+</div>
+</body>
+</html>
