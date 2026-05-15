@@ -483,49 +483,41 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 
 **Goal:** Stateless Responses API pass-through for internal models. No agentic loop yet.
 
-```mermaid
-graph TB
-    Client([Client])
-
-    subgraph GW["AI Inference Gateway — Phase 1 (Weeks 1-4)"]
-        direction TB
-
-        subgraph Existing["Existing Components (no changes)"]
-            Proxy["Istio / Envoy<br/>(Gateway Proxy)"]
-            MaaS["MaaS API<br/>(Auth, Rate Limiting)"]
-        end
-
-        subgraph IPP["IPP Plugins (Go ext_proc)"]
-            direction LR
-            rv["🆕 request-validator<br/>(detect Responses vs<br/>Chat Completions)"]
-            bfth["body-field-to-header"]
-            bmth["base-model-to-header"]
-        end
-
-        subgraph NotYet1["NOT YET — Phase 2+"]
-            direction LR
-            at_na["api-translation<br/>(Responses support)"]
-            ak_na["apikey-injection<br/>(Responses support)"]
-        end
-
-        subgraph NotYet2["NOT YET — Phase 3"]
-            AL_na["Agentic Loop"]
-            OGX_na["OGX State Services"]
-        end
-    end
-
-    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
-
-    Client --> Proxy --> MaaS --> IPP
-    IPP -- "PASS-THROUGH<br/>no translation" --> vLLM
-    vLLM -- "SSE: response.created,<br/>output_text.delta,<br/>response.completed" --> Client
-
-    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style NotYet1 fill:#2a2a2a,stroke:#555,color:#888
-    style NotYet2 fill:#2a2a2a,stroke:#555,color:#888
-    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+  Client
+    │
+    ▼
+┌──────────────────────────────────────────────────┐
+│              AI Inference Gateway                 │
+│                                                  │
+│  ┌──────────────┐   ┌────────────────────────┐   │
+│  │ Istio/Envoy  │──▶│ MaaS API               │   │
+│  │ (proxy)      │   │ (auth, rate limiting)   │   │
+│  └──────────────┘   │ 🆕 /v1/responses route  │   │
+│                     └───────────┬────────────┘   │
+│                                 │                │
+│                                 ▼                │
+│  ┌──────────────────────────────────────────┐    │
+│  │ IPP Plugins (Go ext_proc)                │    │
+│  │                                          │    │
+│  │  🆕 request-validator                    │    │
+│  │  body-field-to-header (existing)         │    │
+│  │  base-model-to-header (existing)         │    │
+│  └─────────────────┬────────────────────────┘    │
+│                    │                             │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       │
+│      ░ NOT YET: api-translation (Phase 2) ░       │
+│      ░ NOT YET: Agentic Loop    (Phase 3) ░       │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       │
+│                    │                             │
+└────────────────────┼─────────────────────────────┘
+                     │ PASS-THROUGH (no translation)
+                     ▼
+            ┌────────────────┐
+            │ vLLM / llm-d   │
+            │ (stateless     │
+            │ /v1/responses) │
+            └────────────────┘
 ```
 
 **What each component does in Phase 1:**
@@ -554,55 +546,44 @@ graph TB
 
 **Goal:** Responses API support for external models via translation to Chat Completions.
 
-```mermaid
-graph TB
-    Client([Client])
-
-    subgraph GW["AI Inference Gateway — Phase 2 (Weeks 4-8)"]
-        direction TB
-
-        subgraph Existing["Existing Components"]
-            Proxy["Istio / Envoy"]
-            MaaS["MaaS API<br/>(Auth, Rate Limiting)"]
-        end
-
-        subgraph IPP["IPP Plugins (Go ext_proc)"]
-            direction LR
-            rv["request-validator"]
-            mpr["model-provider-resolver<br/>(ExternalModel CRD)"]
-            at["🆕 api-translation<br/>(Responses API ↔<br/>Chat Completions)"]
-            ak["apikey-injection"]
-            ng_in["🆕 guardrails<br/>(Responses format)"]
-        end
-
-        subgraph NotYet["NOT YET — Phase 3"]
-            AL_na["Agentic Loop"]
-            OGX_na["OGX State Services"]
-        end
-    end
-
-    subgraph Internal["Internal Models"]
-        vLLM["vLLM / llm-d<br/>(pass-through,<br/>no translation)"]
-    end
-
-    subgraph External["External Providers"]
-        OpenAI["OpenAI"]
-        Anthropic["Anthropic"]
-        Azure["Azure OpenAI"]
-        Bedrock["AWS Bedrock"]
-        Vertex["GCP Vertex"]
-    end
-
-    Client --> Proxy --> MaaS --> IPP
-    rv -- "internal model" --> vLLM
-    at -- "external model<br/>(translated)" --> External
-
-    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style NotYet fill:#2a2a2a,stroke:#555,color:#888
-    style Internal fill:#1a1a3a,stroke:#5C6BC0,color:#fff
-    style External fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+  Client
+    │
+    ▼
+┌──────────────────────────────────────────────────────────────┐
+│                    AI Inference Gateway                       │
+│                                                              │
+│  ┌──────────────┐   ┌──────────────────┐                    │
+│  │ Istio/Envoy  │──▶│ MaaS API         │                    │
+│  │ (proxy)      │   │ (auth, rate lim) │                    │
+│  └──────────────┘   └────────┬─────────┘                    │
+│                              │                              │
+│                              ▼                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ IPP Plugins (Go ext_proc)                            │   │
+│  │                                                      │   │
+│  │  request-validator                                   │   │
+│  │  model-provider-resolver (ExternalModel CRD)         │   │
+│  │  🆕 api-translation (Responses ↔ Chat Completions)   │   │
+│  │  apikey-injection                                    │   │
+│  │  🆕 guardrails (Responses API format)                │   │
+│  └──────────┬───────────────────────┬───────────────────┘   │
+│             │                       │                       │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                 │
+│      ░ NOT YET: Agentic Loop (Phase 3)    ░                 │
+│      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                 │
+│             │                       │                       │
+└─────────────┼───────────────────────┼───────────────────────┘
+              │                       │
+    internal  │              external │ (translated)
+    (no xlat) │                       │
+              ▼                       ▼
+     ┌────────────────┐    ┌─────────────────────┐
+     │ vLLM / llm-d   │    │ External Providers   │
+     │ (pass-through) │    │ OpenAI, Anthropic,   │
+     └────────────────┘    │ Azure, Bedrock,      │
+                           │ Vertex               │
+                           └─────────────────────┘
 ```
 
 **What each component does in Phase 2:**
@@ -632,64 +613,56 @@ graph TB
 
 **Goal:** Integrate OGX-backed agentic loop for internal models with MCP tool support. Most agentic plugins already exist in OGX — this phase is integration, not greenfield.
 
-```mermaid
-graph TB
-    Client([Client])
-
-    subgraph GW["AI Inference Gateway — Phase 3 (Weeks 8-16)"]
-        direction TB
-
-        subgraph Existing["Existing Components"]
-            Proxy["Istio / Envoy"]
-            MaaS["MaaS API"]
-        end
-
-        subgraph IPP["IPP Intake Plugins (Go ext_proc)"]
-            direction LR
-            rv["request-validator"]
-            mpr["model-provider-resolver"]
-            at["api-translation"]
-            ak["apikey-injection"]
-        end
-
-        subgraph AL["🆕 Agentic Loop (Praxis / vLLM Agentic API)"]
-            direction TB
-            cm["conversation-manager<br/>⬅ reuse OGX"]
-            tr["tool-registry<br/>⬅ reuse OGX"]
-            guard["guardrails<br/>(input + output)"]
-            ic["inference-caller<br/>⬅ reuse OGX"]
-            lc["loop-controller<br/>⬅ reuse OGX"]
-            mcp_exec["mcp-executor<br/>⬅ reuse OGX"]
-            rs["response-store<br/>⬅ reuse OGX / Agentic API"]
-        end
-
-        subgraph ExtSvc["External Services (reused from OGX)"]
-            OGX["OGX<br/>(Conversations, Files,<br/>VectorDB, Response Store)"]
-            MCP["MCP Servers"]
-            NeMo["Guardrails Service"]
-        end
-    end
-
-    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
-    ExtProv["External Providers"]
-
-    Client --> Proxy --> MaaS --> IPP
-    IPP -- "internal +<br/>stateful" --> AL
-    IPP -- "external" --> ExtProv
-
-    cm <--> OGX
-    rs <--> OGX
-    mcp_exec <--> MCP
-    guard <--> NeMo
-    ic -- "no translation" --> vLLM
-    lc -- "loop back" --> ic
-
-    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style AL fill:#3a2a0a,stroke:#FF9800,color:#fff
-    style ExtSvc fill:#1a1a3a,stroke:#5C6BC0,color:#fff
-    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+  Client
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       AI Inference Gateway                          │
+│                                                                     │
+│  ┌──────────────┐   ┌──────────────────┐                           │
+│  │ Istio/Envoy  │──▶│ MaaS API         │                           │
+│  │ (proxy)      │   │ (auth, rate lim) │                           │
+│  └──────────────┘   └────────┬─────────┘                           │
+│                              │                                     │
+│                              ▼                                     │
+│  ┌──────────────────────────────────────────┐                      │
+│  │ IPP Intake Plugins (Go ext_proc)         │                      │
+│  │  request-validator, model-provider-      │                      │
+│  │  resolver, api-translation, apikey-inj   │                      │
+│  └──────────┬───────────────────┬───────────┘                      │
+│             │ internal+stateful │ external                         │
+│             ▼                   ▼                                  │
+│  ┌──────────────────────────────────────────┐   ┌───────────────┐ │
+│  │ 🆕 Agentic Loop                          │   │ External      │ │
+│  │    (Praxis / vLLM Agentic API)           │   │ Providers     │ │
+│  │                                          │   │ (OpenAI,      │ │
+│  │  conversation-manager   ◄─ reuse OGX    │   │  Anthropic,   │ │
+│  │  tool-registry          ◄─ reuse OGX    │   │  Azure,       │ │
+│  │  guardrails (in+out)                    │   │  Bedrock,     │ │
+│  │  inference-caller       ◄─ reuse OGX    │   │  Vertex)      │ │
+│  │  loop-controller        ◄─ reuse OGX    │   └───────────────┘ │
+│  │  mcp-executor           ◄─ reuse OGX    │                     │
+│  │  response-store    ◄─ reuse OGX/AgAPI   │                     │
+│  └───────┬──────────┬──────────┬────────────┘                     │
+│          │          │          │                                   │
+│          ▼          ▼          ▼                                   │
+│  ┌───────────┐ ┌─────────┐ ┌────────────┐                        │
+│  │ OGX       │ │ MCP     │ │ Guardrails │                        │
+│  │ (convos,  │ │ Servers │ │ Service    │                        │
+│  │  files,   │ │         │ │ (NeMo)     │                        │
+│  │  VDB,     │ │         │ │            │                        │
+│  │  store)   │ │         │ │            │                        │
+│  └───────────┘ └─────────┘ └────────────┘                        │
+│                                                                     │
+└──────────────────────┬──────────────────────────────────────────────┘
+                       │ no translation (internal)
+                       ▼
+              ┌────────────────┐
+              │ vLLM / llm-d   │
+              │ (stateless     │
+              │ /v1/responses) │
+              └────────────────┘
 ```
 
 **What each component does in Phase 3:**
@@ -763,79 +736,63 @@ graph TB
 
 ### Target Architecture Diagram (Long-Term)
 
-```mermaid
-graph TB
-    Client([Client / Agent])
-
-    subgraph GW["AI Inference Gateway"]
-        direction TB
-
-        subgraph Praxis["Praxis Proxy (Rust)"]
-            direction TB
-
-            subgraph Intake["Intake Filters (run once)"]
-                auth["auth"]
-                rl["rate-limit"]
-                rv["request-validator"]
-                cm["conversation-manager"]
-                tr["tool-registry"]
-                mr["model-resolver"]
-            end
-
-            subgraph Loop["Loop Filters (re-entrant for Responses API)"]
-                at["api-translation<br/>(external only)"]
-                ic["inference-caller"]
-                guard["guardrails"]
-                tch["tool-call-handler"]
-                lc["loop-controller"]
-                mcp_exec["mcp-executor"]
-                ste["server-tool-executor"]
-            end
-
-            subgraph Completion["Completion Filters"]
-                ra["response-assembler"]
-                rs["response-store"]
-            end
-        end
-
-        subgraph ExtServices["External Services"]
-            OGX["OGX State Services<br/>(Files, VectorDB, Conversations, Search)"]
-            MCP["MCP Servers"]
-            NeMo["Guardrails Service"]
-        end
-
-        MaaSBox["MaaS API<br/>(Auth, API Keys, Model Catalog, Subscriptions)"]
-    end
-
-    subgraph Backends["Inference Backends"]
-        vLLM_A["vLLM Pod A<br/>(llm-d)"]
-        vLLM_B["vLLM Pod B<br/>(llm-d)"]
-        ExtProv["External Provider<br/>(OpenAI / Anthropic / Azure / etc.)"]
-    end
-
-    Client --> Praxis
-    Intake --> Loop
-    Loop -- "re-entrant loop" --> Loop
-    Loop --> Completion
-    Completion --> Client
-
-    cm <--> OGX
-    guard <--> NeMo
-    mcp_exec <--> MCP
-    ste <--> OGX
-    rs <--> OGX
-
-    ic --> vLLM_A
-    ic --> vLLM_B
-    at --> ExtProv
-
-    style Praxis fill:#0d1117,stroke:#58a6ff,color:#fff
-    style Intake fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style Loop fill:#3a2a0a,stroke:#FF9800,color:#fff
-    style Completion fill:#1a1a3a,stroke:#5C6BC0,color:#fff
-    style ExtServices fill:#1a1a2a,stroke:#7C4DFF,color:#fff
-    style Backends fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0a0a15,stroke:#30363d,color:#fff
+```
+  Client
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       AI Inference Gateway                          │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │                    Praxis Proxy (Rust)                         │ │
+│  │                                                               │ │
+│  │  ┌─── Intake Filters (run once) ────┐                        │ │
+│  │  │  auth                            │                        │ │
+│  │  │  rate-limit                      │                        │ │
+│  │  │  request-validator               │                        │ │
+│  │  │  conversation-manager            │                        │ │
+│  │  │  tool-registry                   │                        │ │
+│  │  │  model-resolver                  │                        │ │
+│  │  └──────────────┬───────────────────┘                        │ │
+│  │                 │                                            │ │
+│  │                 ▼                                            │ │
+│  │  ┌─── Loop Filters (re-entrant) ───┐                        │ │
+│  │  │  api-translation (ext only)     │                        │ │
+│  │  │  inference-caller          ─────┼───▶ vLLM / Providers   │ │
+│  │  │  guardrails                     │                        │ │
+│  │  │  tool-call-handler              │                        │ │
+│  │  │  loop-controller           ─────┼──╮ loop back           │ │
+│  │  │  mcp-executor                   │  │                     │ │
+│  │  │  server-tool-executor           │  │                     │ │
+│  │  └──────────────┬──────────────────┘  │                     │ │
+│  │                 │              ▲───────╯                     │ │
+│  │                 ▼                                            │ │
+│  │  ┌─── Completion Filters ──────────┐                        │ │
+│  │  │  response-assembler             │                        │ │
+│  │  │  response-store                 │                        │ │
+│  │  └─────────────────────────────────┘                        │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                    │          │          │                          │
+│                    ▼          ▼          ▼                          │
+│            ┌───────────┐ ┌─────────┐ ┌────────────┐               │
+│            │ OGX       │ │ MCP     │ │ Guardrails │               │
+│            │ (files,   │ │ Servers │ │ Service    │               │
+│            │  VDB,     │ │         │ │            │               │
+│            │  convos,  │ │         │ │            │               │
+│            │  search)  │ │         │ │            │               │
+│            └───────────┘ └─────────┘ └────────────┘               │
+│                                                                     │
+│            ┌────────────────────────────────────────┐               │
+│            │  MaaS API (auth, keys, catalog, quotas) │               │
+│            └────────────────────────────────────────┘               │
+│                                                                     │
+└──────────────────────┬──────────────────────┬───────────────────────┘
+                       │                      │
+                       ▼                      ▼
+         ┌──────────────────────┐   ┌──────────────────┐
+         │ vLLM Pods (llm-d)   │   │ External Provider │
+         │ Pod A    Pod B      │   │ (OpenAI, etc.)    │
+         └──────────────────────┘   └──────────────────┘
 ```
 
 ---
