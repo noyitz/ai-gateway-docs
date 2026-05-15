@@ -4,38 +4,42 @@
 
 ---
 
-## Meeting Decisions and Agreements (May 15, 2026)
+## Project Map and Maturity
 
-### Architecture Split
+### Core Infrastructure (Our Stack)
 
-1. **vLLM core** will implement a **stateless** Responses API (pure inference shape, no state management, no tool execution)
-2. **vLLM Agentic API** will implement the **stateful** Responses API (agentic loop, tool calling, state)
-3. **OGX** should handle state management: Files, Vector Stores, Search, Conversations
-4. **Praxis** is a more AI-native proxy with better abstractions than Envoy ext_proc (payload processing, plugin execution, re-entrant loops)
+| Project | Repo | Language | Maturity | What It Does |
+|---------|------|----------|----------|-------------|
+| **IPP (new upstream)** | `llm-d/llm-d-inference-payload-processor` | Go | Early (Apr 2026, no releases) | Envoy ext_proc for payload processing. Plugin framework with CycleState. |
+| **IPP (old upstream)** | `kubernetes-sigs/gateway-api-inference-extension` | Go | GA (v1.5.0) | Original home of BBR/EPP. BBR code migrated to new repo. |
+| **IPP plugins (downstream)** | `opendatahub-io/ai-gateway-payload-processing` | Go | Active (273 PRs, 97/97 E2E) | 5 production plugins. Still on old upstream dependency. |
+| **MaaS** | `opendatahub-io/models-as-a-service` | Go | Pre-GA (v0.1.1) | K8s platform: auth, rate limiting, API keys, model catalog. |
+| **Praxis** | `praxis-proxy/praxis` | Rust | Early (v0.3.1) | AI-native proxy with StreamBuffer, re-entrant filter chains, MCP classifier. |
 
-### Two Distinct Pathways
+### Ecosystem (Community Projects)
 
-5. **Internal models (open-weight on vLLM/llm-d):** NO API translation. Full fidelity pass-through. Gateway adds stateful features as a layer on top without changing the inference shape.
-6. **External models (SaaS providers):** API translation remains necessary. Different chain of plugins for auth, key injection, format conversion.
+| Project | Repo | Language | Maturity | What It Does |
+|---------|------|----------|----------|-------------|
+| **vLLM core** | `vllm-project/vllm` | Python/C++ | Production (50K+ stars) | Leading inference engine. Stateless Responses API merged (Jul 2025). |
+| **vLLM Agentic API** | `vllm-project/agentic-api` | Rust (migrating) | Pre-MVP (2 months) | Stateful gateway for vLLM: response store, agentic loop, tool execution. |
+| **OGX** (formerly LlamaStack) | `ogx-ai/ogx` | Python | Production (8.4K stars, 2 years) | Full agentic API server. Files, Vector Stores, Conversations, Safety. 23 providers. Open Responses conformant. |
+| **Open Responses** | `openresponses/openresponses` | Spec | Early | Emerging standard for Responses API. Items, events, tool taxonomy, agentic loop phases. |
 
-### Guardrails
+### Maturity Assessment
 
-7. Guardrails are **not** transparent inference proxies. They are separate endpoints that receive the payload explicitly. They must understand the Responses API format natively (not via translation to Chat Completions).
-8. Input guardrails work on user messages (similar to today). Output guardrails on model responses are harder -- if the guardrail doesn't understand Responses format natively, it creates issues.
+```
+Production-Ready    ██████████████████████████████  vLLM core (inference)
+                    ██████████████████████████████  OGX (agentic server)
 
-### Where to Write Code
+Active/Functional   ████████████████████░░░░░░░░░░  IPP plugins (downstream)
+                    ████████████████░░░░░░░░░░░░░░  MaaS
+                    ██████████████░░░░░░░░░░░░░░░░  IPP (new upstream)
 
-9. **Depend on Praxis** in agentic APIs (use Praxis as core layer)
-10. **Depend on OGX** in agentic APIs for DB/state services (or make it pluggable)
-11. Code goes into **agentic-apis/fork** and other logic areas where rational
-12. Wait a few days before kicking off so others can weigh in
+Early/Rapid Dev     ████████░░░░░░░░░░░░░░░░░░░░░░  Praxis
+                    ██████░░░░░░░░░░░░░░░░░░░░░░░░  vLLM Agentic API
 
-### Open Items
-
-13. **ITS (Intelligent Ticket System)** -- raised during sync, needs team alignment
-14. A roadmap for the gateway piece is needed
-15. A Dev channel for gateway coordination will be created
-16. Follow-up needed with customers on Responses API interest
+Spec/Design         ████░░░░░░░░░░░░░░░░░░░░░░░░░░  Open Responses
+```
 
 ---
 
