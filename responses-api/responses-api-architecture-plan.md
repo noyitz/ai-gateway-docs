@@ -154,55 +154,95 @@ The fundamental insight from the meeting is that Responses API support requires 
 
 ### 4.1 Internal Models (Open-Weight on vLLM/llm-d)
 
-```
-                        AI Inference Gateway
-┌────────────────────────────────────────────────────────────────┐
-│                                                                │
-│  Client ──► Istio/Praxis ──► MaaS API ──► Agentic Loop ──►   │
-│             (Gateway)        (auth/RL)    (Praxis/vLLM        │
-│                                            Agentic API)       │
-│                                               │               │
-│                                    ┌──────────┼──────────┐    │
-│                                    │          │          │    │
-│                                    ▼          ▼          ▼    │
-│                                  OGX      MCP Server   Tools  │
-│                              (Files,VDB,  (tool disc   (web   │
-│                               Conv,Search) + exec)    search) │
-│                                    │                          │
-│                                    │    NO TRANSLATION        │
-│                                    │    Full fidelity          │
-│                                    ▼                          │
-│                              vLLM / llm-d                     │
-│                          (stateless /v1/responses)            │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    Client([Client / Agent])
+
+    subgraph GW["AI Inference Gateway"]
+        direction TB
+        Proxy["Istio / Praxis<br/>(Gateway Proxy)"]
+        MaaS["MaaS API<br/>(Auth, Rate Limiting, Model Catalog)"]
+        IPP["IPP Intake Plugins<br/>(request-validator, model-resolver)"]
+
+        subgraph AL["Agentic Loop (Praxis / vLLM Agentic API)"]
+            direction TB
+            Hydrate["Hydrate Context<br/>(previous_response_id → full history)"]
+            Guardrails["Guardrails<br/>(input + output per iteration)"]
+            InfCall["Inference Caller"]
+            ToolDetect["Tool Call Detection"]
+            ToolExec["Tool Execution"]
+            LoopCtrl["Loop Controller"]
+        end
+
+        subgraph Services["External Services"]
+            OGX["OGX<br/>(Files, VectorDB,<br/>Conversations, Search)"]
+            MCP["MCP Servers<br/>(Tool Discovery + Exec)"]
+            NeMo["Guardrails Service"]
+        end
+    end
+
+    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
+
+    Client --> Proxy --> MaaS --> IPP --> Hydrate
+    Hydrate <--> OGX
+    Hydrate --> Guardrails
+    Guardrails <--> NeMo
+    Guardrails --> InfCall
+
+    InfCall -- "NO TRANSLATION<br/>Full Responses API fidelity" --> vLLM
+    vLLM --> ToolDetect
+    ToolDetect --> LoopCtrl
+    LoopCtrl -- "tool_call detected" --> ToolExec
+    ToolExec <--> MCP
+    ToolExec <--> OGX
+    LoopCtrl -- "loop back" --> InfCall
+    LoopCtrl -- "done" --> Client
+
+    style AL fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style Services fill:#1a1a3a,stroke:#5C6BC0,color:#fff
+    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0d1117,stroke:#30363d,color:#fff
 ```
 
 **Key principle:** The request hits vLLM in **exactly the same format** the client sent it. The gateway does NOT translate Responses → Chat Completions → back. It hydrates context (conversation retrieval, previous_response_id resolution), applies guardrails, executes tools, and loops -- but the inference call itself is the full Responses API payload with no format changes.
 
 ### 4.2 External Models (SaaS Providers)
 
-```
-                        AI Inference Gateway
-┌────────────────────────────────────────────────────────────────┐
-│                                                                │
-│  Client ──► Istio/Praxis ──► MaaS API ──► IPP Pipeline ──►   │
-│             (Gateway)        (auth/RL)    (payload proc)      │
-│                                               │               │
-│                                    ┌──────────┼──────────┐    │
-│                                    │          │          │    │
-│                                    ▼          ▼          ▼    │
-│                              model-provider  api-trans  apikey │
-│                              -resolver       -lation    -inj   │
-│                                                │              │
-│                                    ┌───────────┤              │
-│                                    │           │              │
-│                                    ▼           ▼              │
-│                              OpenAI API   Anthropic API       │
-│                              Azure API    Bedrock API         │
-│                              Vertex API                       │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    Client([Client / Agent])
+
+    subgraph GW["AI Inference Gateway"]
+        direction TB
+        Proxy["Istio / Praxis<br/>(Gateway Proxy)"]
+        MaaS["MaaS API<br/>(Auth, Rate Limiting, Model Catalog)"]
+
+        subgraph IPP["IPP Pipeline (Payload Processing)"]
+            direction TB
+            ModelResolver["model-provider-resolver<br/>(ExternalModel CRD lookup)"]
+            ApiTrans["api-translation<br/>(OpenAI ↔ Provider format)"]
+            ApikeyInj["apikey-injection<br/>(Provider credentials from Secret)"]
+        end
+    end
+
+    subgraph Providers["External Providers"]
+        OpenAI["OpenAI API"]
+        Anthropic["Anthropic API"]
+        Azure["Azure OpenAI"]
+        Bedrock["AWS Bedrock"]
+        Vertex["GCP Vertex AI"]
+    end
+
+    Client --> Proxy --> MaaS --> ModelResolver
+    ModelResolver --> ApiTrans --> ApikeyInj
+    ApikeyInj --> Providers
+
+    Providers --> ApiTrans
+    ApiTrans -- "Translated response" --> Client
+
+    style IPP fill:#1a1a3a,stroke:#5C6BC0,color:#fff
+    style Providers fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0d1117,stroke:#30363d,color:#fff
 ```
 
 **Key principle:** External models do NOT support the Responses API natively (only OpenAI does, and even there you'd use their API directly). For external models, the gateway does the traditional Chat Completions flow with API translation. If a client sends Responses API format, the gateway must translate to Chat Completions for the external provider, then translate the response back. This is lossy but necessary for SaaS models we don't control.
@@ -283,114 +323,108 @@ The fundamental insight from the meeting is that Responses API support requires 
 
 ### Flow 1: Stateless Responses API (Internal Model, Simple Completion)
 
-```
-Client                   Gateway        MaaS API       IPP          vLLM/llm-d
-  │                        │               │            │               │
-  │ POST /v1/responses     │               │            │               │
-  │ {model:"llama-4",      │               │            │               │
-  │  input:"Hello"}        │               │            │               │
-  │───────────────────────►│               │            │               │
-  │                        │ Validate key  │            │               │
-  │                        │──────────────►│            │               │
-  │                        │  ◄────────────│            │               │
-  │                        │               │            │               │
-  │                        │ Rate limit check            │               │
-  │                        │──────────────────────────►│               │
-  │                        │  ◄────────────────────────│               │
-  │                        │               │            │               │
-  │                        │ PASS-THROUGH (no translation)              │
-  │                        │───────────────────────────────────────────►│
-  │                        │               │            │               │
-  │                        │  ◄─────────────────────────────────────────│
-  │   SSE: response.created│               │            │               │
-  │   SSE: output_text.delta               │            │               │
-  │   SSE: response.completed              │            │               │
-  │◄───────────────────────│               │            │               │
+```mermaid
+sequenceDiagram
+    actor Client
+    participant GW as Gateway<br/>(Istio/Praxis)
+    participant MaaS as MaaS API
+    participant IPP as IPP Intake<br/>Plugins
+    participant vLLM as vLLM / llm-d
+
+    Client->>GW: POST /v1/responses<br/>{model:"llama-4", input:"Hello"}
+    GW->>MaaS: Validate API key
+    MaaS-->>GW: OK (key valid, subscription matched)
+    GW->>IPP: request-validator, rate-limit check
+    IPP-->>GW: OK (within quota)
+
+    Note over GW,vLLM: PASS-THROUGH — no translation for internal models
+
+    GW->>vLLM: POST /v1/responses (unchanged payload)
+    vLLM-->>GW: SSE stream
+    GW-->>Client: SSE: response.created
+    GW-->>Client: SSE: output_text.delta (tokens...)
+    GW-->>Client: SSE: response.completed
 ```
 
 ### Flow 2: Stateful Agentic Loop (Internal Model, MCP Tools)
 
-```
-Client              Gateway/Praxis    Agentic Loop     OGX           MCP Server    vLLM
-  │                      │                │              │               │            │
-  │ POST /v1/responses   │                │              │               │            │
-  │ {model:"llama-4",    │                │              │               │            │
-  │  input:"Search for.."│                │              │               │            │
-  │  tools:[{type:"mcp", │                │              │               │            │
-  │   server:{url:...}}],│                │              │               │            │
-  │  previous_response_id│                │              │               │            │
-  │   :"resp_abc123"}    │                │              │               │            │
-  │─────────────────────►│                │              │               │            │
-  │                      │  Auth + RL     │              │               │            │
-  │                      │───────────────►│              │               │            │
-  │                      │                │  Hydrate     │               │            │
-  │                      │                │  prev resp   │               │            │
-  │                      │                │─────────────►│               │            │
-  │                      │                │  ◄───────────│               │            │
-  │                      │                │              │               │            │
-  │                      │                │  Discover    │               │            │
-  │                      │                │  MCP tools   │               │            │
-  │                      │                │─────────────────────────────►│            │
-  │                      │                │  ◄─────────────────────────  │            │
-  │                      │                │              │               │            │
-  │                      │                │  Input guardrails            │            │
-  │                      │                │              │               │            │
-  │  ┌─────────────────  │                │  INFERENCE (no translation)  │            │
-  │  │ LOOP ITERATION 1  │                │─────────────────────────────────────────►│
-  │  │                   │                │  ◄───────────────────────────────────────│
-  │  │                   │                │  tool_call detected          │            │
-  │  │                   │                │              │               │            │
-  │  │                   │                │  Output guardrails           │            │
-  │  │                   │                │              │               │            │
-  │  │                   │                │  Execute     │               │            │
-  │  │                   │                │  MCP tool    │               │            │
-  │  │                   │                │─────────────────────────────►│            │
-  │  │                   │                │  ◄─────────────────────────  │            │
-  │  └─────────────────  │                │              │               │            │
-  │  ┌─────────────────  │                │              │               │            │
-  │  │ LOOP ITERATION 2  │                │  INFERENCE (with tool result)│            │
-  │  │                   │                │─────────────────────────────────────────►│
-  │  │                   │                │  ◄───────────────────────────────────────│
-  │  │                   │                │  Final text response         │            │
-  │  └─────────────────  │                │              │               │            │
-  │                      │                │  Persist     │               │            │
-  │                      │                │─────────────►│               │            │
-  │                      │                │              │               │            │
-  │  SSE events stream   │                │              │               │            │
-  │◄─────────────────────│                │              │               │            │
+```mermaid
+sequenceDiagram
+    actor Client
+    participant GW as Gateway<br/>(Istio/Praxis)
+    participant MaaS as MaaS API
+    participant IPP as IPP Intake<br/>Plugins
+    participant AL as Agentic Loop<br/>(Praxis / Agentic API)
+    participant OGX as OGX<br/>(State Services)
+    participant MCP as MCP Server
+    participant Guards as Guardrails<br/>Service
+    participant vLLM as vLLM / llm-d
+
+    Client->>GW: POST /v1/responses<br/>{model:"llama-4", input:"Search for...",<br/>tools:[{type:"mcp"}],<br/>previous_response_id:"resp_abc123"}
+
+    GW->>MaaS: Validate API key
+    MaaS-->>GW: OK
+
+    GW->>IPP: request-validator, rate-limit, model-resolver
+    IPP-->>GW: OK (internal model detected)
+
+    GW->>AL: Forward to Agentic Loop
+
+    AL->>OGX: Hydrate previous_response_id → full conversation history
+    OGX-->>AL: Conversation context + previous items
+
+    AL->>MCP: tools/list (discover available tools)
+    MCP-->>AL: Tool catalog
+
+    AL->>Guards: Input guardrails check
+    Guards-->>AL: OK
+
+    rect rgb(30, 50, 30)
+        Note over AL,vLLM: LOOP ITERATION 1
+        AL->>vLLM: POST /v1/responses (hydrated, no translation)
+        vLLM-->>AL: Response with tool_call item
+        AL->>Guards: Output guardrails check
+        Guards-->>AL: OK
+        AL->>MCP: Execute tool call
+        MCP-->>AL: Tool result
+    end
+
+    rect rgb(30, 50, 30)
+        Note over AL,vLLM: LOOP ITERATION 2
+        AL->>vLLM: POST /v1/responses (with tool result injected)
+        vLLM-->>AL: Final text response (no more tool calls)
+    end
+
+    AL->>OGX: Persist response + conversation state
+    AL-->>Client: SSE: response.created, output items, response.completed
 ```
 
 ### Flow 3: External Model (SaaS Provider, Chat Completions Translation)
 
-```
-Client              Gateway         MaaS API       IPP Pipeline       OpenAI/Anthropic
-  │                    │               │               │                    │
-  │ POST /v1/responses │               │               │                    │
-  │ or /v1/chat/comp   │               │               │                    │
-  │────────────────────►               │               │                    │
-  │                    │ Auth           │               │                    │
-  │                    │──────────────►│               │                    │
-  │                    │ ◄─────────────│               │                    │
-  │                    │               │               │                    │
-  │                    │ model-provider-resolver        │                    │
-  │                    │──────────────────────────────►│                    │
-  │                    │               │               │                    │
-  │                    │               │  api-translation                   │
-  │                    │               │  (OpenAI→Anthropic format)         │
-  │                    │               │──────────────►│                    │
-  │                    │               │               │                    │
-  │                    │               │  apikey-injection                  │
-  │                    │               │──────────────►│                    │
-  │                    │               │               │                    │
-  │                    │               │               │  Translated request│
-  │                    │               │               │───────────────────►│
-  │                    │               │               │  ◄─────────────────│
-  │                    │               │               │                    │
-  │                    │               │  api-translation (response)        │
-  │                    │               │──────────────►│                    │
-  │                    │               │               │                    │
-  │  Response          │               │               │                    │
-  │◄───────────────────│               │               │                    │
+```mermaid
+sequenceDiagram
+    actor Client
+    participant GW as Gateway<br/>(Istio/Praxis)
+    participant MaaS as MaaS API
+    participant IPP as IPP Pipeline
+    participant Provider as External Provider<br/>(OpenAI / Anthropic / Azure / etc.)
+
+    Client->>GW: POST /v1/chat/completions<br/>{model:"gpt-4", messages:[...]}
+    GW->>MaaS: Validate API key
+    MaaS-->>GW: OK
+
+    GW->>IPP: model-provider-resolver
+    Note over IPP: Lookup ExternalModel CRD<br/>→ resolve provider, endpoint, credentials
+
+    IPP->>IPP: api-translation (request)<br/>OpenAI → provider-native format
+    IPP->>IPP: apikey-injection<br/>Inject provider credentials from K8s Secret
+
+    IPP->>Provider: Translated request<br/>(provider-native format + auth headers)
+    Provider-->>IPP: Provider-native response
+
+    IPP->>IPP: api-translation (response)<br/>Provider-native → OpenAI format
+
+    IPP-->>Client: OpenAI-format response
 ```
 
 ---
@@ -571,50 +605,79 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 
 ### Target Architecture Diagram (Long-Term)
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     AI Inference Gateway                          │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │                    Praxis Proxy (Rust)                      │ │
-│  │                                                             │ │
-│  │  ┌─── Intake Filters ───┐  ┌─── Loop Filters ──────────┐  │ │
-│  │  │ auth                 │  │ api-translation (ext only) │  │ │
-│  │  │ rate-limit           │  │ inference-caller           │  │ │
-│  │  │ request-validator    │  │ guardrails                 │  │ │
-│  │  │ conversation-manager │  │ tool-call-handler          │  │ │
-│  │  │ tool-registry        │  │ loop-controller            │  │ │
-│  │  │ model-resolver       │  │ mcp-executor               │  │ │
-│  │  └──────────────────────┘  │ server-tool-executor       │  │ │
-│  │                            └──── RE-ENTRANT LOOP ───────┘  │ │
-│  │                                                             │ │
-│  │  ┌─── Completion Filters ─┐                                │ │
-│  │  │ response-assembler     │                                │ │
-│  │  │ response-store         │                                │ │
-│  │  └────────────────────────┘                                │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                            │                                     │
-│              ┌─────────────┼─────────────┐                      │
-│              ▼             ▼             ▼                       │
-│         ┌────────┐   ┌─────────┐   ┌──────────┐                │
-│         │  OGX   │   │   MCP   │   │ NeMo     │                │
-│         │ State  │   │ Servers │   │ Guards   │                │
-│         │Services│   │         │   │          │                │
-│         └────────┘   └─────────┘   └──────────┘                │
-│                                                                  │
-│         ┌────────────────────────────────────────┐              │
-│         │        MaaS API (auth, keys, catalog)  │              │
-│         └────────────────────────────────────────┘              │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-        ┌──────────┐   ┌──────────┐   ┌──────────────┐
-        │  vLLM    │   │  vLLM    │   │  External    │
-        │ Pod A    │   │ Pod B    │   │  Provider    │
-        │ (llm-d) │   │ (llm-d) │   │ (OpenAI/etc) │
-        └──────────┘   └──────────┘   └──────────────┘
+```mermaid
+graph TB
+    Client([Client / Agent])
+
+    subgraph GW["AI Inference Gateway"]
+        direction TB
+
+        subgraph Praxis["Praxis Proxy (Rust)"]
+            direction TB
+
+            subgraph Intake["Intake Filters (run once)"]
+                auth["auth"]
+                rl["rate-limit"]
+                rv["request-validator"]
+                cm["conversation-manager"]
+                tr["tool-registry"]
+                mr["model-resolver"]
+            end
+
+            subgraph Loop["Loop Filters (re-entrant for Responses API)"]
+                at["api-translation<br/>(external only)"]
+                ic["inference-caller"]
+                guard["guardrails"]
+                tch["tool-call-handler"]
+                lc["loop-controller"]
+                mcp_exec["mcp-executor"]
+                ste["server-tool-executor"]
+            end
+
+            subgraph Completion["Completion Filters"]
+                ra["response-assembler"]
+                rs["response-store"]
+            end
+        end
+
+        subgraph ExtServices["External Services"]
+            OGX["OGX State Services<br/>(Files, VectorDB, Conversations, Search)"]
+            MCP["MCP Servers"]
+            NeMo["Guardrails Service"]
+        end
+
+        MaaSBox["MaaS API<br/>(Auth, API Keys, Model Catalog, Subscriptions)"]
+    end
+
+    subgraph Backends["Inference Backends"]
+        vLLM_A["vLLM Pod A<br/>(llm-d)"]
+        vLLM_B["vLLM Pod B<br/>(llm-d)"]
+        ExtProv["External Provider<br/>(OpenAI / Anthropic / Azure / etc.)"]
+    end
+
+    Client --> Praxis
+    Intake --> Loop
+    Loop -- "re-entrant loop" --> Loop
+    Loop --> Completion
+    Completion --> Client
+
+    cm <--> OGX
+    guard <--> NeMo
+    mcp_exec <--> MCP
+    ste <--> OGX
+    rs <--> OGX
+
+    ic --> vLLM_A
+    ic --> vLLM_B
+    at --> ExtProv
+
+    style Praxis fill:#0d1117,stroke:#58a6ff,color:#fff
+    style Intake fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style Loop fill:#3a2a0a,stroke:#FF9800,color:#fff
+    style Completion fill:#1a1a3a,stroke:#5C6BC0,color:#fff
+    style ExtServices fill:#1a1a2a,stroke:#7C4DFF,color:#fff
+    style Backends fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0a0a15,stroke:#30363d,color:#fff
 ```
 
 ---
