@@ -440,30 +440,34 @@ Based on the unified plugin catalog RFC, the target architecture defines a **20-
 
 ### Plugin Classification
 
-| # | Plugin | Boundary | Status | Complexity |
-|---|--------|----------|--------|------------|
-| 1 | auth | External | Exists (IPP) | S |
-| 2 | rate-limit | External | Exists (IPP) | S |
-| 3 | request-validator | Local | Extends IPP | M |
-| 4 | hydrate-prompt | External | **NEW** | L |
-| 5 | conversation-manager | External | **NEW** | M |
-| 6 | tool-registry | External | **NEW** | M |
-| 7 | guardrails | External | Extends IPP | M |
-| 8 | model-provider-resolver | External | Exists (IPP) | S |
-| 9 | api-translation | Local | Extends IPP | L |
-| 10 | body-field-to-header | Local | Exists (IPP) | S |
-| 11 | base-model-to-header | External | Exists (IPP) | S |
-| 12 | apikey-injection | External | Exists (IPP) | S |
-| 13 | inference-caller | External | **NEW** | M |
-| 14 | tool-call-handler | Local | **NEW** | S |
-| 15 | loop-controller | Local | **NEW** | S |
-| 16 | server-tool-executor | External | **NEW** | L |
-| 17 | host-tool-executor | Sandboxed | **NEW** | M |
-| 18 | mcp-executor | External | **NEW** | L |
-| 19 | response-assembler | Local | **NEW** | M |
-| 20 | response-store | External | **NEW** | S |
+| # | Plugin | Boundary | IPP Status | OGX (LlamaStack) | vLLM Agentic API | Reuse Strategy |
+|---|--------|----------|------------|-------------------|------------------|----------------|
+| 1 | auth | External | Exists | Auth middleware | -- | Keep IPP |
+| 2 | rate-limit | External | Exists | -- | -- | Keep IPP |
+| 3 | request-validator | Local | Extends | Request validation | -- | Extend IPP |
+| 4 | hydrate-prompt | External | -- | **Exists** (prompt hydration + templates) | In ADR-01 scope | Reuse OGX |
+| 5 | conversation-manager | External | -- | **Exists** (Conversations API, dual storage) | In ADR-02 (response store) | Reuse OGX |
+| 6 | tool-registry | External | -- | **Exists** (ToolRuntime + MCP discovery) | In MVP scope | Reuse OGX |
+| 7 | guardrails | External | Extends | **Exists** (Shield-based safety, Moderation) | -- | Extend IPP + call OGX/NeMo |
+| 8 | model-provider-resolver | External | Exists | **Exists** (RoutingTable, 23 providers) | -- | Keep IPP (K8s-native CRDs) |
+| 9 | api-translation | Local | Extends | **Exists** (multi-SDK: OpenAI, Anthropic, Google) | -- | Extend IPP (ext models only) |
+| 10 | body-field-to-header | Local | Exists | -- | -- | Keep IPP |
+| 11 | base-model-to-header | External | Exists | -- | -- | Keep IPP |
+| 12 | apikey-injection | External | Exists | -- | -- | Keep IPP |
+| 13 | inference-caller | External | -- | **Exists** (Orchestrator → Inference actor) | Planned (httpx forwarding) | Reuse OGX/Agentic API |
+| 14 | tool-call-handler | Local | -- | **Exists** (Executor actor, tool dispatch) | -- | Reuse OGX |
+| 15 | loop-controller | Local | -- | **Exists** (Orchestrator streaming loop) | -- | Reuse OGX |
+| 16 | server-tool-executor | External | -- | **Exists** (ToolRuntime: web_search, code_interpreter) | -- | Reuse OGX |
+| 17 | host-tool-executor | Sandboxed | -- | **Exists** (code_interpreter sandbox) | -- | Reuse OGX |
+| 18 | mcp-executor | External | -- | **Exists** (MCP actor) | -- | Reuse OGX |
+| 19 | response-assembler | Local | -- | **Exists** (response construction) | -- | Reuse OGX |
+| 20 | response-store | External | -- | **Exists** (Store + Conversations dual persistence) | In ADR-02 (SQLite 3-table) | Reuse OGX / Agentic API |
 
-**Summary:** 7 exist in IPP (reuse/extend), 13 are new for Responses API.
+**Summary:**
+- **7 plugins** exist in IPP today (keep or extend)
+- **11 plugins** have implementations in OGX that we can reuse as external service calls
+- **2 plugins** are being built in vLLM Agentic API (response store, tool registry)
+- **Reuse strategy:** For the agentic loop plugins (4-6, 13-20), call OGX as an external service rather than reimplementing. Long-term, these may be rewritten as Praxis Rust filters, but OGX provides working implementations today.
 
 ### Conditional Execution
 
