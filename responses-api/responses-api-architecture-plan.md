@@ -521,42 +521,238 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 
 **Goal:** Stateless Responses API pass-through for internal models. No agentic loop yet.
 
-| Task | Where | Owner |
-|------|-------|-------|
-| Add `/v1/responses` route to MaaS HTTPRoute generation | `models-as-a-service` (maas-controller) | MaaS team |
-| Request-validator plugin: detect Responses vs Chat Completions format | `ai-gateway-payload-processing` | IPP team |
-| Stateless pass-through: forward `/v1/responses` to vLLM with zero translation | `ai-gateway-payload-processing` | IPP team |
-| Verify vLLM's stateless Responses API works E2E through the gateway | E2E tests | QE |
-| SSE streaming pass-through: ensure gateway doesn't break semantic events | `ai-gateway-payload-processing` | IPP team |
+```mermaid
+graph TB
+    Client([Client])
+
+    subgraph GW["AI Inference Gateway — Phase 1"]
+        direction TB
+
+        subgraph Existing["Existing Components (no changes)"]
+            Proxy["Istio / Envoy<br/>(Gateway Proxy)"]
+            MaaS["MaaS API<br/>(Auth, Rate Limiting)"]
+        end
+
+        subgraph IPP["IPP Plugins (Go ext_proc)"]
+            direction LR
+            rv["🆕 request-validator<br/>(detect Responses vs<br/>Chat Completions)"]
+            bfth["body-field-to-header"]
+            bmth["base-model-to-header"]
+        end
+
+        subgraph NotYet1["NOT YET — Phase 2+"]
+            direction LR
+            at_na["api-translation<br/>(Responses support)"]
+            ak_na["apikey-injection<br/>(Responses support)"]
+        end
+
+        subgraph NotYet2["NOT YET — Phase 3"]
+            AL_na["Agentic Loop"]
+            OGX_na["OGX State Services"]
+        end
+    end
+
+    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
+
+    Client --> Proxy --> MaaS --> IPP
+    IPP -- "PASS-THROUGH<br/>no translation" --> vLLM
+    vLLM -- "SSE: response.created,<br/>output_text.delta,<br/>response.completed" --> Client
+
+    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style NotYet1 fill:#2a2a2a,stroke:#555,color:#888
+    style NotYet2 fill:#2a2a2a,stroke:#555,color:#888
+    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+
+**What each component does in Phase 1:**
+
+| Component | Responsibility | Status |
+|-----------|---------------|--------|
+| **Istio/Envoy** | Proxy, TLS termination, routing | Existing, unchanged |
+| **MaaS API** | API key validation, rate limiting, `/v1/responses` HTTPRoute | 🆕 Add HTTPRoute for `/v1/responses` |
+| **IPP: request-validator** | Detect Responses vs Chat Completions format, set CycleState flag | 🆕 New plugin |
+| **IPP: existing plugins** | body-field-to-header, base-model-to-header | Existing, unchanged |
+| **vLLM / llm-d** | Stateless `/v1/responses` endpoint (no state, no tools) | Existing (merged Jul 2025) |
+
+| Task | Where |
+|------|-------|
+| Add `/v1/responses` route to MaaS HTTPRoute generation | `models-as-a-service` |
+| Request-validator plugin: detect Responses vs Chat Completions format | `ai-gateway-payload-processing` |
+| Stateless pass-through: forward `/v1/responses` to vLLM with zero translation | `ai-gateway-payload-processing` |
+| SSE streaming pass-through: ensure gateway doesn't break semantic events | `ai-gateway-payload-processing` |
+| E2E: verify vLLM's stateless Responses API works through the gateway | E2E tests |
 
 **Deliverable:** A client can send `POST /v1/responses` to the AI Gateway, it passes through MaaS auth/RL, and reaches vLLM unchanged. Response streams back with full fidelity.
 
+---
+
 ### Phase 2: External Model Support (Months 2-4)
 
-**Goal:** Responses API support for external models via translation.
+**Goal:** Responses API support for external models via translation to Chat Completions.
 
-| Task | Where | Owner |
-|------|-------|-------|
-| Extend api-translation plugin to handle Responses API → Chat Completions for external providers | `ai-gateway-payload-processing` | IPP team |
-| Response translation: Chat Completions response → Responses API Items format | `ai-gateway-payload-processing` | IPP team |
-| Decide: do we support Responses API → OpenAI Responses API (direct, no translation)? | Design decision | Team |
-| Extend E2E tests for Responses API on all 5 providers | `ai-gateway-payload-processing` | QE |
-| Guardrails: extend NeMo guards to parse Responses API input format | `ai-gateway-payload-processing` | IPP team |
+```mermaid
+graph TB
+    Client([Client])
+
+    subgraph GW["AI Inference Gateway — Phase 2"]
+        direction TB
+
+        subgraph Existing["Existing Components"]
+            Proxy["Istio / Envoy"]
+            MaaS["MaaS API<br/>(Auth, Rate Limiting)"]
+        end
+
+        subgraph IPP["IPP Plugins (Go ext_proc)"]
+            direction LR
+            rv["request-validator"]
+            mpr["model-provider-resolver<br/>(ExternalModel CRD)"]
+            at["🆕 api-translation<br/>(Responses API ↔<br/>Chat Completions)"]
+            ak["apikey-injection"]
+            ng_in["🆕 guardrails<br/>(Responses format)"]
+        end
+
+        subgraph NotYet["NOT YET — Phase 3"]
+            AL_na["Agentic Loop"]
+            OGX_na["OGX State Services"]
+        end
+    end
+
+    subgraph Internal["Internal Models"]
+        vLLM["vLLM / llm-d<br/>(pass-through,<br/>no translation)"]
+    end
+
+    subgraph External["External Providers"]
+        OpenAI["OpenAI"]
+        Anthropic["Anthropic"]
+        Azure["Azure OpenAI"]
+        Bedrock["AWS Bedrock"]
+        Vertex["GCP Vertex"]
+    end
+
+    Client --> Proxy --> MaaS --> IPP
+    rv -- "internal model" --> vLLM
+    at -- "external model<br/>(translated)" --> External
+
+    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style NotYet fill:#2a2a2a,stroke:#555,color:#888
+    style Internal fill:#1a1a3a,stroke:#5C6BC0,color:#fff
+    style External fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+
+**What each component does in Phase 2:**
+
+| Component | Responsibility | Status |
+|-----------|---------------|--------|
+| **IPP: api-translation** | Bidirectional Responses API ↔ Chat Completions translation for all 5 external providers | 🆕 Extend existing plugin |
+| **IPP: guardrails** | Parse Responses API input format for NeMo guardrails | 🆕 Extend existing plugin |
+| **IPP: model-provider-resolver** | Route to internal (pass-through) vs external (translate) path | Existing, unchanged |
+| **IPP: apikey-injection** | Inject provider credentials | Existing, unchanged |
+| **vLLM / llm-d** | Internal models: pass-through | Existing |
+| **External providers** | All 5 providers via translated Chat Completions | Existing |
+
+| Task | Where |
+|------|-------|
+| Extend api-translation: Responses API → Chat Completions for external providers | `ai-gateway-payload-processing` |
+| Response translation: Chat Completions response → Responses API Items format | `ai-gateway-payload-processing` |
+| Decide: support Responses API → OpenAI Responses API (direct, no translation)? | Design decision |
+| Guardrails: extend NeMo guards to parse Responses API input format | `ai-gateway-payload-processing` |
+| E2E: Responses API tests on all 5 providers | E2E tests |
 
 **Deliverable:** External model users can send Responses API format and get correct responses from all providers.
+
+---
 
 ### Phase 3: Agentic Loop POC (Months 4-6)
 
 **Goal:** Proof-of-concept agentic loop for internal models with MCP tool support.
 
-| Task | Where | Owner |
-|------|-------|-------|
-| Contribute to vLLM Agentic API project (Praxis-based architecture per PR #27) | `vllm-project/agentic-api` | Team + community |
-| Implement response-store plugin (SQLite/PostgreSQL) | `vllm-project/agentic-api` or `ai-gateway-payload-processing` | TBD |
-| Implement conversation-manager plugin (previous_response_id resolution) | Same | TBD |
-| MCP tool discovery and execution (basic) | Same | TBD |
-| Loop controller: single-iteration then multi-iteration | Same | TBD |
-| Demo: client sends Responses API request with MCP tools, server executes tool loop | Demo | Team |
+```mermaid
+graph TB
+    Client([Client])
+
+    subgraph GW["AI Inference Gateway — Phase 3"]
+        direction TB
+
+        subgraph Existing["Existing Components"]
+            Proxy["Istio / Envoy"]
+            MaaS["MaaS API"]
+        end
+
+        subgraph IPP["IPP Intake Plugins (Go ext_proc)"]
+            direction LR
+            rv["request-validator"]
+            mpr["model-provider-resolver"]
+            at["api-translation"]
+            ak["apikey-injection"]
+        end
+
+        subgraph AL["🆕 Agentic Loop (Praxis / vLLM Agentic API)"]
+            direction TB
+            cm["🆕 conversation-manager<br/>(previous_response_id<br/>hydration + persist)"]
+            tr["🆕 tool-registry<br/>(MCP discovery)"]
+            guard["guardrails<br/>(input + output)"]
+            ic["🆕 inference-caller"]
+            lc["🆕 loop-controller"]
+            mcp_exec["🆕 mcp-executor"]
+            rs["🆕 response-store<br/>(SQLite/PostgreSQL)"]
+        end
+
+        subgraph ExtSvc["🆕 External Services"]
+            OGX["🆕 OGX<br/>(Conversations,<br/>Response Store)"]
+            MCP["MCP Servers"]
+            NeMo["Guardrails Service"]
+        end
+    end
+
+    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
+    ExtProv["External Providers"]
+
+    Client --> Proxy --> MaaS --> IPP
+    IPP -- "internal +<br/>stateful" --> AL
+    IPP -- "external" --> ExtProv
+
+    cm <--> OGX
+    rs <--> OGX
+    mcp_exec <--> MCP
+    guard <--> NeMo
+    ic -- "no translation" --> vLLM
+    lc -- "loop back" --> ic
+
+    style Existing fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style IPP fill:#1a3a1a,stroke:#4CAF50,color:#fff
+    style AL fill:#3a2a0a,stroke:#FF9800,color:#fff
+    style ExtSvc fill:#1a1a3a,stroke:#5C6BC0,color:#fff
+    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
+    style GW fill:#0d1117,stroke:#30363d,color:#fff
+```
+
+**What each component does in Phase 3:**
+
+| Component | Responsibility | Status |
+|-----------|---------------|--------|
+| **Agentic Loop** | Orchestrate multi-turn tool-calling loops for Responses API requests | 🆕 New component (Praxis-based) |
+| **conversation-manager** | Resolve `previous_response_id`, hydrate context from OGX, persist after completion | 🆕 New plugin |
+| **tool-registry** | Discover MCP tools via `tools/list` | 🆕 New plugin |
+| **inference-caller** | Call vLLM's stateless `/v1/responses` with hydrated context | 🆕 New plugin |
+| **loop-controller** | Detect tool calls in response, decide: loop back or complete | 🆕 New plugin |
+| **mcp-executor** | Execute MCP tool calls, return results to loop | 🆕 New plugin |
+| **response-store** | Persist responses for `previous_response_id` lookups | 🆕 New plugin |
+| **OGX** | Backend for conversation storage and response store | 🆕 New dependency |
+| **MCP Servers** | External tool backends | New integration |
+| **IPP intake** | Auth, rate-limit, model-resolver (unchanged from Phase 2) | Existing |
+
+| Task | Where |
+|------|-------|
+| Contribute to vLLM Agentic API project (Praxis-based architecture) | `vllm-project/agentic-api` |
+| Implement response-store plugin (SQLite/PostgreSQL) | `vllm-project/agentic-api` |
+| Implement conversation-manager (previous_response_id resolution) | `vllm-project/agentic-api` |
+| MCP tool discovery and execution (basic) | `vllm-project/agentic-api` |
+| Loop controller: single-iteration then multi-iteration | `vllm-project/agentic-api` |
+| Demo: Responses API request with MCP tools, server executes tool loop | Demo |
 
 **Deliverable:** Working POC of agentic loop with MCP tools on internal model.
 
