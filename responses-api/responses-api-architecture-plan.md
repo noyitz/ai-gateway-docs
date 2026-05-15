@@ -17,7 +17,7 @@
 4. [Component Responsibilities](#4-component-responsibilities)
 5. [Request Flow Diagrams](#5-request-flow-diagrams)
 6. [Plugin Pipeline Design](#6-plugin-pipeline-design)
-7. [Short-Term Plan (0-6 months)](#7-short-term-plan-0-6-months)
+7. [Short-Term Plan (0-4 months)](#7-short-term-plan-0-4-months)
 8. [Long-Term Plan (6-18 months)](#8-long-term-plan-6-18-months)
 9. [Where to Write the Code](#9-where-to-write-the-code)
 10. [Open Questions and Risks](#10-open-questions-and-risks)
@@ -477,9 +477,9 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 
 ---
 
-## 7. Short-Term Plan (0-6 months)
+## 7. Short-Term Plan (0-4 months)
 
-### Phase 1: Foundation (Months 1-2)
+### Phase 1: Foundation (Weeks 1-4)
 
 **Goal:** Stateless Responses API pass-through for internal models. No agentic loop yet.
 
@@ -487,7 +487,7 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 graph TB
     Client([Client])
 
-    subgraph GW["AI Inference Gateway — Phase 1"]
+    subgraph GW["AI Inference Gateway — Phase 1 (Weeks 1-4)"]
         direction TB
 
         subgraph Existing["Existing Components (no changes)"]
@@ -550,7 +550,7 @@ graph TB
 
 ---
 
-### Phase 2: External Model Support (Months 2-4)
+### Phase 2: External Model Support (Weeks 4-8)
 
 **Goal:** Responses API support for external models via translation to Chat Completions.
 
@@ -558,7 +558,7 @@ graph TB
 graph TB
     Client([Client])
 
-    subgraph GW["AI Inference Gateway — Phase 2"]
+    subgraph GW["AI Inference Gateway — Phase 2 (Weeks 4-8)"]
         direction TB
 
         subgraph Existing["Existing Components"]
@@ -628,15 +628,15 @@ graph TB
 
 ---
 
-### Phase 3: Agentic Loop POC (Months 4-6)
+### Phase 3: Agentic Loop Integration (Weeks 8-16)
 
-**Goal:** Proof-of-concept agentic loop for internal models with MCP tool support.
+**Goal:** Integrate OGX-backed agentic loop for internal models with MCP tool support. Most agentic plugins already exist in OGX — this phase is integration, not greenfield.
 
 ```mermaid
 graph TB
     Client([Client])
 
-    subgraph GW["AI Inference Gateway — Phase 3"]
+    subgraph GW["AI Inference Gateway — Phase 3 (Weeks 8-16)"]
         direction TB
 
         subgraph Existing["Existing Components"]
@@ -654,17 +654,17 @@ graph TB
 
         subgraph AL["🆕 Agentic Loop (Praxis / vLLM Agentic API)"]
             direction TB
-            cm["🆕 conversation-manager<br/>(previous_response_id<br/>hydration + persist)"]
-            tr["🆕 tool-registry<br/>(MCP discovery)"]
+            cm["conversation-manager<br/>⬅ reuse OGX"]
+            tr["tool-registry<br/>⬅ reuse OGX"]
             guard["guardrails<br/>(input + output)"]
-            ic["🆕 inference-caller"]
-            lc["🆕 loop-controller"]
-            mcp_exec["🆕 mcp-executor"]
-            rs["🆕 response-store<br/>(SQLite/PostgreSQL)"]
+            ic["inference-caller<br/>⬅ reuse OGX"]
+            lc["loop-controller<br/>⬅ reuse OGX"]
+            mcp_exec["mcp-executor<br/>⬅ reuse OGX"]
+            rs["response-store<br/>⬅ reuse OGX / Agentic API"]
         end
 
-        subgraph ExtSvc["🆕 External Services"]
-            OGX["🆕 OGX<br/>(Conversations,<br/>Response Store)"]
+        subgraph ExtSvc["External Services (reused from OGX)"]
+            OGX["OGX<br/>(Conversations, Files,<br/>VectorDB, Response Store)"]
             MCP["MCP Servers"]
             NeMo["Guardrails Service"]
         end
@@ -697,26 +697,26 @@ graph TB
 | Component | Responsibility | Status |
 |-----------|---------------|--------|
 | **Agentic Loop** | Orchestrate multi-turn tool-calling loops for Responses API requests | 🆕 New component (Praxis-based) |
-| **conversation-manager** | Resolve `previous_response_id`, hydrate context from OGX, persist after completion | 🆕 New plugin |
-| **tool-registry** | Discover MCP tools via `tools/list` | 🆕 New plugin |
-| **inference-caller** | Call vLLM's stateless `/v1/responses` with hydrated context | 🆕 New plugin |
-| **loop-controller** | Detect tool calls in response, decide: loop back or complete | 🆕 New plugin |
-| **mcp-executor** | Execute MCP tool calls, return results to loop | 🆕 New plugin |
-| **response-store** | Persist responses for `previous_response_id` lookups | 🆕 New plugin |
-| **OGX** | Backend for conversation storage and response store | 🆕 New dependency |
+| **conversation-manager** | Resolve `previous_response_id`, hydrate context, persist after completion | ♻️ Reuse OGX Conversations API |
+| **tool-registry** | Discover MCP tools via `tools/list` | ♻️ Reuse OGX ToolRuntime |
+| **inference-caller** | Call vLLM's stateless `/v1/responses` with hydrated context | ♻️ Reuse OGX Orchestrator → Inference |
+| **loop-controller** | Detect tool calls in response, decide: loop back or complete | ♻️ Reuse OGX Orchestrator streaming loop |
+| **mcp-executor** | Execute MCP tool calls, return results to loop | ♻️ Reuse OGX MCP actor |
+| **response-store** | Persist responses for `previous_response_id` lookups | ♻️ Reuse OGX Store / Agentic API ADR-02 |
+| **OGX** | Backend services: conversations, files, vector stores, response store | ♻️ Deploy existing OGX (production-ready) |
 | **MCP Servers** | External tool backends | New integration |
 | **IPP intake** | Auth, rate-limit, model-resolver (unchanged from Phase 2) | Existing |
 
 | Task | Where |
 |------|-------|
+| Deploy OGX as state service backend (conversations, response store) | OGX deployment |
+| Wire agentic loop to call OGX APIs for hydration/persistence | `vllm-project/agentic-api` |
+| Wire agentic loop to call OGX ToolRuntime + MCP actor for tool execution | `vllm-project/agentic-api` |
+| Integrate OGX Orchestrator loop logic (or reimplement thin version in Praxis) | `vllm-project/agentic-api` |
 | Contribute to vLLM Agentic API project (Praxis-based architecture) | `vllm-project/agentic-api` |
-| Implement response-store plugin (SQLite/PostgreSQL) | `vllm-project/agentic-api` |
-| Implement conversation-manager (previous_response_id resolution) | `vllm-project/agentic-api` |
-| MCP tool discovery and execution (basic) | `vllm-project/agentic-api` |
-| Loop controller: single-iteration then multi-iteration | `vllm-project/agentic-api` |
 | Demo: Responses API request with MCP tools, server executes tool loop | Demo |
 
-**Deliverable:** Working POC of agentic loop with MCP tools on internal model.
+**Deliverable:** Working POC of agentic loop with MCP tools on internal model, backed by OGX state services.
 
 ---
 
