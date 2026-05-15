@@ -51,7 +51,7 @@
 | Token generation | Core competency: fast, efficient inference with KV-cache, speculative decoding, etc. |
 | **NOT responsible for** | State storage, agentic loops, tool execution, conversation history, file/vector stores. |
 
-### vLLM Agentic API / Praxis (Stateful Orchestration)
+### vLLM Agentic API (Stateful Orchestration) — Praxis runtime long-term
 
 | Responsibility | Details |
 |---------------|---------|

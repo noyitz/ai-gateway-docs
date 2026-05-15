@@ -160,7 +160,7 @@
 │             ▼                   ▼                                  │
 │  ┌──────────────────────────────────────────┐   ┌───────────────┐ │
 │  │ 🆕 Agentic Loop                          │   │ External      │ │
-│  │    (Praxis / vLLM Agentic API)           │   │ Providers     │ │
+│  │    (vLLM Agentic API today,              │   │ Providers     │ │
 │  │                                          │   │ (OpenAI,      │ │
 │  │  conversation-manager   ◄─ reuse OGX    │   │  Anthropic,   │ │
 │  │  tool-registry          ◄─ reuse OGX    │   │  Azure,       │ │

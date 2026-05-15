@@ -46,7 +46,7 @@ sequenceDiagram
     participant GW as Gateway<br/>(Istio/Praxis)
     participant MaaS as MaaS API
     participant IPP as IPP Intake<br/>Plugins
-    participant AL as Agentic Loop<br/>(Praxis / Agentic API)
+    participant AL as Agentic Loop<br/>(vLLM Agentic API)
     participant OGX as OGX<br/>(State Services)
     participant MCP as MCP Server
     participant Guards as Guardrails<br/>Service
@@ -129,7 +129,7 @@ sequenceDiagram
     participant GW as Gateway<br/>(Istio/Praxis)
     participant MaaS as MaaS API
     participant IPP as IPP Plugins
-    participant AL as Agentic Loop<br/>(Praxis / Agentic API)
+    participant AL as Agentic Loop<br/>(vLLM Agentic API)
     participant OGX as OGX<br/>(State Services)
     participant MCP as MCP Server
     participant Guards as Guardrails<br/>Service

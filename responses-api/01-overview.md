@@ -20,9 +20,9 @@ The agreed architecture splits responsibility across components:
 | Layer | Component | Responsibility |
 |-------|-----------|---------------|
 | **Inference** | vLLM core / llm-d | Stateless Responses API (pure inference, no state) |
-| **Orchestration** | Praxis + vLLM Agentic API | Stateful agentic loop, tool execution, guardrails |
+| **Orchestration** | vLLM Agentic API (today) / Praxis (future) | Stateful agentic loop, tool execution, guardrails |
 | **State Services** | OGX | Files, Vector Stores, Conversations, Search |
-| **Gateway** | IPP (today) / Praxis (future) | Auth, rate limiting, model routing, API translation (external only) |
+| **Gateway** | Envoy + IPP ext_proc (today) / Praxis (future) | Auth, rate limiting, model routing, API translation (external only) |
 | **Platform** | MaaS | API keys, subscriptions, model catalog, multi-tenancy |
 
 **The cardinal rule:** For internal models on vLLM/llm-d, there must be **zero API translation** in the inference path. Full fidelity between client and inference server. The gateway layers on stateful features without changing the inference shape.
