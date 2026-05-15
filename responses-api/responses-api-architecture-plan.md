@@ -14,17 +14,14 @@
    - [What is the Responses API?](#21-what-is-the-responses-api)
    - [Project Map and Maturity](#22-project-map-and-maturity)
 3. [Meeting Decisions and Agreements](#3-meeting-decisions-and-agreements-may-15-2026)
-4. [Architecture: Two Worlds](#4-architecture-two-worlds)
-   - [Internal Models (vLLM/llm-d)](#41-internal-models-open-weight-on-vllmllm-d)
-   - [External Models (SaaS Providers)](#42-external-models-saas-providers)
-5. [Component Responsibilities](#5-component-responsibilities)
-6. [Request Flow Diagrams](#6-request-flow-diagrams)
-7. [Plugin Pipeline Design](#7-plugin-pipeline-design)
-8. [Short-Term Plan (0-6 months)](#8-short-term-plan-0-6-months)
-9. [Long-Term Plan (6-18 months)](#9-long-term-plan-6-18-months)
-10. [Where to Write the Code](#10-where-to-write-the-code)
-11. [Open Questions and Risks](#11-open-questions-and-risks)
-12. [Appendix: Research Sources](#12-appendix-research-sources)
+4. [Component Responsibilities](#4-component-responsibilities)
+5. [Request Flow Diagrams](#5-request-flow-diagrams)
+6. [Plugin Pipeline Design](#6-plugin-pipeline-design)
+7. [Short-Term Plan (0-6 months)](#7-short-term-plan-0-6-months)
+8. [Long-Term Plan (6-18 months)](#8-long-term-plan-6-18-months)
+9. [Where to Write the Code](#9-where-to-write-the-code)
+10. [Open Questions and Risks](#10-open-questions-and-risks)
+11. [Appendix: Research Sources](#11-appendix-research-sources)
 
 ---
 
@@ -148,108 +145,7 @@ These were explicitly agreed upon during the sync:
 
 ---
 
-## 4. Architecture: Two Worlds
-
-The fundamental insight from the meeting is that Responses API support requires **two completely different architectures** depending on whether the model is internal (self-hosted) or external (SaaS).
-
-### 4.1 Internal Models (Open-Weight on vLLM/llm-d)
-
-```mermaid
-graph TB
-    Client([Client / Agent])
-
-    subgraph GW["AI Inference Gateway"]
-        direction TB
-        Proxy["Istio / Praxis<br/>(Gateway Proxy)"]
-        MaaS["MaaS API<br/>(Auth, Rate Limiting, Model Catalog)"]
-        IPP["IPP Intake Plugins<br/>(request-validator, model-resolver)"]
-
-        subgraph AL["Agentic Loop (Praxis / vLLM Agentic API)"]
-            direction TB
-            Hydrate["Hydrate Context<br/>(previous_response_id → full history)"]
-            Guardrails["Guardrails<br/>(input + output per iteration)"]
-            InfCall["Inference Caller"]
-            ToolDetect["Tool Call Detection"]
-            ToolExec["Tool Execution"]
-            LoopCtrl["Loop Controller"]
-        end
-
-        subgraph Services["External Services"]
-            OGX["OGX<br/>(Files, VectorDB,<br/>Conversations, Search)"]
-            MCP["MCP Servers<br/>(Tool Discovery + Exec)"]
-            NeMo["Guardrails Service"]
-        end
-    end
-
-    vLLM["vLLM / llm-d<br/>(Stateless /v1/responses)"]
-
-    Client --> Proxy --> MaaS --> IPP --> Hydrate
-    Hydrate <--> OGX
-    Hydrate --> Guardrails
-    Guardrails <--> NeMo
-    Guardrails --> InfCall
-
-    InfCall -- "NO TRANSLATION<br/>Full Responses API fidelity" --> vLLM
-    vLLM --> ToolDetect
-    ToolDetect --> LoopCtrl
-    LoopCtrl -- "tool_call detected" --> ToolExec
-    ToolExec <--> MCP
-    ToolExec <--> OGX
-    LoopCtrl -- "loop back" --> InfCall
-    LoopCtrl -- "done" --> Client
-
-    style AL fill:#1a3a1a,stroke:#4CAF50,color:#fff
-    style Services fill:#1a1a3a,stroke:#5C6BC0,color:#fff
-    style vLLM fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0d1117,stroke:#30363d,color:#fff
-```
-
-**Key principle:** The request hits vLLM in **exactly the same format** the client sent it. The gateway does NOT translate Responses → Chat Completions → back. It hydrates context (conversation retrieval, previous_response_id resolution), applies guardrails, executes tools, and loops -- but the inference call itself is the full Responses API payload with no format changes.
-
-### 4.2 External Models (SaaS Providers)
-
-```mermaid
-graph TB
-    Client([Client / Agent])
-
-    subgraph GW["AI Inference Gateway"]
-        direction TB
-        Proxy["Istio / Praxis<br/>(Gateway Proxy)"]
-        MaaS["MaaS API<br/>(Auth, Rate Limiting, Model Catalog)"]
-
-        subgraph IPP["IPP Pipeline (Payload Processing)"]
-            direction TB
-            ModelResolver["model-provider-resolver<br/>(ExternalModel CRD lookup)"]
-            ApiTrans["api-translation<br/>(OpenAI ↔ Provider format)"]
-            ApikeyInj["apikey-injection<br/>(Provider credentials from Secret)"]
-        end
-    end
-
-    subgraph Providers["External Providers"]
-        OpenAI["OpenAI API"]
-        Anthropic["Anthropic API"]
-        Azure["Azure OpenAI"]
-        Bedrock["AWS Bedrock"]
-        Vertex["GCP Vertex AI"]
-    end
-
-    Client --> Proxy --> MaaS --> ModelResolver
-    ModelResolver --> ApiTrans --> ApikeyInj
-    ApikeyInj --> Providers
-
-    Providers --> ApiTrans
-    ApiTrans -- "Translated response" --> Client
-
-    style IPP fill:#1a1a3a,stroke:#5C6BC0,color:#fff
-    style Providers fill:#3a1a1a,stroke:#EF5350,color:#fff
-    style GW fill:#0d1117,stroke:#30363d,color:#fff
-```
-
-**Key principle:** External models do NOT support the Responses API natively (only OpenAI does, and even there you'd use their API directly). For external models, the gateway does the traditional Chat Completions flow with API translation. If a client sends Responses API format, the gateway must translate to Chat Completions for the external provider, then translate the response back. This is lossy but necessary for SaaS models we don't control.
-
----
-
-## 5. Component Responsibilities
+## 4. Component Responsibilities
 
 ### vLLM Core (Stateless Inference)
 
@@ -319,7 +215,7 @@ graph TB
 
 ---
 
-## 6. Request Flow Diagrams
+## 5. Request Flow Diagrams
 
 ### Flow 1: Stateless Responses API (Internal Model, Simple Completion)
 
@@ -427,9 +323,71 @@ sequenceDiagram
     IPP-->>Client: OpenAI-format response
 ```
 
+### Flow 4: Stateful Agentic Loop (External Model, MCP Tools)
+
+This flow is more complex than the internal model agentic loop because each inference iteration requires API translation.
+
+```mermaid
+sequenceDiagram
+    actor Client
+    participant GW as Gateway<br/>(Istio/Praxis)
+    participant MaaS as MaaS API
+    participant IPP as IPP Plugins
+    participant AL as Agentic Loop<br/>(Praxis / Agentic API)
+    participant OGX as OGX<br/>(State Services)
+    participant MCP as MCP Server
+    participant Guards as Guardrails<br/>Service
+    participant Provider as External Provider<br/>(OpenAI / Anthropic / etc.)
+
+    Client->>GW: POST /v1/responses<br/>{model:"gpt-4", input:"Search for...",<br/>tools:[{type:"mcp"}],<br/>previous_response_id:"resp_abc123"}
+
+    GW->>MaaS: Validate API key
+    MaaS-->>GW: OK
+
+    GW->>IPP: request-validator, rate-limit, model-provider-resolver
+    Note over IPP: ExternalModel CRD lookup<br/>→ resolve provider, endpoint, credentials
+
+    IPP->>AL: Forward to Agentic Loop<br/>(with provider info in CycleState)
+
+    AL->>OGX: Hydrate previous_response_id
+    OGX-->>AL: Conversation context
+
+    AL->>MCP: tools/list (discover tools)
+    MCP-->>AL: Tool catalog
+
+    AL->>Guards: Input guardrails check
+    Guards-->>AL: OK
+
+    rect rgb(50, 30, 30)
+        Note over AL,Provider: LOOP ITERATION 1 (with API translation)
+        AL->>IPP: api-translation (Responses → Chat Completions)
+        IPP->>IPP: apikey-injection
+        IPP->>Provider: Translated request + provider auth
+        Provider-->>IPP: Provider-native response
+        IPP->>AL: api-translation (response → OpenAI format)
+        AL->>Guards: Output guardrails check
+        Guards-->>AL: OK
+        Note over AL: tool_call detected
+        AL->>MCP: Execute tool call
+        MCP-->>AL: Tool result
+    end
+
+    rect rgb(50, 30, 30)
+        Note over AL,Provider: LOOP ITERATION 2 (with tool result)
+        AL->>IPP: api-translation (with tool result injected)
+        IPP->>Provider: Translated request
+        Provider-->>AL: Final text response (no more tool calls)
+    end
+
+    AL->>OGX: Persist response + conversation state
+    AL-->>Client: SSE: response.created, output items, response.completed
+```
+
+**Key difference from internal model flow:** Each loop iteration goes through the IPP `api-translation` and `apikey-injection` plugins because the external provider speaks a different API format. This adds latency per iteration and is inherently lossy (reasoning items, Items array structure may not translate perfectly). For this reason, the agentic loop with external models is a lower-fidelity experience than with internal models.
+
 ---
 
-## 7. Plugin Pipeline Design
+## 6. Plugin Pipeline Design
 
 Based on the unified plugin catalog RFC, the target architecture defines a **20-plugin pipeline** that handles both Chat Completions and Responses API through the same chain with conditional execution.
 
@@ -515,7 +473,7 @@ For internal models, plugins 9 (api-translation req), 12 (apikey-injection), and
 
 ---
 
-## 8. Short-Term Plan (0-6 months)
+## 7. Short-Term Plan (0-6 months)
 
 ### Phase 1: Foundation (Months 1-2)
 
@@ -758,7 +716,7 @@ graph TB
 
 ---
 
-## 9. Long-Term Plan (6-18 months)
+## 8. Long-Term Plan (6-18 months)
 
 ### Phase 4: Praxis Migration (Months 6-12)
 
@@ -878,7 +836,7 @@ graph TB
 
 ---
 
-## 10. Where to Write the Code
+## 9. Where to Write the Code
 
 Based on meeting decisions and architecture analysis:
 
@@ -896,7 +854,7 @@ Based on meeting decisions and architecture analysis:
 
 ---
 
-## 11. Open Questions and Risks
+## 10. Open Questions and Risks
 
 ### Open Questions
 
@@ -929,7 +887,7 @@ Based on meeting decisions and architecture analysis:
 
 ---
 
-## 12. Appendix: Research Sources
+## 11. Appendix: Research Sources
 
 ### Repos Analyzed
 
