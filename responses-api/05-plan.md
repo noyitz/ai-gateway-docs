@@ -4,11 +4,57 @@
 
 ---
 
+## Use Case Map
+
+| # | Use Case | Phase | Model Type | Description |
+|---|----------|-------|------------|-------------|
+| UC-1 | Simple completion via `/v1/responses` | **Phase 1** | Internal | Stateless single-turn. No tools, no state. Equivalent to Chat Completions but in Responses API format. |
+| UC-2 | SSE streaming (semantic events) | **Phase 1** | Internal | Stream response with 23+ event types (response.created, output_text.delta, response.completed). |
+| UC-3 | Simple completion via `/v1/responses` | **Phase 2** | External | Same as UC-1 but routed to external provider with API translation (Responses -> Chat Completions -> provider). |
+| UC-4 | Input guardrails on Responses API | **Phase 2** | Both | NeMo guardrails understand Responses API input format (not just Chat Completions messages). |
+| UC-5 | Multi-turn with `previous_response_id` | **Phase 3** | Internal | Stateful conversation. Server hydrates context from response store, client just passes the ID. |
+| UC-6 | Server-side MCP tool calling | **Phase 3** | Internal | Model discovers MCP tools, calls them server-side, loops until done. Single API call from client. |
+| UC-7 | Function tool round-trip (client-side) | **Phase 3** | Internal | Model requests function call, yields to client, client executes and resumes with result. |
+| UC-8 | Response store (`store: true`) | **Phase 3** | Internal | Persist responses. Retrievable via `GET /v1/responses/{id}`. Enables `previous_response_id` chaining. |
+| UC-9 | Output guardrails per loop iteration | **Phase 3** | Internal | Per-iteration content safety within the agentic loop. Mid-loop rejection with retry. |
+| UC-10 | Praxis inline body inspection | **Phase 4** | Both | Replace ext_proc gRPC with inline StreamBuffer. Lower latency model routing. |
+| UC-11 | Server-side file_search (RAG) | **Phase 5** | Internal | Upload files to vector store, model searches them via built-in file_search tool. |
+| UC-12 | Server-side web_search | **Phase 5** | Internal | Model searches the web as a built-in tool during agentic loop. |
+| UC-13 | Server-side code_interpreter | **Phase 5** | Internal | Model writes and executes Python in a sandbox during agentic loop. |
+| UC-14 | Conversations API | **Phase 5** | Internal | Durable conversation objects that persist across sessions. Separate from `previous_response_id`. |
+| UC-15 | Files API + Vector Stores | **Phase 5** | Internal | `/v1/files` upload, `/v1/vector_stores` for embedding/indexing. Backend for file_search. |
+| UC-16 | Background processing | **Phase 5** | Internal | `background: true` for long-running agentic tasks. Client polls for completion. |
+| UC-17 | Multi-tenancy for state | **Phase 5** | Both | MaaS quota management for Files, Vector Stores. Per-tenant storage limits. |
+| UC-18 | Compaction API | **Phase 5** | Internal | `POST /v1/responses/compact` for lossless context management on long conversations. |
+| UC-19 | Native Praxis agentic loop | **Phase 6** | Both | Re-entrant filter chains replace external agentic service. Single-binary gateway + orchestrator. |
+| UC-20 | MCP gateway in Praxis | **Phase 6** | Both | Native MCP tool catalog, session management, backend registry inside the proxy. |
+
+### MVP Definition
+
+```
+  Pre-MVP          MVP                          Post-MVP
+  ─────────────────┼──────────────────────────────┼─────────────────
+  Phase 1          Phase 2        Phase 3         Phase 4-6
+  (foundation)     (ext models)   (agentic loop)  (platform)
+```
+
+| Milestone | Phase | Use Cases | What a User Can Do |
+|-----------|-------|-----------|-------------------|
+| **Pre-MVP** | Phase 1 | UC-1, UC-2 | Send `/v1/responses` to internal models through the gateway. Stateless only. No tools, no state, no external models. |
+| **MVP** | Phase 2 + Phase 3 | UC-1 through UC-9 | Full Responses API for internal models (stateful, tools, MCP). Basic Responses API for external models (stateless, translated). This is the minimum viable product for customer demos. |
+| **GA** | Phase 5 | UC-1 through UC-18 | Production-ready with Files, Vector Stores, Conversations, built-in tools, background processing, multi-tenancy. |
+
+---
+
 ## Short-Term Plan (0-4 months)
 
-### Phase 1: Foundation (Weeks 1-4)
+### Phase 1: Foundation (Weeks 1-4) — Pre-MVP
 
 **Goal:** Stateless Responses API pass-through for internal models. No agentic loop yet.
+
+**Use cases enabled:** UC-1 (simple completion, internal), UC-2 (SSE streaming)
+
+> **[View Phase 1 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase1.html)**
 
 ```
   Client
@@ -69,9 +115,13 @@
 
 ---
 
-### Phase 2: External Model Support (Weeks 4-8)
+### Phase 2: External Model Support (Weeks 4-8) — MVP (part 1)
 
 **Goal:** Responses API support for external models via translation to Chat Completions.
+
+**Use cases enabled:** UC-3 (simple completion, external), UC-4 (input guardrails on Responses format)
+
+> **[View Phase 2 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase2.html)**
 
 ```
   Client
@@ -134,9 +184,13 @@
 
 ---
 
-### Phase 3: Agentic Loop Integration (Weeks 8-16)
+### Phase 3: Agentic Loop Integration (Weeks 8-16) — MVP (part 2)
 
 **Goal:** Integrate OGX-backed agentic loop for internal models with MCP tool support. Most agentic plugins already exist in OGX -- this phase is integration, not greenfield.
+
+**Use cases enabled:** UC-5 (multi-turn with previous_response_id), UC-6 (MCP tool calling), UC-7 (function tool round-trip), UC-8 (response store), UC-9 (output guardrails per iteration)
+
+> **[View Phase 3 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase3.html)**
 
 ```
   Client
@@ -222,6 +276,10 @@
 
 **Goal:** Replace Envoy + ext_proc with Praxis for AI traffic.
 
+**Use cases enabled:** UC-10 (inline body inspection, lower latency)
+
+> **[View Phase 4 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase4.html)**
+
 | Task | Where |
 |------|-------|
 | Rewrite IPP plugins as Praxis Rust filters | `praxis-proxy/praxis` or downstream |
@@ -231,9 +289,13 @@
 | Benchmark: Praxis vs Envoy+ext_proc latency comparison | Performance testing |
 | Migration path: Praxis as Envoy ext_proc server (intermediate step) | `praxis-proxy/extproc` |
 
-### Phase 5: Full Agentic Platform (Months 9-15)
+### Phase 5: Full Agentic Platform (Months 9-15) — GA
 
 **Goal:** Production-ready Responses API with full tool support.
+
+**Use cases enabled:** UC-11 (file_search/RAG), UC-12 (web_search), UC-13 (code_interpreter), UC-14 (Conversations API), UC-15 (Files + Vector Stores), UC-16 (background processing), UC-17 (multi-tenancy), UC-18 (compaction)
+
+> **[View Phase 5 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase5.html)**
 
 | Task | Where |
 |------|-------|
@@ -248,6 +310,10 @@
 ### Phase 6: Unified Gateway (Months 12-18)
 
 **Goal:** Simplified architecture with Praxis as the single proxy + orchestrator.
+
+**Use cases enabled:** UC-19 (native Praxis agentic loop), UC-20 (MCP gateway in Praxis)
+
+> **[View Phase 6 Interactive Visualization](https://noyitz.github.io/ai-gateway-docs/responses-api/phases/phase6.html)**
 
 | Component | Current | Target |
 |-----------|---------|--------|
