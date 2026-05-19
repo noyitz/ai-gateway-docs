@@ -14,6 +14,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .brand span{font-size:18px;font-weight:700}
 .back{color:var(--dim);font-size:13px;text-decoration:none;margin-bottom:24px;display:inline-block}
 .back:hover{color:var(--accent)}
+.docs-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px;padding:14px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+.docs-nav-title{font-size:12px;color:var(--dim);font-weight:600;width:100%;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.doc-link{font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;color:var(--dim);text-decoration:none;transition:all .15s}
+.doc-link:hover{border-color:var(--accent);color:var(--accent);background:#58a6ff08}
 h1{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
 h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .tagline{font-size:15px;color:var(--dim);margin-bottom:40px}
@@ -40,6 +44,15 @@ h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-back
 
 <h1>Implementation <span class="grad">Phases</span></h1>
 <p class="tagline">6 phases across 18 months — from stateless pass-through to unified Praxis gateway</p>
+
+<div class="docs-nav">
+  <div class="docs-nav-title">Documentation</div>
+  <a href="https://github.com/noyitz/ai-gateway-docs/blob/main/responses-api/01-overview.md" class="doc-link">Overview</a>
+  <a href="https://github.com/noyitz/ai-gateway-docs/blob/main/responses-api/02-components.md" class="doc-link">Components</a>
+  <a href="https://github.com/noyitz/ai-gateway-docs/blob/main/responses-api/03-strategy.md" class="doc-link">Strategy & Flows</a>
+  <a href="https://github.com/noyitz/ai-gateway-docs/blob/main/responses-api/04-plugins.md" class="doc-link">Plugin Pipeline</a>
+  <a href="https://github.com/noyitz/ai-gateway-docs/blob/main/responses-api/05-plan.md" class="doc-link">Implementation Plan</a>
+</div>
 
 <div class="timeline">
 
