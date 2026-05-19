@@ -33,6 +33,23 @@ h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-back
 footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--border);text-align:center;font-size:13px;color:#484f58}
 footer a{color:#484f58;text-decoration:none}
 footer a:hover{color:var(--accent)}
+.modal-backdrop{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+.modal-backdrop.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:600px;width:90%;max-height:85vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--dim);margin-bottom:20px}
+.modal-close{float:right;background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.modal-close:hover{color:var(--text);background:#30363d}
+.phase-link{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text);padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:all .15s}
+.phase-link:hover{border-color:var(--accent);transform:translateX(4px);background:#58a6ff08}
+.phase-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.phase-info{flex:1}
+.phase-name{font-size:14px;font-weight:600}
+.phase-detail{font-size:11px;color:var(--dim)}
+.phase-time{font-size:11px;color:var(--dim);flex-shrink:0}
+.modal-footer{margin-top:16px;padding-top:12px;border-top:1px solid var(--border);text-align:center}
+.modal-footer a{color:var(--dim);font-size:12px;text-decoration:none}
+.modal-footer a:hover{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -94,22 +111,90 @@ footer a:hover{color:var(--accent)}
   </div>
 </a>
 
-<a href="responses-api/" class="card">
+<div class="card" style="cursor:pointer" onclick="document.getElementById('responses-modal').classList.add('show')">
   <div class="card-header">
     <div class="card-icon" style="background:#d2a8ff22;border:1px solid #d2a8ff44">&#128257;</div>
     <div>
       <div class="card-title">Responses API — Pipeline Flow</div>
-      <div class="card-subtitle">Agentic Loops & Tool Invocation</div>
+      <div class="card-subtitle">6 Implementation Phases &middot; 7 Flow Types &middot; 24 Plugins</div>
     </div>
   </div>
-  <div class="card-desc">Processing pipeline for the Responses API: auth, hydration, guardrails, inference, and the agentic loop where tool calls cycle back through inference. Shows MCP tools, function hydration, and guardrails preparation.</div>
+  <div class="card-desc">Processing pipeline for the Responses API across 6 implementation phases. Each phase adds new capabilities: from stateless pass-through to full agentic loop with MCP tools, guardrails, and background processing.</div>
   <div class="card-stats">
-    <span class="stat stat-purple">3 Flows</span>
+    <span class="stat stat-purple">6 Phases</span>
     <span class="stat stat-gold">Agentic Loop</span>
     <span class="stat stat-orange">Guardrails</span>
-    <span class="stat stat-green">Inference</span>
+    <span class="stat stat-green">7 Flows</span>
   </div>
-</a>
+</div>
+
+<div id="responses-modal" class="modal-backdrop" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('responses-modal').classList.remove('show')">&times;</button>
+    <div class="modal-title">Responses API — Implementation Phases</div>
+    <div class="modal-sub">Select a phase to view its animated pipeline flow</div>
+
+    <a href="responses-api/phases/phase1.html" class="phase-link">
+      <div class="phase-dot" style="background:#58a6ff"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 1: Foundation — Internal Pass-Through</div>
+        <div class="phase-detail">Stateless Responses API &middot; 7 active plugins &middot; Flow 1</div>
+      </div>
+      <div class="phase-time">Weeks 1-4</div>
+    </a>
+
+    <a href="responses-api/phases/phase2.html" class="phase-link">
+      <div class="phase-dot" style="background:#d2a8ff"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 2: External Models — API Translation</div>
+        <div class="phase-detail">5 providers &middot; 12 active plugins &middot; Flows 1, 3</div>
+      </div>
+      <div class="phase-time">Weeks 4-8</div>
+    </a>
+
+    <a href="responses-api/phases/phase3.html" class="phase-link">
+      <div class="phase-dot" style="background:#f0883e"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 3: Agentic Loop — MCP Tools & State</div>
+        <div class="phase-detail">MCP tools, OGX state &middot; 20 active plugins &middot; Flows 1-3, 5</div>
+      </div>
+      <div class="phase-time">Weeks 8-16</div>
+    </a>
+
+    <a href="responses-api/phases/phase4.html" class="phase-link">
+      <div class="phase-dot" style="background:#3fb950"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 4: Praxis Migration — Rust Filters</div>
+        <div class="phase-detail">Inline Rust filters, StreamBuffer &middot; Flows 1-3, 5</div>
+      </div>
+      <div class="phase-time">Months 6-12</div>
+    </a>
+
+    <a href="responses-api/phases/phase5.html" class="phase-link">
+      <div class="phase-dot" style="background:#e3b341"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 5: Full Agentic Platform — All Tools</div>
+        <div class="phase-detail">All 24 plugins &middot; All 7 flows &middot; Background mode</div>
+      </div>
+      <div class="phase-time">Months 9-15</div>
+    </a>
+
+    <a href="responses-api/phases/phase6.html" class="phase-link">
+      <div class="phase-dot" style="background:#f85149"></div>
+      <div class="phase-info">
+        <div class="phase-name">Phase 6: Unified Gateway — Single Praxis Runtime</div>
+        <div class="phase-detail">Consolidated architecture &middot; All 7 flows &middot; MCP gateway</div>
+      </div>
+      <div class="phase-time">Months 12-18</div>
+    </a>
+
+    <div class="modal-footer">
+      <a href="responses-api/phases/">View full timeline &rarr;</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/noyitz/ai-gateway-docs/tree/main/responses-api">Documentation &rarr;</a>
+    </div>
+  </div>
+</div>
 
 <a href="https://noyitz.github.io/flowstory/" class="card" style="border-color:#3fb95044">
   <div class="card-header">
