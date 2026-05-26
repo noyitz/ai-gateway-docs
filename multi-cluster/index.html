@@ -122,9 +122,9 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <p class="sub">Interactive animated architecture flow<br>for multi-cluster AI inference</p>
     <div class="stats">
       <div class="stat blue">3 Flows</div>
-      <div class="stat green">2 Worker Clusters</div>
-      <div class="stat gold">External Providers</div>
-      <div class="stat purple">Cross-Cluster Replication</div>
+      <div class="stat green">2 OCP Clusters</div>
+      <div class="stat gold">5 External Providers</div>
+      <div class="stat purple">RHCL Replication</div>
     </div>
     <div class="laptop-msg">
       <div class="laptop-icon">&#128187;</div>
@@ -140,9 +140,9 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div class="right-panel">
   <div class="flow-bar">
     <select id="flow-select">
-      <option value="cluster_a">Route to Worker Cluster A</option>
-      <option value="cluster_b">Route to Worker Cluster B</option>
-      <option value="external">External Provider Fallback</option>
+      <option value="cluster_a">Internal Model -- Cluster A</option>
+      <option value="cluster_b">Internal Model -- Cluster B</option>
+      <option value="external">External Model Fallback</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
@@ -150,7 +150,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
-    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">&#183; click to jump</span></div>
     <div id="steps-ctr"></div>
   </div>
   <div class="insp-section" id="insp-section">
@@ -174,12 +174,12 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 <div class="legend">
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Inference (llm-d)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response / Inference</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
   <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Processing (IPP)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e3b341"></div>External Provider</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Redis / State</div>
   <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div>Infrastructure</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Replication</div>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -193,7 +193,13 @@ let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1;
 let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
-const LW = 1200, LH = 900;
+// Load Redis icon
+const redisImg = new Image();
+redisImg.src = 'redis.svg';
+let redisLoaded = false;
+redisImg.onload = () => { redisLoaded = true; draw(); };
+
+const LW = 1200, LH = 850;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -207,53 +213,68 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  // Client
-  client: { x: 30, y: 200, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
+  // Client (top center)
+  client: { x: 500, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
-  // Argo CD
-  argocd: { x: 450, y: 30, w: 200, h: 50, label: 'Argo CD', sublabel: 'GitOps Deployment', color: '#58a6ff', fs: 16 },
+  // OCP Cluster A (left container)
+  cluster_a: { x: 30, y: 120, w: 440, h: 420, type: 'container', label: 'OCP Cluster A', color: '#58a6ff' },
+  gw_a: { x: 100, y: 165, w: 300, h: 55, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
+  kuad_a: { x: 60, y: 250, w: 160, h: 45, label: 'Kuadrant', sublabel: 'Auth / Rate Limit', color: '#f0883e', fs: 14 },
+  ipp_a: { x: 250, y: 250, w: 160, h: 45, label: 'IPP', sublabel: 'Payload Processor', color: '#d2a8ff', fs: 14 },
+  maas_a: { x: 130, y: 330, w: 200, h: 50, label: 'MaaS API', sublabel: 'Keys / Subscriptions / Catalog', color: '#79c0ff', fs: 14 },
+  redis_a: { x: 60, y: 420, w: 120, h: 45, label: 'Redis', sublabel: 'Rate Limit Cache', color: '#f85149', fs: 13 },
+  pg_a: { x: 280, y: 420, w: 130, h: 45, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 13 },
 
-  // Ingress Cluster boundary
-  ingress_cluster: { x: 200, y: 120, w: 700, h: 370, type: 'boundary', label: 'Ingress Cluster' },
+  // OCP Cluster B (right container)
+  cluster_b: { x: 530, y: 120, w: 440, h: 420, type: 'container', label: 'OCP Cluster B', color: '#58a6ff' },
+  gw_b: { x: 600, y: 165, w: 300, h: 55, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
+  kuad_b: { x: 560, y: 250, w: 160, h: 45, label: 'Kuadrant', sublabel: 'Auth / Rate Limit', color: '#f0883e', fs: 14 },
+  ipp_b: { x: 750, y: 250, w: 160, h: 45, label: 'IPP', sublabel: 'Payload Processor', color: '#d2a8ff', fs: 14 },
+  maas_b: { x: 630, y: 330, w: 200, h: 50, label: 'MaaS API', sublabel: 'Keys / Subscriptions / Catalog', color: '#79c0ff', fs: 14 },
+  redis_b: { x: 560, y: 420, w: 120, h: 45, label: 'Redis', sublabel: 'Rate Limit Cache', color: '#f85149', fs: 13 },
+  pg_b: { x: 780, y: 420, w: 130, h: 45, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 13 },
 
-  // Ingress Cluster components
-  maas: { x: 350, y: 160, w: 200, h: 55, label: 'MaaS API', sublabel: 'Auth · Rate Limit · Model Catalog', color: '#79c0ff', fs: 15 },
-  kuadrant: { x: 250, y: 250, w: 160, h: 50, label: 'Kuadrant', sublabel: 'Auth · Rate Limit', color: '#f0883e', fs: 14 },
-  ipp: { x: 500, y: 250, w: 160, h: 50, label: 'IPP', sublabel: 'Payload Processor', color: '#d2a8ff', fs: 14 },
-  postgres: { x: 350, y: 365, w: 160, h: 45, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 14 },
-  redis: { x: 560, y: 365, w: 140, h: 45, label: 'Redis', sublabel: 'Rate Limit State', color: '#f85149', fs: 14 },
+  // InferencePool A (below left cluster)
+  pool_a: { x: 30, y: 620, w: 440, h: 140, type: 'container', label: 'InferencePool -- Cluster A', color: '#3fb950' },
+  vllm_a1: { x: 60, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
+  vllm_a2: { x: 220, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
 
-  // Worker Cluster A boundary
-  cluster_a: { x: 10, y: 540, w: 380, h: 200, type: 'boundary', label: 'Worker Cluster A' },
-  llmd_a: { x: 50, y: 590, w: 130, h: 55, label: 'llm-d Stack', sublabel: 'vLLM Pods', color: '#3fb950', fs: 14 },
-  epp_a: { x: 220, y: 590, w: 130, h: 55, label: 'EPP', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14 },
-  model_a: { x: 130, y: 680, w: 140, h: 40, label: 'llama-4-scout', sublabel: 'GPU Pool A', color: '#d2a8ff', fs: 13 },
+  // InferencePool B (below right cluster)
+  pool_b: { x: 530, y: 620, w: 440, h: 140, type: 'container', label: 'InferencePool -- Cluster B', color: '#3fb950' },
+  vllm_b1: { x: 560, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
+  vllm_b2: { x: 720, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
 
-  // Worker Cluster B boundary
-  cluster_b: { x: 710, y: 540, w: 380, h: 200, type: 'boundary', label: 'Worker Cluster B' },
-  llmd_b: { x: 750, y: 590, w: 130, h: 55, label: 'llm-d Stack', sublabel: 'vLLM Pods', color: '#3fb950', fs: 14 },
-  epp_b: { x: 920, y: 590, w: 130, h: 55, label: 'EPP', sublabel: 'Pod Selection', color: '#79c0ff', fs: 14 },
-  model_b: { x: 830, y: 680, w: 140, h: 40, label: 'llama-4-maverick', sublabel: 'GPU Pool B', color: '#d2a8ff', fs: 12 },
-
-  // External Providers
-  ext_provider: { x: 430, y: 800, w: 240, h: 55, label: 'External Providers', sublabel: 'OpenAI · Anthropic · Azure', color: '#e3b341', fs: 15 },
+  // External Providers (far right)
+  openai:    { x: 1020, y: 200, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
+  anthropic: { x: 1020, y: 260, w: 130, h: 45, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
+  azure:     { x: 1020, y: 320, w: 130, h: 45, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
+  bedrock:   { x: 1020, y: 380, w: 130, h: 45, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
+  vertex:    { x: 1020, y: 440, w: 130, h: 45, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 13 },
 };
 
 const tips = {
-  argocd: { t: 'Argo CD', d: 'GitOps continuous deployment tool. Manages declarative deployment of llm-d stacks, EPP, and model serving configurations across multiple OpenShift worker clusters from Git repositories.', dt: [['Pattern','GitOps pull-based deployment'],['Targets','Worker Cluster A, Worker Cluster B'],['Deploys','llm-d Stack, EPP, InferencePool, Model configs'],['Sync','Automatic or manual approval']], links:[['Argo CD','https://argo-cd.readthedocs.io/']] },
-  maas: { t: 'MaaS API', d: 'Models-as-a-Service API server. Central control plane for the AI Grid. Manages API keys, subscriptions, model catalog, and rate limiting policies. Routes requests to on-cluster inference or external providers.', dt: [['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/chat/completions'],['Auth','API key validation via Kuadrant'],['Rate Limiting','Token-based via Redis + Limitador'],['CRDs','ExternalModel, MaaSModelRef, MaaSAuth, MaaSSubscription']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
-  kuadrant: { t: 'Kuadrant', d: 'Red Hat Connectivity Link (RHCL) component for multi-cluster auth and rate limiting. Runs Authorino for authentication and Limitador for rate limiting. Policies replicate across clusters via RHCL.', dt: [['Auth Engine','Authorino'],['Rate Limit Engine','Limitador'],['Multi-Cluster','RHCL replication'],['Policies','AuthPolicy, RateLimitPolicy, TokenRateLimitPolicy']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['RHCL','https://developers.redhat.com/products/red-hat-connectivity-link']] },
-  ipp: { t: 'IPP (Inference Payload Processor)', d: 'ext_proc filter for payload processing. Runs request and response plugins: model-provider-resolver, body-field-to-header, api-translation, apikey-injection. Routes to on-cluster InferencePool or external providers.', dt: [['Type','ext_proc filter (Envoy)'],['Request Plugins','model-provider-resolver, body-field-to-header, api-translation, apikey-injection'],['Response Plugins','api-translation (response)'],['Routing','On-cluster (llm-d) or External providers']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  postgres: { t: 'PostgreSQL', d: 'Stores MaaS state including API keys, subscriptions, model catalog, and usage data. State replicates across clusters for HA.', dt: [['Stores','API keys, subscriptions, model catalog, usage'],['Replication','Cross-cluster state replication'],['Used By','MaaS API']] },
-  redis: { t: 'Redis', d: 'In-memory data store for rate limit counters. Limitador uses Redis to track token consumption per subscription. State replicates across clusters via RHCL for consistent rate limiting.', dt: [['Purpose','Rate limit state (token counters)'],['Replication','RHCL cross-cluster replication'],['Used By','Limitador (Kuadrant)'],['Key Pattern','subscription:{id}:tokens']] },
-  llmd_a: { t: 'llm-d Stack (Cluster A)', d: 'vLLM inference engine running on Worker Cluster A. Serves the llama-4-scout model with GPU acceleration. Supports disaggregated serving (P/D) and prefix caching.', dt: [['Engine','vLLM'],['Model','llama-4-scout'],['Features','P/D disaggregation, prefix caching, KV transfer'],['GPU','Pool A (NVIDIA)']], links:[['llm-d','https://github.com/llm-d'],['vLLM','https://docs.vllm.ai/']] },
-  epp_a: { t: 'EPP (Cluster A)', d: 'Endpoint Picker Proxy on Worker Cluster A. Selects the optimal vLLM pod for inference based on KV cache utilization, queue depth, and model affinity.', dt: [['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Metrics','KV cache utilization, queue depth'],['Supports','P/D disaggregation']], links:[['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
-  model_a: { t: 'llama-4-scout (GPU Pool A)', d: 'Meta Llama 4 Scout model running on GPU Pool A. Optimized for fast inference with smaller context windows.', dt: [['Model','llama-4-scout'],['Hardware','NVIDIA GPU Pool A'],['Serving','vLLM with disaggregated P/D']] },
-  llmd_b: { t: 'llm-d Stack (Cluster B)', d: 'vLLM inference engine running on Worker Cluster B. Serves the llama-4-maverick model with GPU acceleration.', dt: [['Engine','vLLM'],['Model','llama-4-maverick'],['Features','P/D disaggregation, prefix caching'],['GPU','Pool B (NVIDIA)']], links:[['llm-d','https://github.com/llm-d'],['vLLM','https://docs.vllm.ai/']] },
-  epp_b: { t: 'EPP (Cluster B)', d: 'Endpoint Picker Proxy on Worker Cluster B. Selects the optimal vLLM pod for inference.', dt: [['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Model','llama-4-maverick']], links:[['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
-  model_b: { t: 'llama-4-maverick (GPU Pool B)', d: 'Meta Llama 4 Maverick model running on GPU Pool B. Large-scale model for complex reasoning tasks.', dt: [['Model','llama-4-maverick'],['Hardware','NVIDIA GPU Pool B'],['Serving','vLLM with disaggregated P/D']] },
-  ext_provider: { t: 'External Providers', d: 'Cloud AI providers used as fallback when on-cluster models are unavailable or for models not hosted on-cluster. IPP handles API translation and credential injection.', dt: [['Providers','OpenAI, Anthropic, Azure OpenAI'],['Translation','OpenAI format to/from provider-native'],['Auth','apikey-injection from K8s Secrets'],['Fallback','When on-cluster model unavailable']], links:[['Provider Guides','https://github.com/opendatahub-io/ai-gateway-payload-processing/tree/main/docs/providers']] },
-  client: { t: 'Client / Agent', d: 'Application or AI agent sending inference requests to the AI Grid via standard OpenAI-compatible API.', dt: [['API','POST /v1/chat/completions'],['Format','OpenAI Chat Completions'],['Auth','MaaS API key']] },
+  client: { t: 'Client / Agent', d: 'Application or AI agent sending inference requests to the AI Grid via standard OpenAI-compatible API.', dt: [['API','POST /v1/chat/completions'],['Format','OpenAI Chat Completions'],['Auth','MaaS API key'],['Routing','Routed to nearest OCP cluster via DNS/load balancer']] },
+  gw_a: { t: 'Istio Gateway (Cluster A)', d: 'Envoy-based reverse proxy that receives all inference requests in OCP Cluster A. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filter for payload processing.', dt: [['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io']] },
+  gw_b: { t: 'Istio Gateway (Cluster B)', d: 'Envoy-based reverse proxy in OCP Cluster B. Identical configuration to Cluster A via GitOps.', dt: [['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io']] },
+  kuad_a: { t: 'Kuadrant (Cluster A)', d: 'Red Hat Connectivity Link component for auth and rate limiting. Runs Authorino for authentication and Limitador for rate limiting.', dt: [['Auth Engine','Authorino'],['Rate Limit Engine','Limitador'],['Policies','AuthPolicy, RateLimitPolicy, TokenRateLimitPolicy'],['Multi-Cluster','RHCL state replication']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['RHCL','https://developers.redhat.com/products/red-hat-connectivity-link']] },
+  kuad_b: { t: 'Kuadrant (Cluster B)', d: 'Kuadrant instance in Cluster B. Rate limit state synchronized with Cluster A via RHCL.', dt: [['Auth Engine','Authorino'],['Rate Limit Engine','Limitador'],['Sync','RHCL cross-cluster replication']] },
+  ipp_a: { t: 'IPP (Cluster A)', d: 'Inference Payload Processor (ext_proc filter). Runs request/response plugins: model-provider-resolver, body-field-to-header, api-translation, apikey-injection.', dt: [['Type','ext_proc filter (Envoy)'],['Request Plugins','model-provider-resolver, body-field-to-header, api-translation, apikey-injection'],['Response Plugins','api-translation (response)'],['Routing','On-cluster InferencePool or External providers']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  ipp_b: { t: 'IPP (Cluster B)', d: 'IPP instance in Cluster B. Same plugin configuration as Cluster A.', dt: [['Type','ext_proc filter (Envoy)'],['Plugins','Same as Cluster A'],['Routing','On-cluster InferencePool or External providers']] },
+  maas_a: { t: 'MaaS API (Cluster A)', d: 'Models-as-a-Service API server. Manages API keys, subscriptions, model catalog, and rate limiting policies.', dt: [['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRDs','ExternalModel, MaaSModelRef, MaaSAuth, MaaSSubscription']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
+  maas_b: { t: 'MaaS API (Cluster B)', d: 'MaaS API instance in Cluster B. State synchronized with Cluster A via PostgreSQL replication.', dt: [['Database','PostgreSQL (replicated)'],['Sync','Cross-cluster state replication']] },
+  redis_a: { t: 'Redis (Cluster A)', d: 'In-memory data store for rate limit counters. Limitador uses Redis to track token consumption. State replicates across clusters via RHCL.', dt: [['Purpose','Rate limit state (token counters)'],['Replication','RHCL cross-cluster'],['Used By','Limitador (Kuadrant)']] },
+  redis_b: { t: 'Redis (Cluster B)', d: 'Redis instance in Cluster B. Synchronized with Cluster A for consistent rate limiting across clusters.', dt: [['Purpose','Rate limit state (token counters)'],['Sync','RHCL cross-cluster replication']] },
+  pg_a: { t: 'PostgreSQL (Cluster A)', d: 'Stores MaaS state: API keys, subscriptions, model catalog, usage data. State replicates across clusters.', dt: [['Stores','API keys, subscriptions, model catalog, usage'],['Replication','Cross-cluster via RHCL'],['Used By','MaaS API']] },
+  pg_b: { t: 'PostgreSQL (Cluster B)', d: 'PostgreSQL instance in Cluster B. Receives replicated state from Cluster A.', dt: [['Stores','Replicated MaaS state'],['Sync','Cross-cluster replication']] },
+  vllm_a1: { t: 'vLLM Decode Pod (Cluster A)', d: 'Generates output tokens auto-regressively using KV cache. Part of disaggregated P/D serving in InferencePool A.', dt: [['Engine','vLLM'],['Function','Auto-regressive token generation'],['Mode','Disaggregated P/D serving']], links:[['vLLM','https://docs.vllm.ai/']] },
+  vllm_a2: { t: 'vLLM Prefill Pod (Cluster A)', d: 'Processes the input prompt and generates KV cache. Part of disaggregated P/D serving.', dt: [['Engine','vLLM'],['Function','Prompt processing, KV cache generation'],['Transfer','KV cache to Decode Pod']], links:[['vLLM','https://docs.vllm.ai/']] },
+  vllm_b1: { t: 'vLLM Decode Pod (Cluster B)', d: 'Decode pod in InferencePool B for auto-regressive generation.', dt: [['Engine','vLLM'],['Function','Auto-regressive token generation']] },
+  vllm_b2: { t: 'vLLM Prefill Pod (Cluster B)', d: 'Prefill pod in InferencePool B for prompt processing.', dt: [['Engine','vLLM'],['Function','Prompt processing, KV cache generation']] },
+  openai: { t: 'OpenAI', d: 'OpenAI API endpoint. Requests pass through without format translation (native OpenAI format).', dt: [['Model','gpt-4o-mini'],['API','/v1/chat/completions'],['Auth Header','Authorization: Bearer'],['Translation','None (native)']], links:[['OpenAI Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/openai.md']] },
+  anthropic: { t: 'Anthropic', d: 'Claude API endpoint. Receives requests translated from OpenAI to Anthropic Messages API format.', dt: [['Model','claude-haiku-4-5'],['API','/v1/messages'],['Auth Header','x-api-key'],['Translation','OpenAI to Anthropic Messages']], links:[['Anthropic Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/anthropic.md']] },
+  azure: { t: 'Azure OpenAI', d: 'Azure OpenAI endpoint. Uses api-key header, content filter fields stripped.', dt: [['Model','gpt-4.1-mini'],['Auth Header','api-key'],['Specifics','Content filter fields stripped']], links:[['Azure Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/azure-openai.md']] },
+  bedrock: { t: 'AWS Bedrock', d: 'AWS Bedrock endpoint (OpenAI-compatible). Uses base64-encoded access key.', dt: [['Model','claude-3-haiku'],['API','/v1/chat/completions'],['Auth','Base64 access key']], links:[['Bedrock Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/aws-bedrock.md']] },
+  vertex: { t: 'Google Vertex AI', d: 'Vertex AI endpoint (OpenAI-compatible). Path rewritten to Vertex format.', dt: [['Model','gemini-2.5-flash'],['Path Rewrite','/v1beta1/projects/{proj}/locations/{loc}/endpoints/openapi/chat/completions']], links:[['Vertex Provider Guide','https://github.com/opendatahub-io/ai-gateway-payload-processing/blob/main/docs/providers/vertex-ai.md']] },
 };
 
 let overlayWasRunning = false, highlightKey = null;
@@ -270,8 +291,8 @@ function showOverlay(key) {
   document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
   document.getElementById('overlay-desc').textContent = tip.d;
   let dh = '';
-  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
-  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">' + esc(l) + '</span><span style="color:#c9d1d9">' + esc(v) + '</span></div>'; });
+  if (tip.links) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += '<a href="' + u + '" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor=\'#58a6ff\'" onmouseout="this.style.borderColor=\'#30363d\'">' + esc(l) + ' ↗</a>'; }); dh += '</div>'; }
   document.getElementById('overlay-details').innerHTML = dh;
   const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
   const canvasRight = innerWidth - 380;
@@ -286,12 +307,12 @@ function showOverlay(key) {
   hb.style.top = ny + 'px';
   hb.style.width = nw + 'px';
   hb.style.height = nh + 'px';
-  hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
-  hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
+  hb.style.border = '3px solid ' + (n.color || '#58a6ff');
+  hb.style.boxShadow = '0 0 30px ' + (n.color || '#58a6ff') + '88, inset 0 0 20px ' + (n.color || '#58a6ff') + '22';
   hb.style.background = isDark ? '#161b22' : '#f6f8fa';
   hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
   hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
-  hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
+  hb.innerHTML = '<div style="font-weight:700;font-size:' + (nw > 150 ? 16 : 13) + 'px">' + esc(n.label) + '</div>' + (n.sublabel ? '<div style="font-size:' + (nw > 150 ? 12 : 10) + 'px;color:#8b949e">' + esc(n.sublabel) + '</div>' : '');
   hb.style.transform = 'none';
   draw();
 }
@@ -330,16 +351,16 @@ function ts(s) { return s * sc; }
 
 function drawBox(key) {
   const n = N[key], c = C();
-  if (!n || n.type === 'boundary') return;
+  if (!n || n.type === 'container') return;
   const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
   const isA = activeNodes.has(key), hasBadge = badges[key] != null;
   ctx.save();
 
   if (n.type === 'icon') {
-    ctx.font = `${ts(32)}px serif`;
+    ctx.font = ts(32) + 'px serif';
     ctx.textAlign = 'center';
     ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
-    ctx.font = `bold ${ts(14)}px system-ui`;
+    ctx.font = 'bold ' + ts(14) + 'px system-ui';
     ctx.fillStyle = c.txt;
     ctx.fillText(n.label, x + w / 2, y + ts(46));
     ctx.restore();
@@ -361,7 +382,15 @@ function drawBox(key) {
 
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, ts(8));
-  ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+
+  // Special fill for Redis boxes
+  if (key === 'redis_a' || key === 'redis_b') {
+    ctx.fillStyle = (isA || hasBadge) ? (isDark ? '#2d1517' : '#ffebe9') : (isDark ? '#1a1215' : '#fff5f5');
+  } else if (key === 'pg_a' || key === 'pg_b') {
+    ctx.fillStyle = (isA || hasBadge) ? c.boxA : (isDark ? '#151820' : '#f0f4f8');
+  } else {
+    ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+  }
   ctx.fill();
   ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
   ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
@@ -372,21 +401,27 @@ function drawBox(key) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  // Draw Redis icon inside redis boxes
+  if ((key === 'redis_a' || key === 'redis_b') && redisLoaded) {
+    const iw = ts(18), ih = ts(15);
+    ctx.drawImage(redisImg, x + ts(6), y + h / 2 - ih / 2, iw, ih);
+  }
+
   if (n.sublabel) {
-    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
-    ctx.font = `${ts(Math.max(fs - 3, 10))}px system-ui`;
+    ctx.font = ts(Math.max(fs - 3, 10)) + 'px system-ui';
     ctx.fillStyle = c.dim;
     ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
   } else {
-    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.font = 'bold ' + ts(fs) + 'px system-ui';
     ctx.fillText(n.label, x + w / 2, y + h / 2);
   }
 
   // Badges
   if (hasBadge) {
     const bList = Array.isArray(badges[key]) ? badges[key] : [badges[key]];
-    bList.forEach((bNum, idx) => {
+    bList.forEach(function(bNum, idx) {
       const bx = x + ts(8) + idx * ts(22), by = y + ts(5), br = ts(9);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
@@ -394,7 +429,7 @@ function drawBox(key) {
       ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
       ctx.fillStyle = n.color;
       ctx.fill();
-      ctx.font = `bold ${ts(10)}px system-ui`;
+      ctx.font = 'bold ' + ts(10) + 'px system-ui';
       ctx.fillStyle = isDark ? '#0d1117' : '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -404,127 +439,147 @@ function drawBox(key) {
   ctx.restore();
 }
 
-function drawBoundary(key) {
+function drawContainer(key, isGlow) {
   const n = N[key], c = C();
-  if (!n || n.type !== 'boundary') return;
+  if (!n || n.type !== 'container') return;
   ctx.save();
-  const isGlow = glowing.has(key);
-  if (isGlow) { ctx.shadowColor = '#3fb950'; ctx.shadowBlur = ts(22); }
+  if (isGlow) { ctx.shadowColor = n.color; ctx.shadowBlur = ts(22); }
   ctx.beginPath();
-  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(12));
-  ctx.strokeStyle = isGlow ? '#3fb950cc' : c.bdr;
-  ctx.lineWidth = ts(isGlow ? 3 : 2);
-  ctx.setLineDash([ts(8), ts(6)]);
+  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
+  var a = isGlow ? 'cc' : '55';
+  ctx.strokeStyle = n.color + a;
+  ctx.lineWidth = ts(isGlow ? 3 : 2.5);
+  ctx.setLineDash([ts(7), ts(5)]);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.font = `bold ${ts(13)}px system-ui`;
-  ctx.fillStyle = isDark ? 'rgba(200,210,220,0.6)' : 'rgba(80,90,100,0.6)';
+  ctx.font = 'bold ' + ts(12) + 'px system-ui';
+  ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
   ctx.textAlign = 'left';
-  ctx.fillText(n.label, tx(n.x + 14), ty(n.y + 20));
+  ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
   ctx.restore();
 }
 
-function drawPermanentConnections() {
-  const c = C();
+function drawReplicationBar() {
+  var c = C();
   ctx.save();
-
-  // Argo CD -> Worker Cluster A
-  drawDashedArrow(
-    N.argocd.x + N.argocd.w / 2 - 60, N.argocd.y + N.argocd.h,
-    N.cluster_a.x + N.cluster_a.w / 2, N.cluster_a.y,
-    '#58a6ff', 'deploy llm-d'
-  );
-
-  // Argo CD -> Worker Cluster B
-  drawDashedArrow(
-    N.argocd.x + N.argocd.w / 2 + 60, N.argocd.y + N.argocd.h,
-    N.cluster_b.x + N.cluster_b.w / 2, N.cluster_b.y,
-    '#58a6ff', 'deploy llm-d'
-  );
-
-  // Redis <-> Worker clusters (RHCL replication)
-  drawDashedArrow(
-    N.redis.x, N.redis.y + N.redis.h / 2,
-    N.cluster_a.x + N.cluster_a.w, N.cluster_a.y + 30,
-    '#f85149', 'RHCL replication', true
-  );
-  drawDashedArrow(
-    N.redis.x + N.redis.w, N.redis.y + N.redis.h / 2,
-    N.cluster_b.x, N.cluster_b.y + 30,
-    '#f85149', 'RHCL replication', true
-  );
-
-  // PostgreSQL <-> state replication
-  drawDashedArrow(
-    N.postgres.x + N.postgres.w / 2, N.postgres.y + N.postgres.h,
-    N.postgres.x + N.postgres.w / 2, N.postgres.y + N.postgres.h + 60,
-    '#8b949e', 'state replication', true
-  );
-
-  ctx.restore();
-}
-
-function drawDashedArrow(x1, y1, x2, y2, color, label, bidir) {
-  ctx.save();
-  ctx.globalAlpha = 0.45;
+  // Dark rounded rectangle spanning both clusters
+  var barX = tx(30), barY = ty(570), barW = ts(940), barH = ts(40);
   ctx.beginPath();
-  ctx.moveTo(tx(x1), ty(y1));
-  ctx.lineTo(tx(x2), ty(y2));
-  ctx.strokeStyle = color;
-  ctx.lineWidth = ts(1.5);
-  ctx.setLineDash([ts(5), ts(4)]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Arrowhead at end
-  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(7);
-  ctx.beginPath();
-  ctx.moveTo(tx(x2), ty(y2));
-  ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
-  ctx.lineTo(tx(x2) - sz * Math.cos(ang + 0.4), ty(y2) - sz * Math.sin(ang + 0.4));
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.globalAlpha = 0.45;
+  ctx.roundRect(barX, barY, barW, barH, ts(8));
+  ctx.fillStyle = isDark ? '#1a1e2a' : '#e8edf5';
   ctx.fill();
-
-  // Arrowhead at start if bidirectional
-  if (bidir) {
-    const ang2 = Math.atan2(y1 - y2, x1 - x2);
-    ctx.beginPath();
-    ctx.moveTo(tx(x1), ty(y1));
-    ctx.lineTo(tx(x1) - sz * Math.cos(ang2 - 0.4), ty(y1) - sz * Math.sin(ang2 - 0.4));
-    ctx.lineTo(tx(x1) - sz * Math.cos(ang2 + 0.4), ty(y1) - sz * Math.sin(ang2 + 0.4));
-    ctx.closePath();
-    ctx.fill();
-  }
+  ctx.strokeStyle = isDark ? '#58a6ff88' : '#58a6ff66';
+  ctx.lineWidth = ts(2);
+  ctx.stroke();
 
   // Label
-  if (label) {
-    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-    ctx.globalAlpha = 0.55;
-    ctx.font = `${ts(9)}px system-ui`;
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    // Rotate label along line
+  ctx.font = 'bold ' + ts(13) + 'px system-ui';
+  ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('RHCL — Red Hat Connectivity Link', barX + barW / 2, barY + barH / 2);
+
+  // Sublabel
+  ctx.font = ts(10) + 'px system-ui';
+  ctx.fillStyle = isDark ? '#8b949e' : '#656d76';
+  ctx.fillText('State Replication Layer', barX + barW / 2, barY + barH / 2 + ts(14));
+
+  ctx.restore();
+
+  // Draw arrows from Redis and PostgreSQL down to bar
+  var arrowTargets = [
+    { key: 'redis_a', xOff: 0 },
+    { key: 'pg_a', xOff: 0 },
+    { key: 'redis_b', xOff: 0 },
+    { key: 'pg_b', xOff: 0 },
+  ];
+  arrowTargets.forEach(function(at) {
+    var n = N[at.key];
+    var sx = tx(n.x + n.w / 2 + at.xOff);
+    var sy = ty(n.y + n.h);
+    var ey = barY;
     ctx.save();
-    ctx.translate(tx(mx), ty(my));
-    let a = Math.atan2(y2 - y1, x2 - x1);
-    if (a > Math.PI / 2) a -= Math.PI;
-    if (a < -Math.PI / 2) a += Math.PI;
-    ctx.rotate(a);
-    ctx.fillText(label, 0, -ts(8));
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx, ey);
+    ctx.strokeStyle = isDark ? '#58a6ff66' : '#58a6ff55';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Arrowhead
+    var sz = ts(6);
+    ctx.beginPath();
+    ctx.moveTo(sx, ey);
+    ctx.lineTo(sx - sz * 0.5, ey - sz);
+    ctx.lineTo(sx + sz * 0.5, ey - sz);
+    ctx.closePath();
+    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff66';
+    ctx.fill();
     ctx.restore();
+  });
+}
+
+function drawBounds() {
+  // OCP Cluster containers
+  drawContainer('cluster_a', glowing.has('cluster_a'));
+  drawContainer('cluster_b', glowing.has('cluster_b'));
+  // InferencePool containers
+  drawContainer('pool_a', glowing.has('pool_a'));
+  drawContainer('pool_b', glowing.has('pool_b'));
+  // Replication bar
+  drawReplicationBar();
+
+  // Stacked vLLM pods behind decode/prefill (decorative)
+  var podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
+  var podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
+  // Cluster A pods
+  for (var j = 2; j >= 1; j--) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(tx(60 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke(); ctx.restore();
   }
+  for (var j = 2; j >= 1; j--) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(tx(220 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  // Cluster B pods
+  for (var j = 2; j >= 1; j--) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(tx(560 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  for (var j = 2; j >= 1; j--) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(tx(720 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
+    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
+    ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+
+  // "External Providers" label on right side
+  ctx.save();
+  ctx.font = 'bold ' + ts(12) + 'px system-ui';
+  ctx.fillStyle = isDark ? '#3fb950aa' : '#3fb95099';
+  ctx.textAlign = 'center';
+  ctx.fillText('External Providers', tx(1085), ty(185));
   ctx.restore();
 }
 
 function edgePt(n, targetX, targetY, yOff) {
-  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
-  const dx = targetX - cx_, dy = targetY - cy_;
+  var cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  var dx = targetX - cx_, dy = targetY - cy_;
   if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: cx_, y: cy_ };
-  const hw = n.w / 2, hh = n.h / 2;
-  let ex, ey;
+  var hw = n.w / 2, hh = n.h / 2;
+  var ex, ey;
   if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
     ex = cx_ + (dx > 0 ? hw : -hw);
     ey = cy_ + dy * (hw / Math.abs(dx));
@@ -544,7 +599,7 @@ function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
   ctx.strokeStyle = color;
   ctx.lineWidth = ts(2.5);
   ctx.stroke();
-  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
+  var ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
   ctx.beginPath();
   ctx.moveTo(tx(x2), ty(y2));
   ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
@@ -553,12 +608,12 @@ function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
   ctx.fillStyle = color;
   ctx.fill();
   if (num != null) {
-    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    var mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
     ctx.beginPath();
     ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.font = 'bold ' + ts(10) + 'px system-ui';
     ctx.fillStyle = isDark ? '#0d1117' : '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -568,7 +623,7 @@ function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
 }
 
 function resolveEdge(n, l, isFrom) {
-  const yo = l.yOff || 0;
+  var yo = l.yOff || 0;
   if (isFrom) {
     if (l.fromLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
     if (l.fromRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
@@ -581,29 +636,29 @@ function resolveEdge(n, l, isFrom) {
     if (l.toTop) return { x: n.x + n.w / 2 + (l.toXOff || l.xOff || 0), y: n.y + yo };
     if (l.toRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
     if (l.toBottom) return { x: n.x + n.w / 2 + (l.toXOff || 0), y: n.y + n.h + yo };
-    if (l.waypoints) { const wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
+    if (l.waypoints) { var wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
     return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
   }
 }
 
 function drawLines() {
-  lines.forEach(l => {
-    const fn = N[l.from], tn = N[l.to];
+  lines.forEach(function(l) {
+    var fn = N[l.from], tn = N[l.to];
     if (!fn || !tn) return;
     if (l.waypoints) {
-      const fp = resolveEdge(fn, l, true);
-      const tp = resolveEdge(tn, l, false);
-      const pts = [fp, ...l.waypoints, tp];
+      var fp = resolveEdge(fn, l, true);
+      var tp = resolveEdge(tn, l, false);
+      var pts = [fp].concat(l.waypoints, [tp]);
       ctx.save();
       ctx.globalAlpha = 0.8;
       ctx.beginPath();
       ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
       ctx.strokeStyle = l.color;
       ctx.lineWidth = ts(2.5);
       ctx.stroke();
-      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
-      const ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
+      var last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      var ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
       ctx.beginPath();
       ctx.moveTo(tx(last.x), ty(last.y));
       ctx.lineTo(tx(last.x) - sz * Math.cos(ang - 0.4), ty(last.y) - sz * Math.sin(ang - 0.4));
@@ -612,13 +667,13 @@ function drawLines() {
       ctx.fillStyle = l.color;
       ctx.fill();
       if (l.num != null) {
-        const mid = pts[Math.floor(pts.length / 2)];
-        const r = ts(12);
+        var mid = pts[Math.floor(pts.length / 2)];
+        var r = ts(12);
         ctx.beginPath();
         ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
         ctx.fillStyle = l.color;
         ctx.fill();
-        ctx.font = `bold ${ts(10)}px system-ui`;
+        ctx.font = 'bold ' + ts(10) + 'px system-ui';
         ctx.fillStyle = isDark ? '#0d1117' : '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -626,37 +681,41 @@ function drawLines() {
       }
       ctx.restore();
     } else {
-      let fp = resolveEdge(fn, l, true);
-      let tp = resolveEdge(tn, l, false);
+      var fp2 = resolveEdge(fn, l, true);
+      var tp2 = resolveEdge(tn, l, false);
       if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
-        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
-        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+        var tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp2 = edgePt(fn, tc, tcy, l.yOff || 0);
       }
       if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
-        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
-        tp = edgePt(tn, fc, fy, l.yOff || 0);
+        var fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp2 = edgePt(tn, fc, fy, l.yOff || 0);
       }
-      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+      drawArrowLine(fp2.x, fp2.y, tp2.x, tp2.y, l.color, l.num, 0.8);
     }
   });
 }
 
 // Click handler
-canvas.addEventListener('click', e => {
-  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
-  for (const k of Object.keys(tips)) {
-    const n = N[k];
+canvas.addEventListener('click', function(e) {
+  var mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  var keys = Object.keys(tips);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var n = N[k];
     if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
       showOverlay(k);
       return;
     }
   }
 });
-canvas.addEventListener('mousemove', e => {
-  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
-  let found = false;
-  for (const k of Object.keys(tips)) {
-    const n = N[k];
+canvas.addEventListener('mousemove', function(e) {
+  var mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  var found = false;
+  var keys = Object.keys(tips);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var n = N[k];
     if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
   }
   canvas.style.cursor = found ? 'pointer' : 'default';
@@ -665,148 +724,138 @@ canvas.addEventListener('mousemove', e => {
 // ================================================================
 // ANIMATED DOT
 // ================================================================
-class Dot {
-  constructor(fKey, tKey, color, speed, cb, opts) {
-    this.color = color;
-    this.speed = speed || 0.012;
-    this.t = 0;
-    this.cb = cb;
-    this.alive = true;
-    const fn = N[fKey], tn = N[tKey];
-    const yo = (opts && opts.yOff) || 0;
-    let fp, tp;
-    const lo = opts || {};
-    fp = resolveEdge(fn, lo, true);
-    tp = resolveEdge(tn, lo, false);
-    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
-      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
-      fp = edgePt(fn, tc, tcy, yo);
-    }
-    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
-      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
-      tp = edgePt(tn, fc, fy, yo);
-    }
-    if (opts && opts.waypoints) {
-      this.pts = [fp, ...opts.waypoints, tp];
-    } else {
-      this.pts = [fp, tp];
-    }
-    this.segLens = [];
-    this.totalLen = 0;
-    for (let i = 1; i < this.pts.length; i++) {
-      const dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      this.segLens.push(len);
-      this.totalLen += len;
-    }
-    this.segIdx = 0;
-    this.x = this.pts[0].x;
-    this.y = this.pts[0].y;
-    const pxPerFrame = 4;
-    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
+function Dot(fKey, tKey, color, speed, cb, opts) {
+  this.color = color;
+  this.speed = speed || 0.012;
+  this.t = 0;
+  this.cb = cb;
+  this.alive = true;
+  var fn = N[fKey], tn = N[tKey];
+  var yo = (opts && opts.yOff) || 0;
+  var fp, tp;
+  var lo = opts || {};
+  fp = resolveEdge(fn, lo, true);
+  tp = resolveEdge(tn, lo, false);
+  if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
+    var tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+    fp = edgePt(fn, tc, tcy, yo);
   }
-  update() {
-    this.t += this.speed;
-    if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
-    const dist = this.t * this.totalLen;
-    let accum = 0;
-    for (let i = 0; i < this.segLens.length; i++) {
-      if (accum + this.segLens[i] >= dist) {
-        const segT = (dist - accum) / this.segLens[i];
-        this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
-        this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
-        this.segIdx = i;
-        return;
-      }
-      accum += this.segLens[i];
-    }
-    const last = this.pts[this.pts.length - 1];
-    this.x = last.x;
-    this.y = last.y;
-    this.segIdx = this.segLens.length - 1;
+  if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+    var fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+    tp = edgePt(tn, fc, fy, yo);
   }
-  posAt(t) {
-    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
-    let accum = 0;
-    for (let i = 0; i < this.segLens.length; i++) {
-      if (accum + this.segLens[i] >= dist) {
-        const segT = (dist - accum) / this.segLens[i];
-        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
-                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
-      }
-      accum += this.segLens[i];
-    }
-    const last = this.pts[this.pts.length - 1];
-    return { x: last.x, y: last.y };
+  if (opts && opts.waypoints) {
+    this.pts = [fp].concat(opts.waypoints, [tp]);
+  } else {
+    this.pts = [fp, tp];
   }
-  draw() {
-    ctx.save();
-    // Progressive trail
-    ctx.beginPath();
-    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
-    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
-    ctx.lineTo(tx(this.x), ty(this.y));
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = ts(2);
-    ctx.globalAlpha = 0.3;
-    ctx.stroke();
-    // Trailing data stream
-    for (let j = 4; j >= 1; j--) {
-      const bt = this.t - j * 0.06;
-      if (bt <= 0) continue;
-      const p = this.posAt(bt);
-      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
-      ctx.beginPath();
-      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.fill();
-    }
-    // Leading packet
-    ctx.globalAlpha = 1;
-    const si = Math.min(this.segIdx, this.pts.length - 2);
-    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
-    ctx.save();
-    ctx.translate(tx(this.x), ty(this.y));
-    ctx.rotate(ang);
-    const pw = ts(13), ph = ts(7);
-    ctx.beginPath();
-    ctx.moveTo(pw / 2, 0);
-    ctx.lineTo(pw / 6, -ph / 2);
-    ctx.lineTo(-pw / 2, -ph / 2);
-    ctx.lineTo(-pw / 2, ph / 2);
-    ctx.lineTo(pw / 6, ph / 2);
-    ctx.closePath();
-    ctx.fillStyle = this.color;
-    ctx.shadowColor = this.color;
-    ctx.shadowBlur = ts(16);
-    ctx.fill();
-    ctx.restore();
-    ctx.restore();
+  this.segLens = [];
+  this.totalLen = 0;
+  for (var i = 1; i < this.pts.length; i++) {
+    var dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    this.segLens.push(len);
+    this.totalLen += len;
   }
+  this.segIdx = 0;
+  this.x = this.pts[0].x;
+  this.y = this.pts[0].y;
+  var pxPerFrame = 4;
+  this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
 }
+Dot.prototype.update = function() {
+  this.t += this.speed;
+  if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
+  var dist = this.t * this.totalLen;
+  var accum = 0;
+  for (var i = 0; i < this.segLens.length; i++) {
+    if (accum + this.segLens[i] >= dist) {
+      var segT = (dist - accum) / this.segLens[i];
+      this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
+      this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
+      this.segIdx = i;
+      return;
+    }
+    accum += this.segLens[i];
+  }
+  var last = this.pts[this.pts.length - 1];
+  this.x = last.x;
+  this.y = last.y;
+  this.segIdx = this.segLens.length - 1;
+};
+Dot.prototype.posAt = function(t) {
+  var dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+  var accum = 0;
+  for (var i = 0; i < this.segLens.length; i++) {
+    if (accum + this.segLens[i] >= dist) {
+      var segT = (dist - accum) / this.segLens[i];
+      return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+               y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+    }
+    accum += this.segLens[i];
+  }
+  var last = this.pts[this.pts.length - 1];
+  return { x: last.x, y: last.y };
+};
+Dot.prototype.draw = function() {
+  ctx.save();
+  // Progressive trail
+  ctx.beginPath();
+  ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+  for (var i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
+  ctx.lineTo(tx(this.x), ty(this.y));
+  ctx.strokeStyle = this.color;
+  ctx.lineWidth = ts(2);
+  ctx.globalAlpha = 0.3;
+  ctx.stroke();
+  // Trailing data stream
+  for (var j = 4; j >= 1; j--) {
+    var bt = this.t - j * 0.06;
+    if (bt <= 0) continue;
+    var p = this.posAt(bt);
+    ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+    ctx.beginPath();
+    ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+  // Leading packet
+  ctx.globalAlpha = 1;
+  var si = Math.min(this.segIdx, this.pts.length - 2);
+  var ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
+  ctx.save();
+  ctx.translate(tx(this.x), ty(this.y));
+  ctx.rotate(ang);
+  var pw = ts(13), ph = ts(7);
+  ctx.beginPath();
+  ctx.moveTo(pw / 2, 0);
+  ctx.lineTo(pw / 6, -ph / 2);
+  ctx.lineTo(-pw / 2, -ph / 2);
+  ctx.lineTo(-pw / 2, ph / 2);
+  ctx.lineTo(pw / 6, ph / 2);
+  ctx.closePath();
+  ctx.fillStyle = this.color;
+  ctx.shadowColor = this.color;
+  ctx.shadowBlur = ts(16);
+  ctx.fill();
+  ctx.restore();
+  ctx.restore();
+};
 
 // ================================================================
 // MAIN DRAW LOOP
 // ================================================================
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  // Draw boundaries first
-  drawBoundary('ingress_cluster');
-  drawBoundary('cluster_a');
-  drawBoundary('cluster_b');
-  // Draw permanent cross-cluster connections
-  drawPermanentConnections();
-  // Draw flow lines
+  drawBounds();
   drawLines();
-  // Draw all boxes
-  Object.keys(N).forEach(k => drawBox(k));
-  // Draw dots
-  dots.forEach(d => { d.update(); d.draw(); });
-  dots = dots.filter(d => d.alive);
+  Object.keys(N).forEach(function(k) { drawBox(k); });
+  dots.forEach(function(d) { d.update(); d.draw(); });
+  dots = dots.filter(function(d) { return d.alive; });
   // Highlight clicked component
   if (highlightKey && N[highlightKey]) {
-    const n = N[highlightKey];
-    const pad = 8;
+    var n = N[highlightKey];
+    var pad = 8;
     ctx.save();
     ctx.shadowColor = n.color || '#58a6ff';
     ctx.shadowBlur = ts(30);
@@ -826,14 +875,14 @@ function animate() { draw(); animFrame = requestAnimationFrame(animate); }
 function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 function initSteps() {
-  const ctr = document.getElementById('steps-ctr');
+  var ctr = document.getElementById('steps-ctr');
   ctr.innerHTML = '';
-  flow.forEach((s, i) => {
-    const d = document.createElement('div');
+  flow.forEach(function(s, i) {
+    var d = document.createElement('div');
     d.className = 'step pending';
     d.id = 'step-' + i;
-    d.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
-    d.onclick = () => jumpToStep(i);
+    d.innerHTML = '<span class="step-mk"></span><span>' + esc(s.t) + '</span>';
+    d.onclick = (function(idx) { return function() { jumpToStep(idx); }; })(i);
     ctr.appendChild(d);
   });
 }
@@ -842,7 +891,7 @@ function initSteps() {
 // INSPECTOR
 // ================================================================
 function setInspPhase(phase) {
-  const el = document.getElementById('insp-title');
+  var el = document.getElementById('insp-title');
   if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
   else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
   else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
@@ -867,23 +916,23 @@ function initInspector() {
 }
 
 function renderInsp() {
-  const el = document.getElementById('insp-content');
-  let h = `<div class="insp-plugin">${esc(inspStepLabel)}</div>`;
+  var el = document.getElementById('insp-content');
+  var h = '<div class="insp-plugin">' + esc(inspStepLabel) + '</div>';
   h += '<div class="insp-sec">Headers:</div>';
-  inspHeaders.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  inspHeaders.forEach(function(l) { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
   h += '<div class="insp-sec">Body:</div>';
-  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  inspBody.forEach(function(l) { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
   if (inspCycle.length) {
     h += '<div class="insp-sec">Routing:</div>';
-    inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+    inspCycle.forEach(function(l) { h += '<div class="insp-line ' + l.s + '">' + esc(l.v) + '</div>'; });
   }
   el.innerHTML = h;
 }
 
 function resetStyles() {
-  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
-  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
-  inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspHeaders.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(function(l) { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
 }
 
 // Inspector step functions per flow
@@ -892,44 +941,44 @@ function inspStepClusterA(stepNum) {
   switch (stepNum) {
     case 1: inspStepLabel = '1. Client sends request'; break;
     case 2:
-      inspStepLabel = '2. MaaS: auth + rate limit check';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      inspStepLabel = '2. Istio Gateway receives request';
       break;
     case 3:
-      inspStepLabel = '3. MaaS -> Kuadrant (auth)';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      inspStepLabel = '3. Kuadrant: auth check';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'highlight';
       break;
     case 4:
-      inspStepLabel = '4. Kuadrant validates';
+      inspStepLabel = '4. Kuadrant validates via MaaS API';
       inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
       inspHeaders.push({ v: 'X-MaaS-Subscription: gpu-pool-sub', s: 'add', id: 'h-maas-sub' });
       break;
     case 5:
-      inspStepLabel = '5. MaaS -> IPP (payload processing)';
+      inspStepLabel = '5. MaaS API: key valid, subscription matched';
       break;
     case 6:
-      inspStepLabel = '6. IPP: model routing (resolves to Cluster A)';
+      inspStepLabel = '6. Kuadrant: rate limit check (Redis)';
+      break;
+    case 7:
+      inspStepLabel = '7. Gateway -> IPP (ext_proc)';
+      break;
+    case 8:
+      inspStepLabel = '8. IPP: model-provider-resolver (internal)';
       inspCycle = [
-        { v: 'target = "worker-cluster-a"', s: 'add', id: 'c-target' },
-        { v: 'pool = "llama-4-scout-pool"', s: 'add', id: 'c-pool' },
         { v: 'type = "inferencepool"', s: 'add', id: 'c-type' },
+        { v: 'pool = "llama-4-scout-pool"', s: 'add', id: 'c-pool' },
       ];
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-scout', s: 'add', id: 'h-xmodel' });
       break;
-    case 7:
-      inspStepLabel = '7. IPP -> Worker Cluster A: llm-d Stack';
-      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
+    case 9:
+      inspStepLabel = '9. IPP -> InferencePool A';
+      var xm = inspHeaders.find(function(l) { return l.id === 'h-xmodel'; });
       if (xm) xm.s = 'highlight';
       break;
-    case 8:
-      inspStepLabel = '8. EPP selects pod';
-      inspCycle.push({ v: 'selected_pod = "vllm-scout-pod-3"', s: 'add', id: 'c-pod' });
-      break;
-    case 9:
-      inspStepLabel = '9. llm-d inference on llama-4-scout';
-      break;
     case 10:
-      inspStepLabel = '10. Response -> IPP';
+      inspStepLabel = '10. vLLM Decode processes';
+      break;
+    case 11:
+      inspStepLabel = '11. Response -> IPP';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -943,14 +992,17 @@ function inspStepClusterA(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 11:
-      inspStepLabel = '11. IPP -> MaaS (rate limit usage)';
-      const u = inspBody.find(l => l.id === 'r-usage');
+    case 12:
+      inspStepLabel = '12. IPP -> Gateway';
+      break;
+    case 13:
+      inspStepLabel = '13. Kuadrant: rate limit usage (Redis)';
+      var u = inspBody.find(function(l) { return l.id === 'r-usage'; });
       if (u) u.s = 'highlight';
       break;
-    case 12:
-      inspStepLabel = '12. Response to Client';
-      const rc = inspBody.find(l => l.id === 'r-choices');
+    case 14:
+      inspStepLabel = '14. Response to Client';
+      var rc = inspBody.find(function(l) { return l.id === 'r-choices'; });
       if (rc) rc.s = 'highlight';
       break;
   }
@@ -960,47 +1012,38 @@ function inspStepClusterA(stepNum) {
 function inspStepClusterB(stepNum) {
   resetStyles();
   switch (stepNum) {
-    case 1: inspStepLabel = '1. Client sends request'; break;
-    case 2:
-      inspStepLabel = '2. MaaS: auth + rate limit check';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
-      // Update model to maverick for this flow
-      const bm = inspBody.find(l => l.id === 'b-model');
+    case 1: inspStepLabel = '1. Client sends request';
+      var bm = inspBody.find(function(l) { return l.id === 'b-model'; });
       if (bm) bm.v = '"model": "llama-4-maverick"';
       break;
+    case 2: inspStepLabel = '2. Istio Gateway receives request'; break;
     case 3:
-      inspStepLabel = '3. MaaS -> Kuadrant (auth)';
+      inspStepLabel = '3. Kuadrant: auth check';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'highlight';
       break;
     case 4:
-      inspStepLabel = '4. Kuadrant validates';
+      inspStepLabel = '4. Kuadrant validates via MaaS API';
       inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
       break;
-    case 5:
-      inspStepLabel = '5. MaaS -> IPP (payload processing)';
-      break;
-    case 6:
-      inspStepLabel = '6. IPP: model routing (resolves to Cluster B)';
+    case 5: inspStepLabel = '5. MaaS API: key valid, subscription matched'; break;
+    case 6: inspStepLabel = '6. Kuadrant: rate limit check (Redis)'; break;
+    case 7: inspStepLabel = '7. Gateway -> IPP (ext_proc)'; break;
+    case 8:
+      inspStepLabel = '8. IPP: model-provider-resolver (internal)';
       inspCycle = [
-        { v: 'target = "worker-cluster-b"', s: 'add', id: 'c-target' },
-        { v: 'pool = "llama-4-maverick-pool"', s: 'add', id: 'c-pool' },
         { v: 'type = "inferencepool"', s: 'add', id: 'c-type' },
+        { v: 'pool = "llama-4-maverick-pool"', s: 'add', id: 'c-pool' },
       ];
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-maverick', s: 'add', id: 'h-xmodel' });
       break;
-    case 7:
-      inspStepLabel = '7. IPP -> Worker Cluster B: llm-d Stack';
-      const xm7 = inspHeaders.find(l => l.id === 'h-xmodel');
-      if (xm7) xm7.s = 'highlight';
-      break;
-    case 8:
-      inspStepLabel = '8. EPP selects pod';
-      inspCycle.push({ v: 'selected_pod = "vllm-maverick-pod-1"', s: 'add', id: 'c-pod' });
-      break;
     case 9:
-      inspStepLabel = '9. llm-d inference on llama-4-maverick';
+      inspStepLabel = '9. IPP -> InferencePool B';
+      var xm9 = inspHeaders.find(function(l) { return l.id === 'h-xmodel'; });
+      if (xm9) xm9.s = 'highlight';
       break;
-    case 10:
-      inspStepLabel = '10. Response -> IPP';
+    case 10: inspStepLabel = '10. vLLM Decode processes'; break;
+    case 11:
+      inspStepLabel = '11. Response -> IPP';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1014,15 +1057,16 @@ function inspStepClusterB(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 11:
-      inspStepLabel = '11. IPP -> MaaS (rate limit usage)';
-      const u11 = inspBody.find(l => l.id === 'r-usage');
-      if (u11) u11.s = 'highlight';
+    case 12: inspStepLabel = '12. IPP -> Gateway'; break;
+    case 13:
+      inspStepLabel = '13. Kuadrant: rate limit usage (Redis)';
+      var u13 = inspBody.find(function(l) { return l.id === 'r-usage'; });
+      if (u13) u13.s = 'highlight';
       break;
-    case 12:
-      inspStepLabel = '12. Response to Client';
-      const rc12 = inspBody.find(l => l.id === 'r-choices');
-      if (rc12) rc12.s = 'highlight';
+    case 14:
+      inspStepLabel = '14. Response to Client';
+      var rc14 = inspBody.find(function(l) { return l.id === 'r-choices'; });
+      if (rc14) rc14.s = 'highlight';
       break;
   }
   renderInsp();
@@ -1031,74 +1075,87 @@ function inspStepClusterB(stepNum) {
 function inspStepExternal(stepNum) {
   resetStyles();
   switch (stepNum) {
-    case 1: inspStepLabel = '1. Client sends request';
-      // Set model to something not on-cluster
-      const bm = inspBody.find(l => l.id === 'b-model');
-      if (bm) bm.v = '"model": "gpt-4o"';
+    case 1:
+      inspStepLabel = '1. Client sends request';
+      var bm = inspBody.find(function(l) { return l.id === 'b-model'; });
+      if (bm) bm.v = '"model": "claude-haiku-4-5"';
       break;
-    case 2:
-      inspStepLabel = '2. MaaS: auth + rate limit check';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+    case 2: inspStepLabel = '2. Istio Gateway receives request'; break;
+    case 3:
+      inspStepLabel = '3. Kuadrant: auth check';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'highlight';
       break;
-    case 3: inspStepLabel = '3. MaaS -> Kuadrant (auth)'; break;
     case 4:
-      inspStepLabel = '4. Kuadrant validates';
+      inspStepLabel = '4. Kuadrant validates via MaaS API';
       inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
       break;
-    case 5: inspStepLabel = '5. MaaS -> IPP (payload processing)'; break;
-    case 6:
-      inspStepLabel = '6. IPP: model not on-cluster -> external';
+    case 5: inspStepLabel = '5. MaaS API: key valid, subscription matched'; break;
+    case 6: inspStepLabel = '6. Kuadrant: rate limit check (Redis)'; break;
+    case 7: inspStepLabel = '7. Gateway -> IPP (ext_proc)'; break;
+    case 8:
+      inspStepLabel = '8. IPP: model-provider-resolver (external model)';
       inspCycle = [
-        { v: 'target = "external"', s: 'add', id: 'c-target' },
-        { v: 'provider = "openai"', s: 'add', id: 'c-prov' },
-        { v: 'targetModel = "gpt-4o"', s: 'add', id: 'c-model' },
+        { v: 'type = "external"', s: 'add', id: 'c-type' },
+        { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
+        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
       ];
       break;
-    case 7:
-      inspStepLabel = '7. IPP: api-translation (Responses -> provider)';
-      inspHeaders.find(l => l.id === 'h-path').s = 'del';
-      inspHeaders.push({ v: 'POST /v1/chat/completions (OpenAI)', s: 'add', id: 'h-path2' });
-      break;
-    case 8:
-      inspStepLabel = '8. IPP: apikey-injection';
-      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
-      inspHeaders.push({ v: 'Authorization: Bearer sk-openai-xxxxx...', s: 'add', id: 'h-xapi' });
-      break;
     case 9:
-      inspStepLabel = '9. IPP -> External Provider (OpenAI)';
-      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
-      if (xapi) xapi.s = 'highlight';
+      inspStepLabel = '9. IPP: api-translation (OpenAI -> Anthropic)';
+      inspHeaders.find(function(l) { return l.id === 'h-path'; }).s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       break;
     case 10:
-      inspStepLabel = '10. Provider responds';
+      inspStepLabel = '10. IPP: apikey-injection';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'del';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 11:
+      inspStepLabel = '11. IPP -> Anthropic';
+      var xapi = inspHeaders.find(function(l) { return l.id === 'h-xapi'; });
+      if (xapi) xapi.s = 'highlight';
+      break;
+    case 12:
+      inspStepLabel = '12. Anthropic responds';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
       ];
       inspBody = [
-        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
-        { v: '"model": "gpt-4o-2024-08-06"', s: 'keep', id: 'r-model' },
-        { v: '"choices": [{"message":{"content":"Greetings!"}}]', s: 'keep', id: 'r-choices' },
-        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage' },
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
       ];
       inspCycle = [];
       break;
-    case 11:
-      inspStepLabel = '11. IPP: api-translation (response)';
-      const rm = inspBody.find(l => l.id === 'r-model');
-      if (rm) rm.s = 'del';
-      inspBody.push({ v: '"model": "gpt-4o" (normalized)', s: 'add', id: 'r-model2' });
-      break;
-    case 12:
-      inspStepLabel = '12. IPP -> MaaS (rate limit usage)';
-      const u12 = inspBody.find(l => l.id === 'r-usage');
-      if (u12) u12.s = 'highlight';
-      break;
     case 13:
-      inspStepLabel = '13. Response to Client';
-      const rc13 = inspBody.find(l => l.id === 'r-choices');
-      if (rc13) rc13.s = 'highlight';
+      inspStepLabel = '13. IPP: api-translation (response)';
+      inspBody.find(function(l) { return l.id === 'r-type'; }).s = 'del';
+      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
+      inspBody.find(function(l) { return l.id === 'r-content'; }).s = 'del';
+      inspBody.push({ v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add', id: 'r-choices' });
+      inspBody.find(function(l) { return l.id === 'r-stop'; }).s = 'del';
+      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
+      inspBody.find(function(l) { return l.id === 'r-usage'; }).s = 'del';
+      inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
+      break;
+    case 14:
+      inspStepLabel = '14. IPP -> Gateway';
+      var robj = inspBody.find(function(l) { return l.id === 'r-obj'; });
+      if (robj) robj.s = 'highlight';
+      break;
+    case 15:
+      inspStepLabel = '15. Kuadrant: rate limit usage';
+      var u15 = inspBody.find(function(l) { return l.id === 'r-usage2'; });
+      if (u15) u15.s = 'highlight';
+      break;
+    case 16:
+      inspStepLabel = '16. Response to Client (OpenAI format)';
+      var rc16 = inspBody.find(function(l) { return l.id === 'r-choices'; });
+      if (rc16) rc16.s = 'highlight';
       break;
   }
   renderInsp();
@@ -1113,92 +1170,94 @@ function inspStep(stepNum) {
 // ================================================================
 // FLOW DEFINITIONS
 // ================================================================
-let activeFlow = 'cluster_a';
+var activeFlow = 'cluster_a';
 
-const flowClusterA = [
-  // 1. Client -> MaaS API
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'client', to: 'maas', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  // 2. MaaS: auth + rate limit check
-  { t: '2. MaaS: auth + rate limit check', mode: 'lightup', target: 'maas', badge: 2 },
-  // 3. MaaS -> Kuadrant
-  { t: '3. MaaS -> Kuadrant (auth)', mode: 'arrow', f: 'maas', to: 'kuadrant', c: '#f0883e', num: 3, fromBottom: true, fromXOff: -40, toTop: true },
-  // 4. Kuadrant validates
-  { t: '4. Kuadrant validates', mode: 'lightup', target: 'kuadrant', badge: 4 },
-  // 5. MaaS -> IPP
-  { t: '5. MaaS -> IPP (payload processing)', mode: 'arrow', f: 'maas', to: 'ipp', c: '#d2a8ff', num: 5, fromRight: true, toLeft: true, yOff: -5 },
-  // 6. IPP: model routing resolves to Cluster A
-  { t: '6. IPP: model routing (resolves to Cluster A)', mode: 'lightup', target: 'ipp', badge: 6 },
-  // 7. IPP -> Worker Cluster A: llm-d
-  { t: '7. IPP -> Worker Cluster A: llm-d Stack', mode: 'arrow', f: 'ipp', to: 'llmd_a', c: '#58a6ff', num: 7, fromBottom: true, toTop: true, glow: 'cluster_a',
-    waypoints: [{ x: 580, y: 520 }, { x: 115, y: 520 }] },
-  // 8. EPP selects pod
-  { t: '8. EPP selects pod', mode: 'arrow', f: 'llmd_a', to: 'epp_a', c: '#79c0ff', num: 8, fromRight: true, toLeft: true },
-  // 9. llm-d inference on llama-4-scout
-  { t: '9. llm-d inference on llama-4-scout', mode: 'arrow', f: 'epp_a', to: 'model_a', c: '#3fb950', num: 9, fromBottom: true, toTop: true },
+var flowClusterA = [
+  // 1. Client -> Istio GW A
+  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: 0 },
+  // 2. GW -> Kuadrant (auth)
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
+  // 3. Kuadrant validates via MaaS API
+  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
+  // 4. MaaS API: key valid
+  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_a', badge: 4 },
+  // 5. Kuadrant: rate limit check (Redis)
+  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
+    waypoints: [{ x: 160, y: 370 }, { x: 120, y: 400 }] },
+  // 6. GW -> IPP
+  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
+  // 7. IPP: model-provider-resolver
+  { t: '7. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_a', badge: 7 },
+  // 8. IPP -> InferencePool A
+  { t: '8. IPP -> InferencePool A', mode: 'arrow', f: 'ipp_a', to: 'vllm_a1', c: '#58a6ff', num: 8, fromBottom: true, toTop: true, glow: 'pool_a',
+    waypoints: [{ x: 330, y: 560 }, { x: 120, y: 610 }] },
+  // 9. vLLM Decode processes
+  { t: '9. vLLM Decode processes', mode: 'lightup', target: 'vllm_a1', badge: 9 },
   // 10. Response -> IPP
-  { t: '10. Response -> IPP', mode: 'arrow', f: 'model_a', to: 'ipp', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
-    waypoints: [{ x: 200, y: 520 }, { x: 580, y: 520 }, { x: 580, y: 310 }] },
-  // 11. IPP -> MaaS (rate limit usage)
-  { t: '11. IPP -> MaaS (rate limit usage)', mode: 'arrow', f: 'ipp', to: 'maas', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 5 },
-  // 12. Response to Client
-  { t: '12. Response to Client', mode: 'arrow', f: 'maas', to: 'client', c: '#3fb950', num: 12, fromLeft: true, toRight: true },
-];
-
-const flowClusterB = [
-  // 1-5 same auth flow
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'client', to: 'maas', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  { t: '2. MaaS: auth + rate limit check', mode: 'lightup', target: 'maas', badge: 2 },
-  { t: '3. MaaS -> Kuadrant (auth)', mode: 'arrow', f: 'maas', to: 'kuadrant', c: '#f0883e', num: 3, fromBottom: true, fromXOff: -40, toTop: true },
-  { t: '4. Kuadrant validates', mode: 'lightup', target: 'kuadrant', badge: 4 },
-  { t: '5. MaaS -> IPP (payload processing)', mode: 'arrow', f: 'maas', to: 'ipp', c: '#d2a8ff', num: 5, fromRight: true, toLeft: true, yOff: -5 },
-  // 6. IPP: model routing resolves to Cluster B
-  { t: '6. IPP: model routing (resolves to Cluster B)', mode: 'lightup', target: 'ipp', badge: 6 },
-  // 7. IPP -> Worker Cluster B: llm-d
-  { t: '7. IPP -> Worker Cluster B: llm-d Stack', mode: 'arrow', f: 'ipp', to: 'llmd_b', c: '#58a6ff', num: 7, fromBottom: true, toTop: true, glow: 'cluster_b',
-    waypoints: [{ x: 580, y: 520 }, { x: 815, y: 520 }] },
-  // 8. EPP selects pod
-  { t: '8. EPP selects pod', mode: 'arrow', f: 'llmd_b', to: 'epp_b', c: '#79c0ff', num: 8, fromRight: true, toLeft: true },
-  // 9. llm-d inference on llama-4-maverick
-  { t: '9. llm-d inference on llama-4-maverick', mode: 'arrow', f: 'epp_b', to: 'model_b', c: '#3fb950', num: 9, fromBottom: true, toTop: true },
-  // 10. Response -> IPP
-  { t: '10. Response -> IPP', mode: 'arrow', f: 'model_b', to: 'ipp', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
-    waypoints: [{ x: 900, y: 520 }, { x: 580, y: 520 }, { x: 580, y: 310 }] },
-  // 11. IPP -> MaaS (rate limit usage)
-  { t: '11. IPP -> MaaS (rate limit usage)', mode: 'arrow', f: 'ipp', to: 'maas', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 5 },
-  // 12. Response to Client
-  { t: '12. Response to Client', mode: 'arrow', f: 'maas', to: 'client', c: '#3fb950', num: 12, fromLeft: true, toRight: true },
-];
-
-const flowExternal = [
-  // 1-5 same auth flow
-  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'client', to: 'maas', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
-  { t: '2. MaaS: auth + rate limit check', mode: 'lightup', target: 'maas', badge: 2 },
-  { t: '3. MaaS -> Kuadrant (auth)', mode: 'arrow', f: 'maas', to: 'kuadrant', c: '#f0883e', num: 3, fromBottom: true, fromXOff: -40, toTop: true },
-  { t: '4. Kuadrant validates', mode: 'lightup', target: 'kuadrant', badge: 4 },
-  { t: '5. MaaS -> IPP (payload processing)', mode: 'arrow', f: 'maas', to: 'ipp', c: '#d2a8ff', num: 5, fromRight: true, toLeft: true, yOff: -5 },
-  // 6. IPP: model not available on-cluster
-  { t: '6. IPP: model not on-cluster -> route to external', mode: 'lightup', target: 'ipp', badge: 6 },
-  // 7. api-translation
-  { t: '7. IPP: api-translation (Responses -> provider format)', mode: 'lightup', target: 'ipp', badge: 7 },
-  // 8. apikey-injection
-  { t: '8. IPP: apikey-injection', mode: 'lightup', target: 'ipp', badge: 8 },
-  // 9. IPP -> External Provider
-  { t: '9. IPP -> External Provider (OpenAI)', mode: 'arrow', f: 'ipp', to: 'ext_provider', c: '#e3b341', num: 9, fromBottom: true, toTop: true,
-    waypoints: [{ x: 580, y: 520 }, { x: 550, y: 760 }] },
-  // 10. Provider responds
-  { t: '10. Provider responds', mode: 'arrow', f: 'ext_provider', to: 'ipp', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
-    waypoints: [{ x: 550, y: 760 }, { x: 580, y: 520 }, { x: 580, y: 310 }] },
-  // 11. api-translation (response)
-  { t: '11. IPP: api-translation (response)', mode: 'lightup', target: 'ipp', badge: 11 },
-  // 12. IPP -> MaaS (rate limit usage)
-  { t: '12. IPP -> MaaS (rate limit usage)', mode: 'arrow', f: 'ipp', to: 'maas', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 5 },
+  { t: '10. Response -> IPP', mode: 'arrow', f: 'vllm_a1', to: 'ipp_a', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
+    waypoints: [{ x: 120, y: 610 }, { x: 330, y: 400 }, { x: 330, y: 300 }] },
+  // 11. IPP -> Gateway
+  { t: '11. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 11, fromTop: true, toBottom: true, toXOff: 80 },
+  // 12. Kuadrant: rate limit usage (Redis update)
+  { t: '12. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_a', badge: 12 },
   // 13. Response to Client
-  { t: '13. Response to Client', mode: 'arrow', f: 'maas', to: 'client', c: '#3fb950', num: 13, fromLeft: true, toRight: true },
+  { t: '13. Response to Client', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: -10 },
 ];
 
-const flowMap = { cluster_a: flowClusterA, cluster_b: flowClusterB, external: flowExternal };
-const flowLabels = { cluster_a: 'Route to Worker Cluster A', cluster_b: 'Route to Worker Cluster B', external: 'External Provider Fallback' };
-let flow = flowClusterA;
+var flowClusterB = [
+  // Same flow through Cluster B
+  { t: '1. Client -> Istio Gateway (Cluster B)', mode: 'arrow', f: 'client', to: 'gw_b', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 0 },
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_b', to: 'kuad_b', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
+  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_b', to: 'maas_b', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
+  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_b', badge: 4 },
+  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_b', to: 'redis_b', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
+    waypoints: [{ x: 660, y: 370 }, { x: 620, y: 400 }] },
+  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_b', to: 'ipp_b', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
+  { t: '7. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_b', badge: 7 },
+  { t: '8. IPP -> InferencePool B', mode: 'arrow', f: 'ipp_b', to: 'vllm_b1', c: '#58a6ff', num: 8, fromBottom: true, toTop: true, glow: 'pool_b',
+    waypoints: [{ x: 830, y: 560 }, { x: 620, y: 610 }] },
+  { t: '9. vLLM Decode processes', mode: 'lightup', target: 'vllm_b1', badge: 9 },
+  { t: '10. Response -> IPP', mode: 'arrow', f: 'vllm_b1', to: 'ipp_b', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
+    waypoints: [{ x: 620, y: 610 }, { x: 830, y: 400 }, { x: 830, y: 300 }] },
+  { t: '11. IPP -> Gateway', mode: 'arrow', f: 'ipp_b', to: 'gw_b', c: '#3fb950', num: 11, fromTop: true, toBottom: true, toXOff: 80 },
+  { t: '12. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_b', badge: 12 },
+  { t: '13. Response to Client', mode: 'arrow', f: 'gw_b', to: 'client', c: '#3fb950', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 10 },
+];
+
+var flowExternal = [
+  // 1-6: Same auth through Cluster A
+  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: 0 },
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
+  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
+  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_a', badge: 4 },
+  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
+    waypoints: [{ x: 160, y: 370 }, { x: 120, y: 400 }] },
+  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
+  // 7. IPP: external model detected
+  { t: '7. IPP: model-provider-resolver (external model)', mode: 'lightup', target: 'ipp_a', badge: 7 },
+  // 8. IPP: api-translation
+  { t: '8. IPP: api-translation (OpenAI -> Anthropic)', mode: 'lightup', target: 'ipp_a', badge: 8 },
+  // 9. IPP: apikey-injection
+  { t: '9. IPP: apikey-injection', mode: 'lightup', target: 'ipp_a', badge: 9 },
+  // 10. IPP -> Anthropic
+  { t: '10. IPP -> Anthropic', mode: 'arrow', f: 'ipp_a', to: 'anthropic', c: '#58a6ff', num: 10, fromRight: true, toLeft: true,
+    waypoints: [{ x: 480, y: 272 }, { x: 990, y: 282 }] },
+  // 11. Anthropic responds
+  { t: '11. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp_a', c: '#3fb950', num: 11, fromLeft: true, toRight: true,
+    waypoints: [{ x: 990, y: 290 }, { x: 480, y: 280 }] },
+  // 12. IPP: api-translation (response)
+  { t: '12. IPP: api-translation (response)', mode: 'lightup', target: 'ipp_a', badge: 12 },
+  // 13. IPP -> Gateway
+  { t: '13. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 13, fromTop: true, toBottom: true, toXOff: 80 },
+  // 14. Kuadrant: rate limit usage
+  { t: '14. Kuadrant: rate limit usage', mode: 'lightup', target: 'redis_a', badge: 14 },
+  // 15. Response to Client
+  { t: '15. Response to Client (OpenAI format)', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 15, fromTop: true, fromXOff: -40, toBottom: true, toXOff: -10 },
+];
+
+var flowMap = { cluster_a: flowClusterA, cluster_b: flowClusterB, external: flowExternal };
+var flowLabels = { cluster_a: 'Internal Model -- Cluster A', cluster_b: 'Internal Model -- Cluster B', external: 'External Model Fallback' };
+var flow = flowClusterA;
 
 function updateTitle() {
   document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
@@ -1208,15 +1267,15 @@ function updateTitle() {
 // RUN / RESET
 // ================================================================
 function updatePlayBtn() {
-  const btn = document.querySelector('.start');
+  var btn = document.querySelector('.start');
   if (paused) btn.innerHTML = '&#9654; Resume';
   else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
   else btn.innerHTML = '&#9654; Start';
 }
 
 function cycleSpeed() {
-  const speeds = [0.5, 1, 2];
-  const idx = speeds.indexOf(playbackSpeed);
+  var speeds = [0.5, 1, 2];
+  var idx = speeds.indexOf(playbackSpeed);
   playbackSpeed = speeds[(idx + 1) % speeds.length];
   document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
 }
@@ -1238,7 +1297,7 @@ function stepLine(s) {
   };
 }
 
-let stepOnceMode = false;
+var stepOnceMode = false;
 
 function stepOnce() {
   if (running && !paused) {
@@ -1294,20 +1353,20 @@ function execStep() {
     }
     return;
   }
-  const si = runStepIndex;
-  const s = flow[si];
-  for (let j = 0; j < si; j++) {
-    const prev = document.getElementById('step-' + j);
+  var si = runStepIndex;
+  var s = flow[si];
+  for (var j = 0; j < si; j++) {
+    var prev = document.getElementById('step-' + j);
     if (prev) prev.className = 'step done';
   }
-  const el = document.getElementById('step-' + si);
+  var el = document.getElementById('step-' + si);
   el.className = 'step active';
   el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   inspStep(si + 1);
 
   if (s.mode === 'arrow') {
     if (s.f) activeNodes.add(s.f);
-    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, function() {
       lines.push(stepLine(s));
       if (s.glow) glowing.add(s.glow);
       activeNodes.add(s.to);
@@ -1326,7 +1385,7 @@ function execStep() {
     activeNodes.add(s.target);
     if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
     if (badges[s.target] != null) {
-      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      var existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
       existing.push(s.badge);
       badges[s.target] = existing;
     } else {
@@ -1358,7 +1417,7 @@ function restoreSnapshot(stepIdx) {
     activeNodes.clear(); badges = {}; lines = []; glowing.clear();
     return;
   }
-  const snap = snapshots[stepIdx];
+  var snap = snapshots[stepIdx];
   if (!snap) return;
   activeNodes = new Set(snap.activeNodes);
   badges = JSON.parse(JSON.stringify(snap.badges));
@@ -1368,8 +1427,8 @@ function restoreSnapshot(stepIdx) {
 
 function simulateUpTo(targetStep) {
   activeNodes.clear(); badges = {}; lines = []; glowing.clear();
-  for (let i = 0; i <= targetStep; i++) {
-    const s = flow[i];
+  for (var i = 0; i <= targetStep; i++) {
+    var s = flow[i];
     if (s.mode === 'arrow') {
       if (s.f) activeNodes.add(s.f);
       lines.push(stepLine(s));
@@ -1379,7 +1438,7 @@ function simulateUpTo(targetStep) {
       activeNodes.add(s.target);
       if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
       if (badges[s.target] != null) {
-        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        var existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
         existing.push(s.badge);
         badges[s.target] = existing;
       } else {
@@ -1399,24 +1458,24 @@ function jumpToStep(targetStep) {
   restoreSnapshot(targetStep);
   currentStepDone = targetStep + 1;
   runStepIndex = targetStep + 1;
-  document.querySelectorAll('.step').forEach((el, i) => {
+  document.querySelectorAll('.step').forEach(function(el, i) {
     if (i <= targetStep) el.className = 'step done';
     else el.className = 'step pending';
   });
-  const clickedEl = document.getElementById('step-' + targetStep);
+  var clickedEl = document.getElementById('step-' + targetStep);
   if (clickedEl) clickedEl.className = 'step active';
   initInspector();
-  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  for (var i = 1; i <= targetStep + 1; i++) inspStep(i);
   dots = [];
   fading = {};
   paused = true;
   updatePlayBtn();
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  requestAnimationFrame(() => { draw(); draw(); });
+  requestAnimationFrame(function() { draw(); draw(); });
 }
 
 function doReset() {
-  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  Object.keys(N).forEach(function(k) { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
   running = false;
   paused = false;
   runStepIndex = 0;
@@ -1452,68 +1511,68 @@ updateTitle();
 draw();
 
 // Auto-start play on load (no loop)
-setTimeout(() => { run(); }, 500);
+setTimeout(function() { run(); }, 500);
 
 // Mobile splash animation
 (function(){
   if(window.innerWidth>=800)return;
-  const mc=document.getElementById('mobile-canvas');
+  var mc=document.getElementById('mobile-canvas');
   if(!mc)return;
-  const mx=mc.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  let mW,mH;
+  var mx=mc.getContext('2d');
+  var dpr=window.devicePixelRatio||1;
+  var mW,mH;
   function mResize(){
-    const r=mc.getBoundingClientRect();
+    var r=mc.getBoundingClientRect();
     mW=r.width;mH=r.height;
     mc.width=mW*dpr;mc.height=mH*dpr;
     mx.setTransform(dpr,0,0,dpr,0,0);
   }
   mResize();
-  const boxes=[
+  var boxes=[
     {x:.15,y:.12,label:'Client',color:'#58a6ff'},
-    {x:.5,y:.08,label:'MaaS API',color:'#79c0ff'},
+    {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
     {x:.85,y:.12,label:'Kuadrant',color:'#f0883e'},
     {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
-    {x:.5,y:.32,label:'Argo CD',color:'#58a6ff'},
+    {x:.5,y:.32,label:'MaaS API',color:'#79c0ff'},
     {x:.85,y:.35,label:'Redis',color:'#f85149'},
     {x:.2,y:.6,label:'Cluster A',color:'#3fb950'},
-    {x:.5,y:.65,label:'llm-d',color:'#3fb950'},
+    {x:.5,y:.65,label:'vLLM',color:'#d2a8ff'},
     {x:.8,y:.6,label:'Cluster B',color:'#3fb950'},
-    {x:.35,y:.85,label:'EPP',color:'#79c0ff'},
-    {x:.65,y:.85,label:'External',color:'#e3b341'},
+    {x:.35,y:.85,label:'RHCL',color:'#58a6ff'},
+    {x:.65,y:.85,label:'Anthropic',color:'#3fb950'},
   ];
-  let particles=[];
+  var particles=[];
   function spawn(){
-    const fi=Math.floor(Math.random()*boxes.length);
-    let ti=Math.floor(Math.random()*boxes.length);
+    var fi=Math.floor(Math.random()*boxes.length);
+    var ti=Math.floor(Math.random()*boxes.length);
     while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
-    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#e3b341'];
+    var colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#f85149'];
     particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
       c:colors[Math.floor(Math.random()*colors.length)],
       sz:2+Math.random()*3,a:.3+Math.random()*.4});
   }
-  for(let i=0;i<12;i++)spawn();
+  for(var i=0;i<12;i++)spawn();
   function mDraw(){
     mx.clearRect(0,0,mW,mH);
-    boxes.forEach(b=>{
+    boxes.forEach(function(b){
       mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
       mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
       mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
       mx.fillText(b.label,b.x*mW,b.y*mH+3);
       mx.restore();
     });
-    particles.forEach(p=>{
-      const f=boxes[p.f],t=boxes[p.t];
-      const px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
-      const py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
-      const fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+    particles.forEach(function(p){
+      var f=boxes[p.f],t=boxes[p.t];
+      var px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      var py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      var fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
       mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
       mx.shadowColor=p.c;mx.shadowBlur=8;
       mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
       mx.restore();
       p.p+=p.sp;
     });
-    particles=particles.filter(p=>p.p<1);
+    particles=particles.filter(function(p){return p.p<1;});
     if(Math.random()<.2)spawn();
     requestAnimationFrame(mDraw);
   }
