@@ -199,7 +199,7 @@ redisImg.src = 'redis.svg';
 let redisLoaded = false;
 redisImg.onload = () => { redisLoaded = true; draw(); };
 
-const LW = 1200, LH = 850;
+const LW = 1200, LH = 720;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -217,32 +217,32 @@ const N = {
   client: { x: 500, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // OCP Cluster A (left container)
-  cluster_a: { x: 30, y: 120, w: 440, h: 420, type: 'container', label: 'OCP Cluster A', color: '#58a6ff' },
-  gw_a: { x: 100, y: 165, w: 300, h: 55, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
-  kuad_a: { x: 60, y: 250, w: 160, h: 45, label: 'Kuadrant', sublabel: 'Auth / Rate Limit', color: '#f0883e', fs: 14 },
-  ipp_a: { x: 250, y: 250, w: 160, h: 45, label: 'IPP', sublabel: 'Payload Processor', color: '#d2a8ff', fs: 14 },
-  maas_a: { x: 130, y: 330, w: 200, h: 50, label: 'MaaS API', sublabel: 'Keys / Subscriptions / Catalog', color: '#79c0ff', fs: 14 },
-  redis_a: { x: 60, y: 420, w: 120, h: 45, label: 'Redis', sublabel: 'Rate Limit Cache', color: '#f85149', fs: 13 },
-  pg_a: { x: 280, y: 420, w: 130, h: 45, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 13 },
+  cluster_a: { x: 30, y: 120, w: 440, h: 320, type: 'container', label: 'OCP Cluster A', color: '#58a6ff' },
+  gw_a: { x: 70, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
+  maas_a: { x: 50, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
+  kuad_a: { x: 195, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
+  ipp_a: { x: 330, y: 240, w: 110, h: 48, label: 'IPP', sublabel: 'Payload Proc.', color: '#d2a8ff', fs: 13 },
+  pg_a: { x: 55, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11 },
+  redis_a: { x: 200, y: 320, w: 110, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
 
   // OCP Cluster B (right container)
-  cluster_b: { x: 530, y: 120, w: 440, h: 420, type: 'container', label: 'OCP Cluster B', color: '#58a6ff' },
-  gw_b: { x: 600, y: 165, w: 300, h: 55, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
-  kuad_b: { x: 560, y: 250, w: 160, h: 45, label: 'Kuadrant', sublabel: 'Auth / Rate Limit', color: '#f0883e', fs: 14 },
-  ipp_b: { x: 750, y: 250, w: 160, h: 45, label: 'IPP', sublabel: 'Payload Processor', color: '#d2a8ff', fs: 14 },
-  maas_b: { x: 630, y: 330, w: 200, h: 50, label: 'MaaS API', sublabel: 'Keys / Subscriptions / Catalog', color: '#79c0ff', fs: 14 },
-  redis_b: { x: 560, y: 420, w: 120, h: 45, label: 'Redis', sublabel: 'Rate Limit Cache', color: '#f85149', fs: 13 },
-  pg_b: { x: 780, y: 420, w: 130, h: 45, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 13 },
+  cluster_b: { x: 530, y: 120, w: 440, h: 320, type: 'container', label: 'OCP Cluster B', color: '#58a6ff' },
+  gw_b: { x: 570, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
+  maas_b: { x: 550, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
+  kuad_b: { x: 695, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
+  ipp_b: { x: 830, y: 240, w: 110, h: 48, label: 'IPP', sublabel: 'Payload Proc.', color: '#d2a8ff', fs: 13 },
+  pg_b: { x: 555, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11 },
+  redis_b: { x: 700, y: 320, w: 110, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
 
   // InferencePool A (below left cluster)
-  pool_a: { x: 30, y: 620, w: 440, h: 140, type: 'container', label: 'InferencePool -- Cluster A', color: '#3fb950' },
-  vllm_a1: { x: 60, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
-  vllm_a2: { x: 220, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
+  pool_a: { x: 30, y: 520, w: 440, h: 130, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950' },
+  vllm_a1: { x: 60, y: 565, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
+  vllm_a2: { x: 220, y: 565, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
 
   // InferencePool B (below right cluster)
-  pool_b: { x: 530, y: 620, w: 440, h: 140, type: 'container', label: 'InferencePool -- Cluster B', color: '#3fb950' },
-  vllm_b1: { x: 560, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
-  vllm_b2: { x: 720, y: 670, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
+  pool_b: { x: 530, y: 520, w: 440, h: 130, type: 'container', label: 'InferencePool — Cluster B', color: '#3fb950' },
+  vllm_b1: { x: 560, y: 565, w: 120, h: 50, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 14 },
+  vllm_b2: { x: 720, y: 565, w: 120, h: 50, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 14 },
 
   // External Providers (far right)
   openai:    { x: 1020, y: 200, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
@@ -463,7 +463,7 @@ function drawReplicationBar() {
   var c = C();
   ctx.save();
   // Dark rounded rectangle spanning both clusters
-  var barX = tx(30), barY = ty(570), barW = ts(940), barH = ts(40);
+  var barX = tx(30), barY = ty(460), barW = ts(940), barH = ts(40);
   ctx.beginPath();
   ctx.roundRect(barX, barY, barW, barH, ts(8));
   ctx.fillStyle = isDark ? '#1a1e2a' : '#e8edf5';
@@ -486,40 +486,50 @@ function drawReplicationBar() {
 
   ctx.restore();
 
-  // Draw arrows from Redis and PostgreSQL down to bar
-  var arrowTargets = [
-    { key: 'redis_a', xOff: 0 },
-    { key: 'pg_a', xOff: 0 },
-    { key: 'redis_b', xOff: 0 },
-    { key: 'pg_b', xOff: 0 },
+  // Draw horizontal sync arrows between matching Redis and PostgreSQL boxes
+  var syncPairs = [
+    { a: 'redis_a', b: 'redis_b', color: '#f85149' },
+    { a: 'pg_a', b: 'pg_b', color: '#8b949e' },
   ];
-  arrowTargets.forEach(function(at) {
-    var n = N[at.key];
-    var sx = tx(n.x + n.w / 2 + at.xOff);
-    var sy = ty(n.y + n.h);
-    var ey = barY;
+  syncPairs.forEach(function(pair) {
+    var na = N[pair.a], nb = N[pair.b];
+    var sx = tx(na.x + na.w);
+    var sy = ty(na.y + na.h / 2);
+    var ex = tx(nb.x);
+    var ey = ty(nb.y + nb.h / 2);
     ctx.save();
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = pair.color;
+    ctx.lineWidth = ts(2);
+    ctx.setLineDash([ts(6), ts(4)]);
     ctx.beginPath();
     ctx.moveTo(sx, sy);
-    ctx.lineTo(sx, ey);
-    ctx.strokeStyle = isDark ? '#58a6ff66' : '#58a6ff55';
-    ctx.lineWidth = ts(1.5);
-    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.lineTo(ex, ey);
     ctx.stroke();
     ctx.setLineDash([]);
-    // Arrowhead
-    var sz = ts(6);
+    // Bidirectional arrowheads
+    var hl = ts(7), ha = 0.4;
+    ctx.fillStyle = pair.color;
+    // Right arrow
     ctx.beginPath();
-    ctx.moveTo(sx, ey);
-    ctx.lineTo(sx - sz * 0.5, ey - sz);
-    ctx.lineTo(sx + sz * 0.5, ey - sz);
-    ctx.closePath();
-    ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff66';
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - hl, ey - hl * ha);
+    ctx.lineTo(ex - hl, ey + hl * ha);
     ctx.fill();
+    // Left arrow
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + hl, sy - hl * ha);
+    ctx.lineTo(sx + hl, sy + hl * ha);
+    ctx.fill();
+    // Label in middle
+    ctx.font = ts(9) + 'px system-ui';
+    ctx.fillStyle = isDark ? '#8b949e' : '#656d76';
+    ctx.textAlign = 'center';
+    ctx.fillText('sync', (sx + ex) / 2, sy - ts(8));
     ctx.restore();
   });
-}
+
 
 function drawBounds() {
   // OCP Cluster containers
