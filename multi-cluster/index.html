@@ -486,32 +486,6 @@ function drawContainer(key, isGlow) {
 }
 
 function drawReplicationBar() {
-  var c = C();
-  ctx.save();
-  // Dark rounded rectangle spanning both clusters
-  var barX = tx(30), barY = ty(510), barW = ts(940), barH = ts(40);
-  ctx.beginPath();
-  ctx.roundRect(barX, barY, barW, barH, ts(8));
-  ctx.fillStyle = isDark ? '#1a1e2a' : '#e8edf5';
-  ctx.fill();
-  ctx.strokeStyle = isDark ? '#58a6ff88' : '#58a6ff66';
-  ctx.lineWidth = ts(2);
-  ctx.stroke();
-
-  // Label
-  ctx.font = 'bold ' + ts(13) + 'px system-ui';
-  ctx.fillStyle = isDark ? '#c9d1d9' : '#24292f';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('RHCL — Red Hat Connectivity Link', barX + barW / 2, barY + barH / 2);
-
-  // Sublabel
-  ctx.font = ts(10) + 'px system-ui';
-  ctx.fillStyle = isDark ? '#8b949e' : '#656d76';
-  ctx.fillText('State Replication Layer', barX + barW / 2, barY + barH / 2 + ts(14));
-
-  ctx.restore();
-
   // Draw horizontal sync arrows between matching Redis and PostgreSQL boxes
   var syncPairs = [
     { a: 'redis_a', b: 'redis_b', color: '#f85149' },
@@ -1217,11 +1191,9 @@ var flowClusterA = [
   { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
   { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 60, toTop: true },
   { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_a', badge: 8 },
-  { t: '9. IPP -> InferencePool A', mode: 'arrow', f: 'ipp_a', to: 'vllm_a1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_a',
-    waypoints: [{ x: 385, y: 560 }, { x: 120, y: 610 }] },
+  { t: '9. IPP -> InferencePool A', mode: 'arrow', f: 'ipp_a', to: 'vllm_a1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_a', fromXOff: -20, toXOff: 20 },
   { t: '10. vLLM Decode processes', mode: 'lightup', target: 'vllm_a1', badge: 10 },
-  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_a1', to: 'ipp_a', c: '#3fb950', num: 11, fromTop: true, toBottom: true,
-    waypoints: [{ x: 120, y: 560 }, { x: 420, y: 400 }] },
+  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_a1', to: 'ipp_a', c: '#3fb950', num: 11, fromTop: true, toBottom: true, fromXOff: 40, toXOff: 10 },
   { t: '12. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 12, fromTop: true, toBottom: true, toXOff: 80 },
   { t: '13. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_a', badge: 13 },
   { t: '14. Response to Client', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 14, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -10 },
@@ -1236,11 +1208,9 @@ var flowClusterB = [
   { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_b', to: 'redis_b', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
   { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_b', to: 'ipp_b', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 60, toTop: true },
   { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_b', badge: 8 },
-  { t: '9. IPP -> InferencePool B', mode: 'arrow', f: 'ipp_b', to: 'vllm_b1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_b',
-    waypoints: [{ x: 885, y: 560 }, { x: 620, y: 610 }] },
+  { t: '9. IPP -> InferencePool B', mode: 'arrow', f: 'ipp_b', to: 'vllm_b1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_b', fromXOff: -20, toXOff: 20 },
   { t: '10. vLLM Decode processes', mode: 'lightup', target: 'vllm_b1', badge: 10 },
-  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_b1', to: 'ipp_b', c: '#3fb950', num: 11, fromTop: true, toBottom: true,
-    waypoints: [{ x: 620, y: 560 }, { x: 920, y: 400 }] },
+  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_b1', to: 'ipp_b', c: '#3fb950', num: 11, fromTop: true, toBottom: true, fromXOff: 40, toXOff: 10 },
   { t: '12. IPP -> Gateway', mode: 'arrow', f: 'ipp_b', to: 'gw_b', c: '#3fb950', num: 12, fromTop: true, toBottom: true, toXOff: 80 },
   { t: '13. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_b', badge: 13 },
   { t: '14. Response to Client', mode: 'arrow', f: 'gw_b', to: 'client', c: '#3fb950', num: 14, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 10 },
