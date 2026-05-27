@@ -217,21 +217,21 @@ const N = {
   client: { x: 500, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // OCP Cluster A (left container)
-  cluster_a: { x: 30, y: 120, w: 440, h: 320, type: 'container', label: 'OCP Cluster A', color: '#58a6ff' },
+  cluster_a: { x: 30, y: 120, w: 440, h: 320, type: 'container', label: 'Cluster A — Inference Gateway (no GPU)', color: '#58a6ff' },
   gw_a: { x: 70, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_a: { x: 50, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_a: { x: 195, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
   ipp_a: { x: 330, y: 240, w: 110, h: 48, label: 'IPP', sublabel: 'Payload Proc.', color: '#d2a8ff', fs: 13 },
-  pg_a: { x: 55, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11 },
+  pg_a: { x: 55, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
   redis_a: { x: 200, y: 320, w: 110, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
 
   // OCP Cluster B (right container)
-  cluster_b: { x: 530, y: 120, w: 440, h: 320, type: 'container', label: 'OCP Cluster B', color: '#58a6ff' },
+  cluster_b: { x: 530, y: 120, w: 440, h: 320, type: 'container', label: 'Cluster B — Inference Gateway (no GPU)', color: '#58a6ff' },
   gw_b: { x: 570, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_b: { x: 550, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_b: { x: 695, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
   ipp_b: { x: 830, y: 240, w: 110, h: 48, label: 'IPP', sublabel: 'Payload Proc.', color: '#d2a8ff', fs: 13 },
-  pg_b: { x: 555, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11 },
+  pg_b: { x: 555, y: 320, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
   redis_b: { x: 700, y: 320, w: 110, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
 
   // InferencePool A (below left cluster)
@@ -380,21 +380,47 @@ function drawBox(key) {
     ctx.globalAlpha = 0.3 + 0.7 * fadeA;
   }
 
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, ts(8));
-
-  // Special fill for Redis boxes
+  var fillCol, strokeCol;
   if (key === 'redis_a' || key === 'redis_b') {
-    ctx.fillStyle = (isA || hasBadge) ? (isDark ? '#2d1517' : '#ffebe9') : (isDark ? '#1a1215' : '#fff5f5');
+    fillCol = (isA || hasBadge) ? (isDark ? '#2d1517' : '#ffebe9') : (isDark ? '#1a1215' : '#fff5f5');
   } else if (key === 'pg_a' || key === 'pg_b') {
-    ctx.fillStyle = (isA || hasBadge) ? c.boxA : (isDark ? '#151820' : '#f0f4f8');
+    fillCol = (isA || hasBadge) ? c.boxA : (isDark ? '#151820' : '#f0f4f8');
   } else {
-    ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+    fillCol = (isA || hasBadge) ? c.boxA : c.box;
   }
-  ctx.fill();
-  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
-  ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
-  ctx.stroke();
+  strokeCol = (isA || hasBadge) ? n.color : c.bdr;
+  var lw = ts((isA || hasBadge) ? 2.5 : 1.5);
+
+  if (n.dbShape) {
+    // Draw cylinder (DB shape)
+    var ry = ts(8);
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, y + ry, w/2, ry, 0, Math.PI, 0);
+    ctx.lineTo(x + w, y + h - ry);
+    ctx.ellipse(x + w/2, y + h - ry, w/2, ry, 0, 0, Math.PI);
+    ctx.closePath();
+    ctx.fillStyle = fillCol;
+    ctx.fill();
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+    // Top ellipse
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, y + ry, w/2, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = isDark ? '#1a2030' : '#e0e8f0';
+    ctx.fill();
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, ts(8));
+    ctx.fillStyle = fillCol;
+    ctx.fill();
+    ctx.strokeStyle = strokeCol;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+  }
 
   const fs = n.fs || 16;
   ctx.fillStyle = c.txt;
