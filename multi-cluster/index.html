@@ -1209,86 +1209,66 @@ function inspStep(stepNum) {
 var activeFlow = 'cluster_a';
 
 var flowClusterA = [
-  // 1. Client -> Istio GW A
-  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: 0 },
-  // 2. GW -> Kuadrant (auth)
-  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
-  // 3. Kuadrant validates via MaaS API
-  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
-  // 4. MaaS API: key valid
-  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_a', badge: 4 },
-  // 5. Kuadrant: rate limit check (Redis)
-  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
-    waypoints: [{ x: 160, y: 370 }, { x: 120, y: 400 }] },
-  // 6. GW -> IPP
-  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
-  // 7. IPP: model-provider-resolver
-  { t: '7. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_a', badge: 7 },
-  // 8. IPP -> InferencePool A
-  { t: '8. IPP -> InferencePool A', mode: 'arrow', f: 'ipp_a', to: 'vllm_a1', c: '#58a6ff', num: 8, fromBottom: true, toTop: true, glow: 'pool_a',
-    waypoints: [{ x: 330, y: 560 }, { x: 120, y: 610 }] },
-  // 9. vLLM Decode processes
-  { t: '9. vLLM Decode processes', mode: 'lightup', target: 'vllm_a1', badge: 9 },
-  // 10. Response -> IPP
-  { t: '10. Response -> IPP', mode: 'arrow', f: 'vllm_a1', to: 'ipp_a', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
-    waypoints: [{ x: 120, y: 610 }, { x: 330, y: 400 }, { x: 330, y: 300 }] },
-  // 11. IPP -> Gateway
-  { t: '11. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 11, fromTop: true, toBottom: true, toXOff: 80 },
-  // 12. Kuadrant: rate limit usage (Redis update)
-  { t: '12. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_a', badge: 12 },
-  // 13. Response to Client
-  { t: '13. Response to Client', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: -10 },
+  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -60 },
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -5, toTop: true },
+  { t: '3. Kuadrant -> MaaS API (key validation)', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromLeft: true, toRight: true },
+  { t: '4. MaaS API -> PostgreSQL (query keys)', mode: 'arrow', f: 'maas_a', to: 'pg_a', c: '#8b949e', num: 4, fromBottom: true, toTop: true },
+  { t: '5. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_a', badge: 5 },
+  { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
+  { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 60, toTop: true },
+  { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_a', badge: 8 },
+  { t: '9. IPP -> InferencePool A', mode: 'arrow', f: 'ipp_a', to: 'vllm_a1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_a',
+    waypoints: [{ x: 385, y: 560 }, { x: 120, y: 610 }] },
+  { t: '10. vLLM Decode processes', mode: 'lightup', target: 'vllm_a1', badge: 10 },
+  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_a1', to: 'ipp_a', c: '#3fb950', num: 11, fromTop: true, toBottom: true,
+    waypoints: [{ x: 120, y: 560 }, { x: 420, y: 400 }] },
+  { t: '12. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 12, fromTop: true, toBottom: true, toXOff: 80 },
+  { t: '13. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_a', badge: 13 },
+  { t: '14. Response to Client', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 14, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -10 },
 ];
 
 var flowClusterB = [
-  // Same flow through Cluster B
-  { t: '1. Client -> Istio Gateway (Cluster B)', mode: 'arrow', f: 'client', to: 'gw_b', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 0 },
-  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_b', to: 'kuad_b', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
-  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_b', to: 'maas_b', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
-  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_b', badge: 4 },
-  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_b', to: 'redis_b', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
-    waypoints: [{ x: 660, y: 370 }, { x: 620, y: 400 }] },
-  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_b', to: 'ipp_b', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
-  { t: '7. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_b', badge: 7 },
-  { t: '8. IPP -> InferencePool B', mode: 'arrow', f: 'ipp_b', to: 'vllm_b1', c: '#58a6ff', num: 8, fromBottom: true, toTop: true, glow: 'pool_b',
-    waypoints: [{ x: 830, y: 560 }, { x: 620, y: 610 }] },
-  { t: '9. vLLM Decode processes', mode: 'lightup', target: 'vllm_b1', badge: 9 },
-  { t: '10. Response -> IPP', mode: 'arrow', f: 'vllm_b1', to: 'ipp_b', c: '#3fb950', num: 10, fromTop: true, toBottom: true,
-    waypoints: [{ x: 620, y: 610 }, { x: 830, y: 400 }, { x: 830, y: 300 }] },
-  { t: '11. IPP -> Gateway', mode: 'arrow', f: 'ipp_b', to: 'gw_b', c: '#3fb950', num: 11, fromTop: true, toBottom: true, toXOff: 80 },
-  { t: '12. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_b', badge: 12 },
-  { t: '13. Response to Client', mode: 'arrow', f: 'gw_b', to: 'client', c: '#3fb950', num: 13, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 10 },
+  { t: '1. Client -> Istio Gateway (Cluster B)', mode: 'arrow', f: 'client', to: 'gw_b', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: 30, toTop: true, toXOff: -60 },
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_b', to: 'kuad_b', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -5, toTop: true },
+  { t: '3. Kuadrant -> MaaS API (key validation)', mode: 'arrow', f: 'kuad_b', to: 'maas_b', c: '#f0883e', num: 3, fromLeft: true, toRight: true },
+  { t: '4. MaaS API -> PostgreSQL (query keys)', mode: 'arrow', f: 'maas_b', to: 'pg_b', c: '#8b949e', num: 4, fromBottom: true, toTop: true },
+  { t: '5. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_b', badge: 5 },
+  { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_b', to: 'redis_b', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
+  { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_b', to: 'ipp_b', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 60, toTop: true },
+  { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp_b', badge: 8 },
+  { t: '9. IPP -> InferencePool B', mode: 'arrow', f: 'ipp_b', to: 'vllm_b1', c: '#58a6ff', num: 9, fromBottom: true, toTop: true, glow: 'pool_b',
+    waypoints: [{ x: 885, y: 560 }, { x: 620, y: 610 }] },
+  { t: '10. vLLM Decode processes', mode: 'lightup', target: 'vllm_b1', badge: 10 },
+  { t: '11. Response -> IPP', mode: 'arrow', f: 'vllm_b1', to: 'ipp_b', c: '#3fb950', num: 11, fromTop: true, toBottom: true,
+    waypoints: [{ x: 620, y: 560 }, { x: 920, y: 400 }] },
+  { t: '12. IPP -> Gateway', mode: 'arrow', f: 'ipp_b', to: 'gw_b', c: '#3fb950', num: 12, fromTop: true, toBottom: true, toXOff: 80 },
+  { t: '13. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_b', badge: 13 },
+  { t: '14. Response to Client', mode: 'arrow', f: 'gw_b', to: 'client', c: '#3fb950', num: 14, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 10 },
 ];
 
 var flowExternal = [
   // 1-6: Same auth through Cluster A
-  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: 0 },
-  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -80, toTop: true },
-  { t: '3. Kuadrant validates via MaaS API', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromBottom: true, toTop: true, toXOff: -30 },
-  { t: '4. MaaS API: key valid, subscription matched', mode: 'lightup', target: 'maas_a', badge: 4 },
-  { t: '5. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#f85149', num: 5, fromBottom: true, fromXOff: 20, toTop: true,
-    waypoints: [{ x: 160, y: 370 }, { x: 120, y: 400 }] },
-  { t: '6. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 6, fromBottom: true, fromXOff: 60, toTop: true },
+  { t: '1. Client -> Istio Gateway (Cluster A)', mode: 'arrow', f: 'client', to: 'gw_a', c: '#58a6ff', num: 1, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -60 },
+  { t: '2. Gateway -> Kuadrant (auth)', mode: 'arrow', f: 'gw_a', to: 'kuad_a', c: '#f0883e', num: 2, fromBottom: true, fromXOff: -5, toTop: true },
+  { t: '3. Kuadrant -> MaaS API (key validation)', mode: 'arrow', f: 'kuad_a', to: 'maas_a', c: '#f0883e', num: 3, fromLeft: true, toRight: true },
+  { t: '4. MaaS API -> PostgreSQL (query keys)', mode: 'arrow', f: 'maas_a', to: 'pg_a', c: '#8b949e', num: 4, fromBottom: true, toTop: true },
+  { t: '5. MaaS API: key valid', mode: 'lightup', target: 'maas_a', badge: 5 },
+  { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad_a', to: 'redis_a', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
+  { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw_a', to: 'ipp_a', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 60, toTop: true },
   // 7. IPP: external model detected
   { t: '7. IPP: model-provider-resolver (external model)', mode: 'lightup', target: 'ipp_a', badge: 7 },
   // 8. IPP: api-translation
-  { t: '8. IPP: api-translation (OpenAI -> Anthropic)', mode: 'lightup', target: 'ipp_a', badge: 8 },
-  // 9. IPP: apikey-injection
-  { t: '9. IPP: apikey-injection', mode: 'lightup', target: 'ipp_a', badge: 9 },
-  // 10. IPP -> Anthropic
-  { t: '10. IPP -> Anthropic', mode: 'arrow', f: 'ipp_a', to: 'anthropic', c: '#58a6ff', num: 10, fromRight: true, toLeft: true,
+  { t: '8. IPP: external model detected', mode: 'lightup', target: 'ipp_a', badge: 8 },
+  { t: '9. IPP: api-translation (OpenAI -> Anthropic)', mode: 'lightup', target: 'ipp_a', badge: 9 },
+  { t: '10. IPP: apikey-injection', mode: 'lightup', target: 'ipp_a', badge: 10 },
+  { t: '11. IPP -> Anthropic', mode: 'arrow', f: 'ipp_a', to: 'anthropic', c: '#e3b341', num: 11, fromRight: true, toLeft: true,
     waypoints: [{ x: 480, y: 272 }, { x: 990, y: 282 }] },
-  // 11. Anthropic responds
-  { t: '11. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp_a', c: '#3fb950', num: 11, fromLeft: true, toRight: true,
-    waypoints: [{ x: 990, y: 290 }, { x: 480, y: 280 }] },
-  // 12. IPP: api-translation (response)
-  { t: '12. IPP: api-translation (response)', mode: 'lightup', target: 'ipp_a', badge: 12 },
-  // 13. IPP -> Gateway
-  { t: '13. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 13, fromTop: true, toBottom: true, toXOff: 80 },
-  // 14. Kuadrant: rate limit usage
-  { t: '14. Kuadrant: rate limit usage', mode: 'lightup', target: 'redis_a', badge: 14 },
-  // 15. Response to Client
-  { t: '15. Response to Client (OpenAI format)', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 15, fromTop: true, fromXOff: -40, toBottom: true, toXOff: -10 },
+  { t: '12. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp_a', c: '#3fb950', num: 12, fromLeft: true, toRight: true,
+    waypoints: [{ x: 990, y: 295 }, { x: 480, y: 290 }] },
+  { t: '13. IPP: api-translation (response)', mode: 'lightup', target: 'ipp_a', badge: 13 },
+  { t: '14. IPP -> Gateway', mode: 'arrow', f: 'ipp_a', to: 'gw_a', c: '#3fb950', num: 14, fromTop: true, toBottom: true, toXOff: 80 },
+  { t: '15. Kuadrant: rate limit usage', mode: 'lightup', target: 'redis_a', badge: 15 },
+  { t: '16. Response to Client (OpenAI format)', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 16, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -10 },
 ];
 
 var flowMap = { cluster_a: flowClusterA, cluster_b: flowClusterB, external: flowExternal };
