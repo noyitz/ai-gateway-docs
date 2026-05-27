@@ -569,39 +569,6 @@ function drawBounds() {
   // Replication bar
   drawReplicationBar();
 
-  // Stacked vLLM pods behind decode/prefill (decorative)
-  var podC = isDark ? '#d2a8ff18' : '#d2a8ff12';
-  var podS = isDark ? '#d2a8ff44' : '#d2a8ff33';
-  // Cluster A pods
-  for (var j = 2; j >= 1; j--) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(tx(60 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
-    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
-    ctx.fill(); ctx.stroke(); ctx.restore();
-  }
-  for (var j = 2; j >= 1; j--) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(tx(220 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
-    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
-    ctx.fill(); ctx.stroke(); ctx.restore();
-  }
-  // Cluster B pods
-  for (var j = 2; j >= 1; j--) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(tx(560 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
-    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
-    ctx.fill(); ctx.stroke(); ctx.restore();
-  }
-  for (var j = 2; j >= 1; j--) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(tx(720 - j * 6), ty(670 - j * 4), ts(120), ts(50), ts(6));
-    ctx.fillStyle = podC; ctx.strokeStyle = podS; ctx.lineWidth = ts(1);
-    ctx.fill(); ctx.stroke(); ctx.restore();
-  }
 
   // "External Providers" label on right side
   ctx.save();
