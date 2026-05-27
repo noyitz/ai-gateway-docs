@@ -217,7 +217,7 @@ const N = {
   client: { x: 500, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // OCP Cluster A (left container)
-  cluster_a: { x: 30, y: 120, w: 440, h: 370, type: 'container', label: 'Cluster A — Inference Gateway (no GPU)', color: '#58a6ff' },
+  cluster_a: { x: 30, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster A — Inference Gateway (no GPU)', color: '#58a6ff' },
   gw_a: { x: 70, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_a: { x: 50, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_a: { x: 195, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
@@ -226,7 +226,7 @@ const N = {
   pg_a: { x: 55, y: 390, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
 
   // OCP Cluster B (right container)
-  cluster_b: { x: 530, y: 120, w: 440, h: 370, type: 'container', label: 'Cluster B — Inference Gateway (no GPU)', color: '#58a6ff' },
+  cluster_b: { x: 530, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster B — Inference Gateway (no GPU)', color: '#58a6ff' },
   gw_b: { x: 570, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_b: { x: 550, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_b: { x: 695, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
@@ -234,9 +234,9 @@ const N = {
   redis_b: { x: 700, y: 320, w: 110, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
   pg_b: { x: 555, y: 390, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
 
-  // EPP (between gateway clusters and inference pools)
-  epp_a: { x: 130, y: 520, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
-  epp_b: { x: 660, y: 520, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
+  // EPP (inside gateway clusters, below PostgreSQL/Redis row)
+  epp_a: { x: 130, y: 460, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
+  epp_b: { x: 660, y: 460, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
 
   // InferencePool A (below left)
   pool_a: { x: 30, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950' },
@@ -1197,7 +1197,7 @@ var flowClusterA = [
   { t: '17. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_a', to: 'nixl_a', c: '#8b949e', num: 17, fromRight: true, toLeft: true, yOff: -5 },
   { t: '18. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_a', to: 'decode_a', c: '#8b949e', num: 18, fromLeft: true, toRight: true, yOff: 5 },
   { t: '19. Decode processing', mode: 'lightup', target: 'decode_a', badge: 19 },
-  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_a', to: 'gw_a', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: -60 },
+  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_a', to: 'gw_a', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: 20 },
   { t: '21. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_a', badge: 21 },
   { t: '22. Response to Client', mode: 'arrow', f: 'gw_a', to: 'client', c: '#3fb950', num: 22, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -10 },
 ];
@@ -1222,7 +1222,7 @@ var flowClusterB = [
   { t: '17. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_b', to: 'nixl_b', c: '#8b949e', num: 17, fromRight: true, toLeft: true, yOff: -5 },
   { t: '18. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_b', to: 'decode_b', c: '#8b949e', num: 18, fromLeft: true, toRight: true, yOff: 5 },
   { t: '19. Decode processing', mode: 'lightup', target: 'decode_b', badge: 19 },
-  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_b', to: 'gw_b', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: -60 },
+  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_b', to: 'gw_b', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: 20 },
   { t: '21. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis_b', badge: 21 },
   { t: '22. Response to Client', mode: 'arrow', f: 'gw_b', to: 'client', c: '#3fb950', num: 22, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 10 },
 ];
