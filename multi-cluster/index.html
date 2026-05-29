@@ -199,6 +199,11 @@ redisImg.src = 'redis.svg';
 let redisLoaded = false;
 redisImg.onload = () => { redisLoaded = true; draw(); };
 
+const rhLogoImg = new Image();
+rhLogoImg.src = 'redhat-logo.svg';
+let rhLogoLoaded = false;
+rhLogoImg.onload = () => { rhLogoLoaded = true; draw(); };
+
 const LW = 1200, LH = 850;
 let ox = 0, oy = 0, sc = 1;
 
@@ -217,7 +222,7 @@ const N = {
   client: { x: 500, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // OCP Cluster A (left container)
-  cluster_a: { x: 30, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster A — Inference Gateway (no GPU)', color: '#58a6ff' },
+  cluster_a: { x: 30, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster A — Inference Gateway (no GPU)', color: '#58a6ff', rhoai: true },
   gw_a: { x: 70, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_a: { x: 50, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_a: { x: 195, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
@@ -226,7 +231,7 @@ const N = {
   pg_a: { x: 55, y: 390, w: 120, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
 
   // OCP Cluster B (right container)
-  cluster_b: { x: 530, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster B — Inference Gateway (no GPU)', color: '#58a6ff' },
+  cluster_b: { x: 530, y: 120, w: 440, h: 400, type: 'container', label: 'Cluster B — Inference Gateway (no GPU)', color: '#58a6ff', rhoai: true },
   gw_b: { x: 570, y: 160, w: 360, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas_b: { x: 550, y: 240, w: 130, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad_b: { x: 695, y: 240, w: 120, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
@@ -239,14 +244,14 @@ const N = {
   epp_b: { x: 660, y: 460, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
 
   // InferencePool A (below left)
-  pool_a: { x: 30, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950' },
+  pool_a: { x: 30, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950', rhoai: true },
   sidecar_a: { x: 140, y: 610, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
   decode_a: { x: 50, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
   nixl_a: { x: 195, y: 675, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
   prefill_a: { x: 320, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
 
   // InferencePool B (below right)
-  pool_b: { x: 530, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster B', color: '#3fb950' },
+  pool_b: { x: 530, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster B', color: '#3fb950', rhoai: true },
   sidecar_b: { x: 640, y: 610, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
   decode_b: { x: 550, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
   nixl_b: { x: 695, y: 675, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
@@ -490,6 +495,19 @@ function drawContainer(key, isGlow) {
   ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
   ctx.textAlign = 'left';
   ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
+  if (n.rhoai && rhLogoLoaded) {
+    var logoH = ts(12);
+    var logoW = logoH * (rhLogoImg.naturalWidth / rhLogoImg.naturalHeight);
+    var badgeX = tx(n.x + n.w) - logoW - ts(80);
+    var badgeY = ty(n.y + 8);
+    ctx.globalAlpha = isDark ? 0.7 : 0.6;
+    ctx.drawImage(rhLogoImg, badgeX, badgeY, logoW, logoH);
+    ctx.globalAlpha = isDark ? 0.55 : 0.5;
+    ctx.font = 'bold ' + ts(10) + 'px system-ui';
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#24292f';
+    ctx.textAlign = 'left';
+    ctx.fillText('OpenShift AI', badgeX + logoW + ts(4), badgeY + logoH / 2 + ts(1));
+  }
   ctx.restore();
 }
 
