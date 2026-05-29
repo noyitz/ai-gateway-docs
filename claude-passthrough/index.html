@@ -255,7 +255,7 @@ const N = {
   anthropic: { x: 10, y: 450, w: 145, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 15 },
 
   // Grafana -- outside cluster, bottom-right
-  grafana: { x: 1170, y: 470, w: 200, h: 55, label: 'Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'new' },
+  grafana: { x: 1170, y: 520, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'new' },
 };
 
 const tips = {
@@ -604,6 +604,26 @@ function drawBounds() {
     ctx.restore();
   }
 
+  // Static line: Metering Service -> PostgreSQL
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = ts(2);
+  ctx.strokeStyle = '#e3b341';
+  ctx.beginPath();
+  ctx.moveTo(tx(N.metering.x + N.metering.w / 2), ty(N.metering.y + N.metering.h));
+  ctx.lineTo(tx(N.pg_meter.x + N.pg_meter.w / 2), ty(N.pg_meter.y));
+  ctx.stroke();
+  // small arrowhead
+  var ahl = ts(7);
+  ctx.beginPath();
+  ctx.moveTo(tx(N.pg_meter.x + N.pg_meter.w / 2), ty(N.pg_meter.y));
+  ctx.lineTo(tx(N.pg_meter.x + N.pg_meter.w / 2) - ahl * 0.4, ty(N.pg_meter.y) - ahl);
+  ctx.lineTo(tx(N.pg_meter.x + N.pg_meter.w / 2) + ahl * 0.4, ty(N.pg_meter.y) - ahl);
+  ctx.closePath();
+  ctx.fillStyle = '#e3b341';
+  ctx.fill();
+  ctx.restore();
+
   // Static dashed line: Grafana -> PostgreSQL
   ctx.save();
   ctx.globalAlpha = 0.35;
@@ -803,7 +823,7 @@ class Dot {
     this.segIdx = 0;
     this.x = this.pts[0].x;
     this.y = this.pts[0].y;
-    const pxPerFrame = 4;
+    const pxPerFrame = 2;
     this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
   }
   update() {
