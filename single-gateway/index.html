@@ -204,7 +204,7 @@ rhLogoImg.src = 'redhat-logo.svg';
 let rhLogoLoaded = false;
 rhLogoImg.onload = () => { rhLogoLoaded = true; draw(); };
 
-const LW = 1350, LH = 850;
+const LW = 1350, LH = 920;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -222,35 +222,38 @@ const N = {
   client: { x: 470, y: 30, w: 90, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // Single Inference Gateway (centered, wide)
-  cluster: { x: 150, y: 120, w: 700, h: 400, type: 'container', label: 'Inference Gateway (no GPU)', color: '#58a6ff', rhoai: true },
+  cluster: { x: 150, y: 120, w: 700, h: 360, type: 'container', label: 'Inference Gateway (no GPU)', color: '#58a6ff', rhoai: true },
   gw: { x: 200, y: 160, w: 600, h: 50, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 15 },
   maas: { x: 180, y: 240, w: 180, h: 48, label: 'MaaS API', sublabel: 'Keys · Subs', color: '#79c0ff', fs: 12 },
   kuad: { x: 380, y: 240, w: 160, h: 48, label: 'Kuadrant', sublabel: 'RHCL', color: '#f0883e', fs: 13 },
   ipp: { x: 560, y: 240, w: 160, h: 48, label: 'IPP', sublabel: 'Payload Proc.', color: '#d2a8ff', fs: 13 },
   redis: { x: 380, y: 320, w: 150, h: 42, label: 'Redis', sublabel: 'Rate Limit', color: '#f85149', fs: 11 },
   pg: { x: 180, y: 390, w: 150, h: 42, label: 'PostgreSQL', sublabel: 'MaaS State', color: '#8b949e', fs: 11, dbShape: true },
-  epp: { x: 350, y: 460, w: 200, h: 40, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
 
   // InferencePool A (bottom left)
-  pool_a: { x: 30, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950', rhoai: true },
-  sidecar_a: { x: 140, y: 610, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
-  decode_a: { x: 50, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
-  nixl_a: { x: 195, y: 675, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
-  prefill_a: { x: 320, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
+  pool_a: { x: 30, y: 560, w: 440, h: 280, type: 'container', label: 'InferencePool — Cluster A', color: '#3fb950', rhoai: true },
+  gw_pool_a: { x: 50, y: 590, w: 400, h: 40, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 13 },
+  epp_a: { x: 140, y: 640, w: 200, h: 35, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
+  sidecar_a: { x: 140, y: 690, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
+  decode_a: { x: 50, y: 740, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
+  nixl_a: { x: 195, y: 745, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
+  prefill_a: { x: 320, y: 740, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
 
   // InferencePool B (bottom right)
-  pool_b: { x: 530, y: 580, w: 440, h: 200, type: 'container', label: 'InferencePool — Cluster B', color: '#3fb950', rhoai: true },
-  sidecar_b: { x: 640, y: 610, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
-  decode_b: { x: 550, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
-  nixl_b: { x: 695, y: 675, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
-  prefill_b: { x: 820, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
+  pool_b: { x: 530, y: 560, w: 440, h: 280, type: 'container', label: 'InferencePool — Cluster B', color: '#3fb950', rhoai: true },
+  gw_pool_b: { x: 550, y: 590, w: 400, h: 40, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 13 },
+  epp_b: { x: 640, y: 640, w: 200, h: 35, label: 'EPP (ext_proc)', sublabel: 'Endpoint Picker', color: '#79c0ff', fs: 12 },
+  sidecar_b: { x: 640, y: 690, w: 100, h: 35, label: 'Sidecar', color: '#8b949e', fs: 12 },
+  decode_b: { x: 550, y: 740, w: 120, h: 45, label: 'vLLM', sublabel: 'Decode Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
+  nixl_b: { x: 695, y: 745, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
+  prefill_b: { x: 820, y: 740, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
 
   // External Providers (bottom right, same level as InferencePools)
-  openai:    { x: 1020, y: 590, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
-  anthropic: { x: 1020, y: 645, w: 130, h: 45, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
-  azure:     { x: 1020, y: 700, w: 130, h: 45, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
-  bedrock:   { x: 1170, y: 590, w: 130, h: 45, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
-  vertex:    { x: 1170, y: 645, w: 130, h: 45, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 13 },
+  openai:    { x: 1020, y: 650, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
+  anthropic: { x: 1020, y: 705, w: 130, h: 45, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
+  azure:     { x: 1020, y: 760, w: 130, h: 45, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
+  bedrock:   { x: 1170, y: 650, w: 130, h: 45, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
+  vertex:    { x: 1170, y: 705, w: 130, h: 45, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 13 },
 };
 
 const tips = {
@@ -261,7 +264,10 @@ const tips = {
   maas: { t: 'MaaS API', d: 'Models-as-a-Service API server. Manages API keys, subscriptions, model catalog, and rate limiting policies.', dt: [['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRDs','ExternalModel, MaaSModelRef, MaaSAuth, MaaSSubscription']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
   redis: { t: 'Redis', d: 'In-memory data store for rate limit counters. Limitador uses Redis to track token consumption.', dt: [['Purpose','Rate limit state (token counters)'],['Used By','Limitador (Kuadrant)']] },
   pg: { t: 'PostgreSQL', d: 'Stores MaaS state: API keys, subscriptions, model catalog, usage data.', dt: [['Stores','API keys, subscriptions, model catalog, usage'],['Used By','MaaS API']] },
-  epp: { t: 'EPP (ext_proc)', d: 'Endpoint Picker Processor. Selects optimal Prefill/Decode worker pods within an InferencePool based on load, latency, and model availability.', dt: [['Type','ext_proc filter (Envoy)'],['Function','Worker selection (P/D disaggregation)'],['Selects','Prefill + Decode pods per request']] },
+  gw_pool_a: { t: 'Istio Gateway (Pool A)', d: 'Envoy-based gateway in the InferencePool cluster. Receives requests from the central gateway cluster and runs EPP ext_proc filter for pod selection.', dt: [['Filters','EPP (ext_proc)'],['Protocol','HTTP/2, gRPC'],['Role','Cross-cluster ingress + EPP dispatch']], links:[] },
+  gw_pool_b: { t: 'Istio Gateway (Pool B)', d: 'Envoy-based gateway in InferencePool Cluster B. Same role as Pool A gateway.', dt: [['Filters','EPP (ext_proc)'],['Protocol','HTTP/2, gRPC'],['Role','Cross-cluster ingress + EPP dispatch']], links:[] },
+  epp_a: { t: 'EPP — Endpoint Picker (Pool A)', d: 'Endpoint Picker ext_proc filter running in the InferencePool cluster. Selects prefill/decode workers based on load, model availability, and KV cache locality.', dt: [['Type','ext_proc filter'],['Selection','Load-based P/D worker selection'],['Output','Selected prefill + decode pod endpoints']], links:[['GIE Upstream','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
+  epp_b: { t: 'EPP — Endpoint Picker (Pool B)', d: 'Endpoint Picker in InferencePool Cluster B. Same function as Pool A EPP.', dt: [['Type','ext_proc filter'],['Selection','Load-based P/D worker selection']], links:[] },
   sidecar_a: { t: 'Sidecar (Pool A)', d: 'Request routing sidecar in InferencePool A. Routes requests between Prefill and Decode pods.', dt: [['Pool','InferencePool A'],['Function','P/D request routing']] },
   decode_a: { t: 'vLLM Decode Pod (Pool A)', d: 'Generates output tokens auto-regressively using KV cache. Part of disaggregated P/D serving in InferencePool A.', dt: [['Engine','vLLM'],['Function','Auto-regressive token generation'],['Mode','Disaggregated P/D serving']], links:[['vLLM','https://docs.vllm.ai/']] },
   prefill_a: { t: 'vLLM Prefill Pod (Pool A)', d: 'Processes the input prompt and generates KV cache. Part of disaggregated P/D serving.', dt: [['Engine','vLLM'],['Function','Prompt processing, KV cache generation'],['Transfer','KV cache to Decode Pod']], links:[['vLLM','https://docs.vllm.ai/']] },
@@ -529,7 +535,7 @@ function drawBounds() {
   ctx.font = 'bold ' + ts(12) + 'px system-ui';
   ctx.fillStyle = isDark ? '#3fb950aa' : '#3fb95099';
   ctx.textAlign = 'center';
-  ctx.fillText('External Providers', tx(1115), ty(575));
+  ctx.fillText('External Providers', tx(1115), ty(635));
   ctx.restore();
 }
 
@@ -932,18 +938,18 @@ function inspStepPoolA(stepNum) {
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-scout', s: 'add', id: 'h-xmodel' });
       break;
     case 10:
-      inspStepLabel = '10. IPP -> Gateway (request ready)';
+      inspStepLabel = '10. Gateway Istio -> Pool A Istio';
       var xm = inspHeaders.find(function(l) { return l.id === 'h-xmodel'; });
       if (xm) xm.s = 'highlight';
       break;
     case 11:
-      inspStepLabel = '11. Gateway -> EPP (ext_proc)';
+      inspStepLabel = '11. Pool A Istio -> EPP (ext_proc)';
       break;
     case 12:
       inspStepLabel = '12. EPP selects P/D workers';
       break;
     case 13:
-      inspStepLabel = '13. Gateway -> Sidecar (Pool A)';
+      inspStepLabel = '13. Pool A Istio -> Sidecar';
       break;
     case 14:
       inspStepLabel = '14. Sidecar -> Prefill Pod';
@@ -967,7 +973,10 @@ function inspStepPoolA(stepNum) {
       inspStepLabel = '20. Decode processing';
       break;
     case 21:
-      inspStepLabel = '21. Decode -> Gateway (response)';
+      inspStepLabel = '21. Decode -> Pool A Istio (response)';
+      break;
+    case 22:
+      inspStepLabel = '22. Pool A Istio -> Gateway Istio (response)';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -981,13 +990,13 @@ function inspStepPoolA(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 22:
-      inspStepLabel = '22. Kuadrant: rate limit usage (Redis)';
+    case 23:
+      inspStepLabel = '23. Kuadrant: rate limit usage (Redis)';
       var u = inspBody.find(function(l) { return l.id === 'r-usage'; });
       if (u) u.s = 'highlight';
       break;
-    case 23:
-      inspStepLabel = '23. Response to Client';
+    case 24:
+      inspStepLabel = '24. Response to Client';
       var rc = inspBody.find(function(l) { return l.id === 'r-choices'; });
       if (rc) rc.s = 'highlight';
       break;
@@ -1024,13 +1033,13 @@ function inspStepPoolB(stepNum) {
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-maverick', s: 'add', id: 'h-xmodel' });
       break;
     case 10:
-      inspStepLabel = '10. IPP -> Gateway (request ready)';
+      inspStepLabel = '10. Gateway Istio -> Pool B Istio';
       var xm10 = inspHeaders.find(function(l) { return l.id === 'h-xmodel'; });
       if (xm10) xm10.s = 'highlight';
       break;
-    case 11: inspStepLabel = '11. Gateway -> EPP (ext_proc)'; break;
+    case 11: inspStepLabel = '11. Pool B Istio -> EPP (ext_proc)'; break;
     case 12: inspStepLabel = '12. EPP selects P/D workers'; break;
-    case 13: inspStepLabel = '13. Gateway -> Sidecar (Pool B)'; break;
+    case 13: inspStepLabel = '13. Pool B Istio -> Sidecar'; break;
     case 14: inspStepLabel = '14. Sidecar -> Prefill Pod'; break;
     case 15: inspStepLabel = '15. Prefill processing'; break;
     case 16: inspStepLabel = '16. Prefill -> Sidecar (KV metadata)'; break;
@@ -1039,7 +1048,10 @@ function inspStepPoolB(stepNum) {
     case 19: inspStepLabel = '19. NIXL returns KV cache (RDMA)'; break;
     case 20: inspStepLabel = '20. Decode processing'; break;
     case 21:
-      inspStepLabel = '21. Decode -> Gateway (response)';
+      inspStepLabel = '21. Decode -> Pool B Istio (response)';
+      break;
+    case 22:
+      inspStepLabel = '22. Pool B Istio -> Gateway Istio (response)';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1053,13 +1065,13 @@ function inspStepPoolB(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 22:
-      inspStepLabel = '22. Kuadrant: rate limit usage (Redis)';
+    case 23:
+      inspStepLabel = '23. Kuadrant: rate limit usage (Redis)';
       var u22 = inspBody.find(function(l) { return l.id === 'r-usage'; });
       if (u22) u22.s = 'highlight';
       break;
-    case 23:
-      inspStepLabel = '23. Response to Client';
+    case 24:
+      inspStepLabel = '24. Response to Client';
       var rc23 = inspBody.find(function(l) { return l.id === 'r-choices'; });
       if (rc23) rc23.s = 'highlight';
       break;
@@ -1177,20 +1189,22 @@ var flowPoolA = [
   { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad', to: 'redis', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
   { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 100, toTop: true },
   { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp', badge: 8 },
-  { t: '9. IPP -> Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 9, fromTop: true, toBottom: true, toXOff: 80 },
-  { t: '10. Gateway -> EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'epp', c: '#58a6ff', num: 10, fromBottom: true, fromXOff: -50, toTop: true },
-  { t: '11. EPP selects P/D workers', mode: 'lightup', target: 'epp', badge: 11 },
-  { t: '12. Gateway -> Sidecar (Pool A)', mode: 'arrow', f: 'gw', to: 'sidecar_a', c: '#58a6ff', num: 12, fromBottom: true, fromXOff: -120, toTop: true, glow: 'pool_a' },
-  { t: '13. Sidecar -> Prefill Pod', mode: 'arrow', f: 'sidecar_a', to: 'prefill_a', c: '#58a6ff', num: 13, fromRight: true, toLeft: true },
-  { t: '14. Prefill processing', mode: 'lightup', target: 'prefill_a', badge: 14 },
-  { t: '15. Prefill -> Sidecar (KV metadata)', mode: 'arrow', f: 'prefill_a', to: 'sidecar_a', c: '#3fb950', num: 15, fromTop: true, toBottom: true, fromXOff: -20, toXOff: 20 },
-  { t: '16. Sidecar -> Decode Pod', mode: 'arrow', f: 'sidecar_a', to: 'decode_a', c: '#58a6ff', num: 16, fromLeft: true, toTop: true },
-  { t: '17. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_a', to: 'nixl_a', c: '#8b949e', num: 17, fromRight: true, toLeft: true, yOff: -5 },
-  { t: '18. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_a', to: 'decode_a', c: '#8b949e', num: 18, fromLeft: true, toRight: true, yOff: 5 },
-  { t: '19. Decode processing', mode: 'lightup', target: 'decode_a', badge: 19 },
-  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_a', to: 'gw', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: -150 },
-  { t: '21. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis', badge: 21 },
-  { t: '22. Response to Client', mode: 'arrow', f: 'gw', to: 'client', c: '#3fb950', num: 22, fromTop: true, fromXOff: -130, toBottom: true, toXOff: -10 },
+  { t: '9. IPP -> Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 9, fromTop: true, toBottom: true, toXOff: 50 },
+  { t: '10. Gateway Istio -> Pool A Istio', mode: 'arrow', f: 'gw', to: 'gw_pool_a', c: '#58a6ff', num: 10, fromBottom: true, toTop: true, glow: 'pool_a' },
+  { t: '11. Pool A Istio -> EPP (ext_proc)', mode: 'arrow', f: 'gw_pool_a', to: 'epp_a', c: '#58a6ff', num: 11, fromBottom: true, toTop: true },
+  { t: '12. EPP selects P/D workers', mode: 'lightup', target: 'epp_a', badge: 12 },
+  { t: '13. Pool A Istio -> Sidecar', mode: 'arrow', f: 'gw_pool_a', to: 'sidecar_a', c: '#58a6ff', num: 13, fromBottom: true, fromXOff: -60, toTop: true },
+  { t: '14. Sidecar -> Prefill Pod', mode: 'arrow', f: 'sidecar_a', to: 'prefill_a', c: '#58a6ff', num: 14, fromRight: true, toLeft: true },
+  { t: '15. Prefill processing', mode: 'lightup', target: 'prefill_a', badge: 15 },
+  { t: '16. Prefill -> Sidecar (KV metadata)', mode: 'arrow', f: 'prefill_a', to: 'sidecar_a', c: '#3fb950', num: 16, fromTop: true, toBottom: true, fromXOff: -20, toXOff: 20 },
+  { t: '17. Sidecar -> Decode Pod', mode: 'arrow', f: 'sidecar_a', to: 'decode_a', c: '#58a6ff', num: 17, fromLeft: true, toTop: true },
+  { t: '18. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_a', to: 'nixl_a', c: '#8b949e', num: 18, fromRight: true, toLeft: true, yOff: -5 },
+  { t: '19. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_a', to: 'decode_a', c: '#8b949e', num: 19, fromLeft: true, toRight: true, yOff: 5 },
+  { t: '20. Decode processing', mode: 'lightup', target: 'decode_a', badge: 20 },
+  { t: '21. Decode -> Pool A Istio (response)', mode: 'arrow', f: 'decode_a', to: 'gw_pool_a', c: '#3fb950', num: 21, fromTop: true, toBottom: true, toXOff: 60 },
+  { t: '22. Pool A Istio -> Gateway Istio (response)', mode: 'arrow', f: 'gw_pool_a', to: 'gw', c: '#3fb950', num: 22, fromTop: true, toBottom: true, toXOff: -100 },
+  { t: '23. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis', badge: 23 },
+  { t: '24. Response to Client', mode: 'arrow', f: 'gw', to: 'client', c: '#3fb950', num: 24, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -10 },
 ];
 
 var flowPoolB = [
@@ -1202,20 +1216,22 @@ var flowPoolB = [
   { t: '6. Kuadrant: rate limit check (Redis)', mode: 'arrow', f: 'kuad', to: 'redis', c: '#79c0ff', num: 6, fromBottom: true, toTop: true },
   { t: '7. Gateway -> IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#d2a8ff', num: 7, fromBottom: true, fromXOff: 100, toTop: true },
   { t: '8. IPP: model-provider-resolver (internal model)', mode: 'lightup', target: 'ipp', badge: 8 },
-  { t: '9. IPP -> Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 9, fromTop: true, toBottom: true, toXOff: 80 },
-  { t: '10. Gateway -> EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'epp', c: '#58a6ff', num: 10, fromBottom: true, fromXOff: -50, toTop: true },
-  { t: '11. EPP selects P/D workers', mode: 'lightup', target: 'epp', badge: 11 },
-  { t: '12. Gateway -> Sidecar (Pool B)', mode: 'arrow', f: 'gw', to: 'sidecar_b', c: '#58a6ff', num: 12, fromBottom: true, fromXOff: 50, toTop: true, glow: 'pool_b' },
-  { t: '13. Sidecar -> Prefill Pod', mode: 'arrow', f: 'sidecar_b', to: 'prefill_b', c: '#58a6ff', num: 13, fromRight: true, toLeft: true },
-  { t: '14. Prefill processing', mode: 'lightup', target: 'prefill_b', badge: 14 },
-  { t: '15. Prefill -> Sidecar (KV metadata)', mode: 'arrow', f: 'prefill_b', to: 'sidecar_b', c: '#3fb950', num: 15, fromTop: true, toBottom: true, fromXOff: -20, toXOff: 20 },
-  { t: '16. Sidecar -> Decode Pod', mode: 'arrow', f: 'sidecar_b', to: 'decode_b', c: '#58a6ff', num: 16, fromLeft: true, toTop: true },
-  { t: '17. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_b', to: 'nixl_b', c: '#8b949e', num: 17, fromRight: true, toLeft: true, yOff: -5 },
-  { t: '18. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_b', to: 'decode_b', c: '#8b949e', num: 18, fromLeft: true, toRight: true, yOff: 5 },
-  { t: '19. Decode processing', mode: 'lightup', target: 'decode_b', badge: 19 },
-  { t: '20. Decode -> Gateway (response)', mode: 'arrow', f: 'decode_b', to: 'gw', c: '#3fb950', num: 20, fromTop: true, toBottom: true, toXOff: 100 },
-  { t: '21. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis', badge: 21 },
-  { t: '22. Response to Client', mode: 'arrow', f: 'gw', to: 'client', c: '#3fb950', num: 22, fromTop: true, fromXOff: -130, toBottom: true, toXOff: 10 },
+  { t: '9. IPP -> Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 9, fromTop: true, toBottom: true, toXOff: 50 },
+  { t: '10. Gateway Istio -> Pool B Istio', mode: 'arrow', f: 'gw', to: 'gw_pool_b', c: '#58a6ff', num: 10, fromBottom: true, toTop: true, glow: 'pool_b' },
+  { t: '11. Pool B Istio -> EPP (ext_proc)', mode: 'arrow', f: 'gw_pool_b', to: 'epp_b', c: '#58a6ff', num: 11, fromBottom: true, toTop: true },
+  { t: '12. EPP selects P/D workers', mode: 'lightup', target: 'epp_b', badge: 12 },
+  { t: '13. Pool B Istio -> Sidecar', mode: 'arrow', f: 'gw_pool_b', to: 'sidecar_b', c: '#58a6ff', num: 13, fromBottom: true, fromXOff: -60, toTop: true },
+  { t: '14. Sidecar -> Prefill Pod', mode: 'arrow', f: 'sidecar_b', to: 'prefill_b', c: '#58a6ff', num: 14, fromRight: true, toLeft: true },
+  { t: '15. Prefill processing', mode: 'lightup', target: 'prefill_b', badge: 15 },
+  { t: '16. Prefill -> Sidecar (KV metadata)', mode: 'arrow', f: 'prefill_b', to: 'sidecar_b', c: '#3fb950', num: 16, fromTop: true, toBottom: true, fromXOff: -20, toXOff: 20 },
+  { t: '17. Sidecar -> Decode Pod', mode: 'arrow', f: 'sidecar_b', to: 'decode_b', c: '#58a6ff', num: 17, fromLeft: true, toTop: true },
+  { t: '18. Decode pulls KVs via NIXL', mode: 'arrow', f: 'decode_b', to: 'nixl_b', c: '#8b949e', num: 18, fromRight: true, toLeft: true, yOff: -5 },
+  { t: '19. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl_b', to: 'decode_b', c: '#8b949e', num: 19, fromLeft: true, toRight: true, yOff: 5 },
+  { t: '20. Decode processing', mode: 'lightup', target: 'decode_b', badge: 20 },
+  { t: '21. Decode -> Pool B Istio (response)', mode: 'arrow', f: 'decode_b', to: 'gw_pool_b', c: '#3fb950', num: 21, fromTop: true, toBottom: true, toXOff: 60 },
+  { t: '22. Pool B Istio -> Gateway Istio (response)', mode: 'arrow', f: 'gw_pool_b', to: 'gw', c: '#3fb950', num: 22, fromTop: true, toBottom: true, toXOff: 100 },
+  { t: '23. Kuadrant: rate limit usage (update Redis)', mode: 'lightup', target: 'redis', badge: 23 },
+  { t: '24. Response to Client', mode: 'arrow', f: 'gw', to: 'client', c: '#3fb950', num: 24, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 10 },
 ];
 
 var flowExternal = [
@@ -1230,9 +1246,9 @@ var flowExternal = [
   { t: '9. IPP: api-translation (OpenAI -> Anthropic)', mode: 'lightup', target: 'ipp', badge: 9 },
   { t: '10. IPP: apikey-injection', mode: 'lightup', target: 'ipp', badge: 10 },
   { t: '11. IPP -> Anthropic', mode: 'arrow', f: 'ipp', to: 'anthropic', c: '#e3b341', num: 11, fromBottom: true, toTop: true,
-    waypoints: [{ x: 640, y: 550 }, { x: 1085, y: 550 }] },
+    waypoints: [{ x: 640, y: 550 }, { x: 1085, y: 610 }] },
   { t: '12. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp', c: '#3fb950', num: 12, fromTop: true, toBottom: true,
-    waypoints: [{ x: 1050, y: 550 }, { x: 700, y: 550 }] },
+    waypoints: [{ x: 1050, y: 610 }, { x: 700, y: 550 }] },
   { t: '13. IPP: api-translation (response)', mode: 'lightup', target: 'ipp', badge: 13 },
   { t: '14. IPP -> Gateway', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 14, fromTop: true, toBottom: true, toXOff: 120 },
   { t: '15. Kuadrant: rate limit usage', mode: 'lightup', target: 'redis', badge: 15 },
