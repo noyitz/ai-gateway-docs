@@ -152,12 +152,10 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="flow-bar">
     <select id="flow-select">
       <option value="happy">Happy Path (Passthrough)</option>
-      <option value="exhausted">Budget Exhausted (429)</option>
-      <option value="failopen">Metering Unavailable (fail-open)</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
-    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff;display:none">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
@@ -1438,7 +1436,7 @@ const flowFailopen = [
 
 const flowMap = { happy: flowHappy, exhausted: flowExhausted, failopen: flowFailopen };
 const flowLabels = { happy: 'Happy Path (Passthrough)', exhausted: 'Budget Exhausted (429)', failopen: 'Metering Unavailable (fail-open)' };
-const flowOrder = ['happy', 'exhausted', 'failopen'];
+const flowOrder = ['happy'];
 let flow = flowHappy;
 
 function updateTitle() {
@@ -1684,8 +1682,8 @@ initSteps();
 updateTitle();
 draw();
 
-// Auto-start loop mode on page load
-setTimeout(function() { toggleLoop(); }, 500);
+// Auto-start on page load
+setTimeout(function() { run(); }, 500);
 
 // Mobile splash animation
 (function(){
