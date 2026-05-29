@@ -204,7 +204,7 @@ rhLogoImg.src = 'redhat-logo.svg';
 let rhLogoLoaded = false;
 rhLogoImg.onload = () => { rhLogoLoaded = true; draw(); };
 
-const LW = 1200, LH = 850;
+const LW = 1350, LH = 850;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -245,12 +245,12 @@ const N = {
   nixl_b: { x: 695, y: 675, w: 100, h: 35, label: 'NIXL', sublabel: 'KV Transfer', color: '#8b949e', fs: 11 },
   prefill_b: { x: 820, y: 670, w: 120, h: 45, label: 'vLLM', sublabel: 'Prefill Pod', color: '#d2a8ff', fs: 13, stackCount: 2, stackOffset: {dx:-6,dy:-4} },
 
-  // External Providers (right side, shifted up slightly)
-  openai:    { x: 1020, y: 160, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
-  anthropic: { x: 1020, y: 220, w: 130, h: 45, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
-  azure:     { x: 1020, y: 280, w: 130, h: 45, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
-  bedrock:   { x: 1020, y: 340, w: 130, h: 45, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
-  vertex:    { x: 1020, y: 400, w: 130, h: 45, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 13 },
+  // External Providers (bottom right, same level as InferencePools)
+  openai:    { x: 1020, y: 590, w: 130, h: 45, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 14 },
+  anthropic: { x: 1020, y: 645, w: 130, h: 45, label: 'Anthropic',    sublabel: 'claude-haiku-4-5',  color: '#3fb950', fs: 14 },
+  azure:     { x: 1020, y: 700, w: 130, h: 45, label: 'Azure OpenAI', sublabel: 'gpt-4.1-mini',     color: '#3fb950', fs: 13 },
+  bedrock:   { x: 1170, y: 590, w: 130, h: 45, label: 'Bedrock',      sublabel: 'claude-3-haiku',   color: '#3fb950', fs: 14 },
+  vertex:    { x: 1170, y: 645, w: 130, h: 45, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 13 },
 };
 
 const tips = {
@@ -529,7 +529,7 @@ function drawBounds() {
   ctx.font = 'bold ' + ts(12) + 'px system-ui';
   ctx.fillStyle = isDark ? '#3fb950aa' : '#3fb95099';
   ctx.textAlign = 'center';
-  ctx.fillText('External Providers', tx(1085), ty(145));
+  ctx.fillText('External Providers', tx(1115), ty(575));
   ctx.restore();
 }
 
@@ -1229,10 +1229,10 @@ var flowExternal = [
   { t: '8. IPP: model-provider-resolver (external model)', mode: 'lightup', target: 'ipp', badge: 8 },
   { t: '9. IPP: api-translation (OpenAI -> Anthropic)', mode: 'lightup', target: 'ipp', badge: 9 },
   { t: '10. IPP: apikey-injection', mode: 'lightup', target: 'ipp', badge: 10 },
-  { t: '11. IPP -> Anthropic', mode: 'arrow', f: 'ipp', to: 'anthropic', c: '#e3b341', num: 11, fromRight: true, toLeft: true,
-    waypoints: [{ x: 980, y: 250 }, { x: 990, y: 242 }] },
-  { t: '12. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp', c: '#3fb950', num: 12, fromLeft: true, toRight: true,
-    waypoints: [{ x: 990, y: 255 }, { x: 980, y: 268 }] },
+  { t: '11. IPP -> Anthropic', mode: 'arrow', f: 'ipp', to: 'anthropic', c: '#e3b341', num: 11, fromBottom: true, toTop: true,
+    waypoints: [{ x: 640, y: 550 }, { x: 1085, y: 550 }] },
+  { t: '12. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'ipp', c: '#3fb950', num: 12, fromTop: true, toBottom: true,
+    waypoints: [{ x: 1050, y: 550 }, { x: 700, y: 550 }] },
   { t: '13. IPP: api-translation (response)', mode: 'lightup', target: 'ipp', badge: 13 },
   { t: '14. IPP -> Gateway', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 14, fromTop: true, toBottom: true, toXOff: 120 },
   { t: '15. Kuadrant: rate limit usage', mode: 'lightup', target: 'redis', badge: 15 },
