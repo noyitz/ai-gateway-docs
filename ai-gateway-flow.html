@@ -210,11 +210,11 @@ const N = {
   user: { x: -20, y: 155, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
   cluster: { x: 120, y: 80, w: 1070, h: 960, type: 'boundary' },
-  aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  aigw: { x: 155, y: 115, w: 1010, h: 740, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
 
   gw: { x: 250, y: 140, w: 700, h: 80, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  wasm: { x: 190, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  wasm: { x: 190, y: 305, w: 300, h: 280, type: 'container', label: 'Kuadrant / RHCL', color: '#f0883e' },
   auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
   rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
 
@@ -481,7 +481,7 @@ function drawBounds() {
   ctx.font = `${ts(13)}px system-ui`;
   ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
   ctx.textAlign = 'right';
-  ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+  ctx.fillText('OCP cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
 
   // AI Gateway boundary
   drawContainer('aigw', false);
