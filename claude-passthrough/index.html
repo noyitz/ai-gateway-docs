@@ -1718,13 +1718,17 @@ const flowHappyOpenAI = [
 ];
 
 const flowDirectClaude = [
-  { t: '1. Claude Code → Anthropic (direct, real API key exposed)', mode: 'arrow', f: 'user', to: 'anthropic', c: '#f0883e', num: 1, fromBottom: true, toTop: true },
-  { t: '2. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'user', c: '#3fb950', num: 2, fromTop: true, toBottom: true, fromXOff: 30, toXOff: 30 },
+  { t: '1. Claude Code → Anthropic (direct, real API key exposed)', mode: 'arrow', f: 'user', to: 'anthropic', c: '#f0883e', num: 1, fromLeft: true, toTop: true,
+    waypoints: [{ x: 150, y: 57 }, { x: 75, y: 57 }] },
+  { t: '2. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'user', c: '#3fb950', num: 2, fromTop: true, toLeft: true,
+    waypoints: [{ x: 55, y: 40 }, { x: 140, y: 40 }] },
 ];
 
 const flowDirectCodex = [
-  { t: '1. Codex → OpenAI (direct, real API key exposed)', mode: 'arrow', f: 'codex', to: 'openai', c: '#f0883e', num: 1, fromBottom: true, toTop: true },
-  { t: '2. OpenAI responds', mode: 'arrow', f: 'openai', to: 'codex', c: '#3fb950', num: 2, fromTop: true, toBottom: true, fromXOff: 30, toXOff: 30 },
+  { t: '1. Codex → OpenAI (direct, real API key exposed)', mode: 'arrow', f: 'codex', to: 'openai', c: '#f0883e', num: 1, fromLeft: true, toTop: true,
+    waypoints: [{ x: 150, y: 67 }, { x: 75, y: 67 }] },
+  { t: '2. OpenAI responds', mode: 'arrow', f: 'openai', to: 'codex', c: '#3fb950', num: 2, fromTop: true, toLeft: true,
+    waypoints: [{ x: 55, y: 50 }, { x: 140, y: 50 }] },
 ];
 
 const flowMap = { happy: flowHappy, happyOpenAI: flowHappyOpenAI, directClaude: flowDirectClaude, directCodex: flowDirectCodex, exhausted: flowExhausted, failopen: flowFailopen };
