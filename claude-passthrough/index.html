@@ -224,41 +224,41 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 10, y: 160, w: 120, h: 70, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
-  codex: { x: 10, y: 280, w: 120, h: 70, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
+  user: { x: 350, y: 10, w: 120, h: 60, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
+  codex: { x: 650, y: 10, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
-  cluster: { x: 170, y: 60, w: 950, h: 730, type: 'boundary' },
-  aigw: { x: 195, y: 90, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  cluster: { x: 170, y: 90, w: 950, h: 730, type: 'boundary' },
+  aigw: { x: 195, y: 120, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
 
-  gw: { x: 280, y: 115, w: 720, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
+  gw: { x: 280, y: 145, w: 720, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  wasm: { x: 225, y: 260, w: 255, h: 170, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 245, y: 310, w: 215, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
-  rlimit: { x: 245, y: 375, w: 215, h: 45, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
+  wasm: { x: 225, y: 290, w: 255, h: 170, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  auth: { x: 245, y: 340, w: 215, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
+  rlimit: { x: 245, y: 405, w: 215, h: 45, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  ipp: { x: 600, y: 220, w: 470, h: 380, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 600, y: 250, w: 470, h: 380, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
-  p_bfth:      { x: 630, y: 285, w: 410, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_meter_req: { x: 630, y: 330, w: 410, h: 44, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
-  p_mpr:       { x: 630, y: 380, w: 410, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, pocStatus: 'modified' },
-  p_aki:       { x: 630, y: 420, w: 410, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_bfth:      { x: 630, y: 315, w: 410, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_meter_req: { x: 630, y: 360, w: 410, h: 44, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
+  p_mpr:       { x: 630, y: 410, w: 410, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, pocStatus: 'modified' },
+  p_aki:       { x: 630, y: 450, w: 410, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
 
   // Passthrough note
-  passthrough_note: { x: 630, y: 460, w: 410, h: 28, label: 'NO api-translation -- PASSTHROUGH MODE', color: '#d2a8ff', type: 'note', inner: true, fs: 11 },
+  passthrough_note: { x: 630, y: 490, w: 410, h: 28, label: 'NO api-translation -- PASSTHROUGH MODE', color: '#d2a8ff', type: 'note', inner: true, fs: 11 },
 
   // Response plugins
-  p_meter_resp: { x: 630, y: 530, w: 410, h: 44, label: 'external-metering', sublabel: '(response: SSE usage extraction + CloudEvent)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
+  p_meter_resp: { x: 630, y: 560, w: 410, h: 44, label: 'external-metering', sublabel: '(response: SSE usage extraction + CloudEvent)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
 
   // External Metering System -- outside cluster, right side
-  metering: { x: 1170, y: 310, w: 200, h: 70, label: 'Metering Service', sublabel: 'Go HTTP Server', color: '#e3b341', fs: 15, pocStatus: 'optional' },
-  pg_meter: { x: 1170, y: 400, w: 200, h: 50, label: 'PostgreSQL', sublabel: 'usage_events · model_pricing', color: '#8b949e', fs: 13, pocStatus: 'optional', dbShape: true },
+  metering: { x: 1170, y: 340, w: 200, h: 70, label: 'Metering Service', sublabel: 'Go HTTP Server', color: '#e3b341', fs: 15, pocStatus: 'optional' },
+  pg_meter: { x: 1170, y: 430, w: 200, h: 50, label: 'PostgreSQL', sublabel: 'usage_events · model_pricing', color: '#8b949e', fs: 13, pocStatus: 'optional', dbShape: true },
 
-  // Model Providers -- outside cluster, bottom-left
-  anthropic: { x: 10, y: 420, w: 130, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 14 },
-  openai: { x: 10, y: 500, w: 130, h: 55, label: 'OpenAI', sublabel: 'gpt-5.5', color: '#3fb950', fs: 14 },
+  // Model Providers -- left side, below clients
+  anthropic: { x: 10, y: 450, w: 130, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 14 },
+  openai: { x: 10, y: 530, w: 130, h: 55, label: 'OpenAI', sublabel: 'gpt-5.5', color: '#3fb950', fs: 14 },
 
   // Grafana -- outside cluster, bottom-right
-  grafana: { x: 1170, y: 520, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'optional' },
+  grafana: { x: 1170, y: 550, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'optional' },
 };
 
 const tips = {
@@ -577,9 +577,9 @@ function drawBounds() {
   // IPP request plugins section
   if (N.ipp) {
     ctx.save();
-    // Request plugins section
+    // Request plugins section (includes passthrough note)
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(270), ts(435), ts(200), ts(8));
+    ctx.roundRect(tx(618), ty(298), ts(435), ts(230), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -590,11 +590,11 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(630), ty(280));
+    ctx.fillText('Request Plugins →', tx(630), ty(310));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(510), ts(435), ts(80), ts(8));
+    ctx.roundRect(tx(618), ty(540), ts(435), ts(80), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -605,7 +605,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(630), ty(522));
+    ctx.fillText('← Response Plugins', tx(630), ty(552));
     ctx.restore();
   }
 
