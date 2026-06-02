@@ -210,7 +210,7 @@ let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
 // Logical canvas dimensions
-const LW = 1400, LH = 700;
+const LW = 1400, LH = 750;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -236,7 +236,7 @@ const N = {
   auth: { x: 245, y: 355, w: 215, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
   rlimit: { x: 245, y: 415, w: 215, h: 40, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  ipp: { x: 600, y: 310, w: 470, h: 340, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 600, y: 290, w: 470, h: 370, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_bfth:      { x: 630, y: 340, w: 410, h: 34, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_meter_req: { x: 630, y: 380, w: 410, h: 40, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
@@ -342,7 +342,7 @@ function resize() {
   H = canvas.height = innerHeight;
   sc = Math.min(W / LW, H / LH) * 0.98;
   ox = (W - LW * sc) / 2;
-  oy = (H - LH * sc) * 0.04;
+  oy = Math.max(45, (H - LH * sc) * 0.08);
   draw();
 }
 addEventListener('resize', resize);
@@ -1624,7 +1624,7 @@ let activeFlow = 'happy';
 
 const flowHappy = [
   // REQUEST PATH
-  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: -230 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
@@ -1648,12 +1648,12 @@ const flowHappy = [
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
   // Continue response
   { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
-  { t: '19. Response to Claude Code (native Anthropic format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '19. Response to Claude Code (native Anthropic format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromTop: true, toBottom: true, fromXOff: -200, toXOff: 30 },
 ];
 
 const flowExhausted = [
   // Same request path steps 1-9
-  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: -230 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
@@ -1672,7 +1672,7 @@ const flowExhausted = [
 
 const flowFailopen = [
   // Same request path steps 1-9
-  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '1. Claude Code sends POST /v1/messages (x-api-key)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: -230 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
@@ -1692,11 +1692,11 @@ const flowFailopen = [
   { t: '16. external-metering: extract token usage', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
   { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
-  { t: '19. Response to Claude Code (with metering_status warning)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '19. Response to Claude Code (with metering_status warning)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromTop: true, toBottom: true, fromXOff: -200, toXOff: 30 },
 ];
 
 const flowHappyOpenAI = [
-  { t: '1. Codex sends POST /v1/responses', mode: 'arrow', f: 'codex', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '1. Codex sends POST /v1/responses', mode: 'arrow', f: 'codex', to: 'gw', c: '#58a6ff', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: 70 },
   { t: '2. Gateway → Kuadrant / RHCL', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates API key, injects identity headers', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
@@ -1714,7 +1714,7 @@ const flowHappyOpenAI = [
   { t: '16. external-metering: extract token usage from SSE', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
   { t: '18. IPP → Gateway (native response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
-  { t: '19. Response to Codex (OpenAI format)', mode: 'arrow', f: 'gw', to: 'codex', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '19. Response to Codex (OpenAI format)', mode: 'arrow', f: 'gw', to: 'codex', c: '#3fb950', num: 19, fromTop: true, toBottom: true, fromXOff: 100, toXOff: 30 },
 ];
 
 const flowDirectClaude = [
