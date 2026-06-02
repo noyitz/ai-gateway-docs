@@ -224,8 +224,8 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 350, y: 10, w: 120, h: 60, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
-  codex: { x: 650, y: 10, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
+  user: { x: 350, y: 50, w: 120, h: 60, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
+  codex: { x: 650, y: 50, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
   cluster: { x: 170, y: 90, w: 950, h: 730, type: 'boundary' },
   aigw: { x: 195, y: 120, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
@@ -253,9 +253,9 @@ const N = {
   metering: { x: 1170, y: 340, w: 200, h: 70, label: 'Metering Service', sublabel: 'Go HTTP Server', color: '#e3b341', fs: 15, pocStatus: 'optional' },
   pg_meter: { x: 1170, y: 430, w: 200, h: 50, label: 'PostgreSQL', sublabel: 'usage_events · model_pricing', color: '#8b949e', fs: 13, pocStatus: 'optional', dbShape: true },
 
-  // Model Providers -- left side, below clients
-  anthropic: { x: 10, y: 450, w: 130, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 14 },
-  openai: { x: 10, y: 530, w: 130, h: 55, label: 'OpenAI', sublabel: 'gpt-5.5', color: '#3fb950', fs: 14 },
+  // Model Providers -- left side, beside cluster
+  anthropic: { x: 10, y: 300, w: 130, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 14 },
+  openai: { x: 10, y: 380, w: 130, h: 55, label: 'OpenAI', sublabel: 'gpt-5.5', color: '#3fb950', fs: 14 },
 
   // Grafana -- outside cluster, bottom-right
   grafana: { x: 1170, y: 550, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'optional' },
