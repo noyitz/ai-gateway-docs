@@ -228,11 +228,11 @@ const N = {
   codex: { x: 650, y: 50, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
   cluster: { x: 170, y: 90, w: 950, h: 730, type: 'boundary' },
-  aigw: { x: 195, y: 120, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
+  aigw: { x: 195, y: 120, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
 
   gw: { x: 280, y: 145, w: 720, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
-  wasm: { x: 225, y: 290, w: 255, h: 170, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
+  wasm: { x: 225, y: 290, w: 255, h: 170, type: 'container', label: 'Kuadrant / RHCL', color: '#f0883e' },
   auth: { x: 245, y: 340, w: 215, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
   rlimit: { x: 245, y: 405, w: 215, h: 45, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
@@ -565,7 +565,7 @@ function drawBounds() {
   ctx.font = ts(13)+'px system-ui';
   ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
   ctx.textAlign = 'right';
-  ctx.fillText('kubernetes cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+  ctx.fillText('OCP cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
 
   // AI Gateway boundary
   drawContainer('aigw', false);
