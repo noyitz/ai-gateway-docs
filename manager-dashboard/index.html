@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MaaS Team Usage Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
+.header{background:#161b22;border-bottom:1px solid #30363d;padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:20px;color:#f0f6fc}
+.header .subtitle{color:#8b949e;font-size:13px;margin-top:2px}
+.header .manager{color:#d2a8ff;font-size:14px}
+.header .live{color:#3fb950;font-size:12px;display:flex;align-items:center;gap:6px}
+.header .live::before{content:'';width:8px;height:8px;background:#3fb950;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:1400px;margin:0 auto;padding:24px 32px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;text-align:center}
+.stat-card .value{font-size:36px;font-weight:700;margin:8px 0}
+.stat-card .label{color:#8b949e;font-size:13px;text-transform:uppercase;letter-spacing:1px}
+.stat-card.green .value{color:#3fb950}
+.stat-card.blue .value{color:#58a6ff}
+.stat-card.orange .value{color:#f0883e}
+.stat-card.purple .value{color:#d2a8ff}
+.section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin-bottom:24px}
+.section h2{font-size:16px;margin-bottom:16px;color:#f0f6fc;display:flex;align-items:center;gap:8px}
+.top-bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.ranking .item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;margin-bottom:4px;transition:background .2s}
+.ranking .item:hover{background:#21262d}
+.ranking .rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.ranking .rank.gold{background:#f0883e22;color:#f0883e;border:1px solid #f0883e44}
+.ranking .rank.silver{background:#8b949e22;color:#8b949e;border:1px solid #8b949e44}
+.ranking .rank.bronze{background:#da8e6322;color:#da8e63;border:1px solid #da8e6344}
+.ranking .rank.normal{background:#21262d;color:#8b949e}
+.ranking .name{flex:1;font-weight:500}
+.ranking .tokens{color:#58a6ff;font-size:13px;font-weight:600}
+.ranking .cost{color:#f0883e;font-size:12px;min-width:60px;text-align:right}
+.bar-bg{flex:2;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:#8b949e;border-bottom:1px solid #30363d;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:1px;cursor:pointer}
+th:hover{color:#58a6ff}
+td{padding:10px 12px;border-bottom:1px solid #21262d}
+tr:hover td{background:#161b2299}
+tr.expanded{background:#1c2128}
+.model-detail{padding:4px 12px 4px 40px;font-size:12px;color:#8b949e}
+.model-detail .model-row{display:flex;gap:16px;padding:4px 0}
+.model-detail .model-name{color:#d2a8ff;min-width:140px}
+.model-detail .model-provider{color:#58a6ff;min-width:80px}
+.expand-btn{cursor:pointer;color:#58a6ff;font-size:16px;width:24px;text-align:center;transition:transform .2s}
+.expand-btn.open{transform:rotate(90deg)}
+.footer{text-align:center;color:#484f58;font-size:11px;padding:20px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>MaaS Team Usage Dashboard</h1>
+    <div class="subtitle">AI Coding Tools — Token Consumption & Cost Analytics</div>
+  </div>
+  <div style="text-align:right">
+    <div class="manager">Manager: Ron Haberman</div>
+    <div class="live">Live — refreshing every 5s</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card green"><div class="label">Team Members</div><div class="value" id="s-members">—</div></div>
+    <div class="stat-card blue"><div class="label">Total Requests</div><div class="value" id="s-requests">—</div></div>
+    <div class="stat-card purple"><div class="label">Total Tokens</div><div class="value" id="s-tokens">—</div></div>
+    <div class="stat-card orange"><div class="label">Estimated Cost</div><div class="value" id="s-cost">—</div></div>
+  </div>
+
+  <div class="top-bottom">
+    <div class="section">
+      <h2>🏆 Top 5 Users by Token Usage</h2>
+      <div class="ranking" id="top5"></div>
+    </div>
+    <div class="section">
+      <h2>📉 Bottom 5 Users by Token Usage</h2>
+      <div class="ranking" id="bottom5"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>👥 Team Breakdown <span style="font-weight:400;font-size:12px;color:#8b949e">click row to expand model details</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px"></th>
+          <th onclick="sortBy('username')">User</th>
+          <th onclick="sortBy('requests')">Requests</th>
+          <th onclick="sortBy('prompt_tokens')">Input Tokens</th>
+          <th onclick="sortBy('completion_tokens')">Output Tokens</th>
+          <th onclick="sortBy('total_tokens')">Total Tokens</th>
+          <th onclick="sortBy('cost_usd')">Est. Cost</th>
+          <th style="width:200px">Usage</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">MaaS Usage Analytics — Data from PostgreSQL via Metering Service — Auto-refreshes every 5 seconds</div>
+
+<script>
+const API_URL = 'https://metering-api-openshift-ingress.apps.ocp.4fnz2.sandbox2228.opentlc.com/api/v1/team-usage';
+let data = [];
+let sortField = 'total_tokens';
+let sortAsc = false;
+let expandedUser = null;
+
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function rankClass(i) {
+  if (i === 0) return 'gold';
+  if (i === 1) return 'silver';
+  if (i === 2) return 'bronze';
+  return 'normal';
+}
+
+function sortBy(field) {
+  if (sortField === field) sortAsc = !sortAsc;
+  else { sortField = field; sortAsc = false; }
+  render();
+}
+
+function sorted() {
+  return [...data].sort((a, b) => {
+    let va = a[sortField], vb = b[sortField];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    return sortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+}
+
+function renderRanking(id, items) {
+  const el = document.getElementById(id);
+  const maxTokens = items.length > 0 ? items[0].total_tokens : 1;
+  el.innerHTML = items.map((u, i) => `
+    <div class="item">
+      <div class="rank ${rankClass(i)}">${i + 1}</div>
+      <div class="name">${u.username}</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${(u.total_tokens / maxTokens * 100).toFixed(0)}%;background:${id === 'top5' ? '#58a6ff' : '#8b949e'}"></div></div>
+      <div class="tokens">${fmt(u.total_tokens)}</div>
+      <div class="cost">$${u.cost_usd.toFixed(2)}</div>
+    </div>
+  `).join('');
+}
+
+function render() {
+  if (!data.length) return;
+
+  const totalMembers = data.length;
+  const totalRequests = data.reduce((s, u) => s + u.requests, 0);
+  const totalTokens = data.reduce((s, u) => s + u.total_tokens, 0);
+  const totalCost = data.reduce((s, u) => s + u.cost_usd, 0);
+
+  document.getElementById('s-members').textContent = totalMembers;
+  document.getElementById('s-requests').textContent = fmt(totalRequests);
+  document.getElementById('s-tokens').textContent = fmt(totalTokens);
+  document.getElementById('s-cost').textContent = '$' + totalCost.toFixed(2);
+
+  const byTokens = [...data].sort((a, b) => b.total_tokens - a.total_tokens);
+  renderRanking('top5', byTokens.slice(0, 5));
+  renderRanking('bottom5', byTokens.slice(-5).reverse());
+
+  const s = sorted();
+  const maxTokens = Math.max(...s.map(u => u.total_tokens));
+  const tbody = document.getElementById('table-body');
+  let html = '';
+  for (const u of s) {
+    const isExpanded = expandedUser === u.username;
+    html += `<tr onclick="toggleExpand('${u.username}')" style="cursor:pointer" class="${isExpanded ? 'expanded' : ''}">
+      <td><span class="expand-btn ${isExpanded ? 'open' : ''}">▶</span></td>
+      <td style="font-weight:600">${u.username}</td>
+      <td>${u.requests}</td>
+      <td>${fmt(u.prompt_tokens)}</td>
+      <td>${fmt(u.completion_tokens)}</td>
+      <td style="font-weight:600;color:#d2a8ff">${fmt(u.total_tokens)}</td>
+      <td style="color:#f0883e;font-weight:600">$${u.cost_usd.toFixed(2)}</td>
+      <td><div class="bar-bg"><div class="bar-fill" style="width:${(u.total_tokens/maxTokens*100).toFixed(0)}%;background:linear-gradient(90deg,#58a6ff,#d2a8ff)"></div></div></td>
+    </tr>`;
+    if (isExpanded && u.models) {
+      html += `<tr><td colspan="8" class="model-detail">`;
+      for (const m of u.models) {
+        html += `<div class="model-row">
+          <span class="model-name">${m.model}</span>
+          <span class="model-provider">${m.provider}</span>
+          <span>${m.requests} reqs</span>
+          <span style="color:#d2a8ff">${fmt(m.total_tokens)} tokens</span>
+          <span style="color:#f0883e">$${m.cost_usd.toFixed(2)}</span>
+        </div>`;
+      }
+      html += `</td></tr>`;
+    }
+  }
+  tbody.innerHTML = html;
+}
+
+function toggleExpand(username) {
+  expandedUser = expandedUser === username ? null : username;
+  render();
+}
+
+async function fetchData() {
+  try {
+    const resp = await fetch(API_URL);
+    data = await resp.json();
+    render();
+  } catch (e) {
+    console.error('Fetch error:', e);
+  }
+}
+
+fetchData();
+setInterval(fetchData, 5000);
+</script>
+</body>
+</html>
