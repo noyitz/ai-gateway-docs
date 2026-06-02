@@ -224,19 +224,19 @@ function toggleTheme() {
 // NODES
 // ================================================================
 const N = {
-  user: { x: 350, y: 50, w: 120, h: 60, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
-  codex: { x: 650, y: 50, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
+  user: { x: 350, y: 30, w: 120, h: 55, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
+  codex: { x: 650, y: 30, w: 120, h: 55, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
-  cluster: { x: 170, y: 130, w: 950, h: 520, type: 'boundary' },
-  aigw: { x: 195, y: 155, w: 905, h: 490, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
+  cluster: { x: 170, y: 105, w: 950, h: 580, type: 'boundary' },
+  aigw: { x: 195, y: 130, w: 905, h: 550, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
 
-  gw: { x: 280, y: 185, w: 720, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
+  gw: { x: 280, y: 160, w: 720, h: 65, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
   wasm: { x: 225, y: 310, w: 255, h: 160, type: 'container', label: 'Kuadrant / RHCL', color: '#f0883e' },
   auth: { x: 245, y: 355, w: 215, h: 50, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
   rlimit: { x: 245, y: 415, w: 215, h: 40, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
-  ipp: { x: 600, y: 280, w: 470, h: 360, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
+  ipp: { x: 600, y: 310, w: 470, h: 340, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_bfth:      { x: 630, y: 340, w: 410, h: 34, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_meter_req: { x: 630, y: 380, w: 410, h: 40, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
@@ -1628,7 +1628,7 @@ const flowHappy = [
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
-  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -200 },
+  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 60, toTop: true, toXOff: 60 },
   // IPP request plugins
   { t: '6. body-field-to-header: model → X-Gateway-Model-Name', mode: 'lightup', target: 'p_bfth', badge: 6 },
   { t: '7. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 7 },
@@ -1638,16 +1638,16 @@ const flowHappy = [
   { t: '10. IPP → Metering Service: GET /entitlements', mode: 'arrow', f: 'p_meter_req', to: 'metering', c: '#e3b341', num: 10, fromRight: true, toLeft: true, yOff: -15 },
   { t: '11. Metering responds: hasAccess=true, balance=4850', mode: 'arrow', f: 'metering', to: 'p_meter_req', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 15 },
   // Continue
-  { t: '12. IPP → Gateway (native Anthropic — NO translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -140, toBottom: true, toXOff: 160 },
+  { t: '12. IPP → Gateway (native Anthropic — NO translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -60, toBottom: true, toXOff: -60 },
   { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13, fromLeft: true, toRight: true, yOff: -10 },
   // RESPONSE PATH
   { t: '14. Anthropic responds (SSE streaming)', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
+  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 140, toTop: true, toXOff: 140 },
   // METERING RESPONSE
   { t: '16. external-metering: extract token usage from SSE response', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
   // Continue response
-  { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 270 },
+  { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
   { t: '19. Response to Claude Code (native Anthropic format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
@@ -1657,7 +1657,7 @@ const flowExhausted = [
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
-  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -200 },
+  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 60, toTop: true, toXOff: 60 },
   { t: '6. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 6 },
   { t: '7. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 7 },
   { t: '8. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 8 },
@@ -1676,7 +1676,7 @@ const flowFailopen = [
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '3. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 3 },
   { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
-  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -200 },
+  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 60, toTop: true, toXOff: 60 },
   { t: '6. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 6 },
   { t: '7. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 7 },
   { t: '8. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 8 },
@@ -1688,10 +1688,10 @@ const flowFailopen = [
   // Continue like happy path but with warning
   { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13, fromLeft: true, toRight: true, yOff: -10 },
   { t: '14. Anthropic responds (SSE streaming)', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
+  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 140, toTop: true, toXOff: 140 },
   { t: '16. external-metering: extract token usage', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
-  { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 270 },
+  { t: '18. IPP → Gateway (native response, no translation)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
   { t: '19. Response to Claude Code (with metering_status warning)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
@@ -1707,13 +1707,13 @@ const flowHappyOpenAI = [
   { t: '9. apikey-injection: MaaS key → real sk-proj-xxxxx', mode: 'lightup', target: 'p_aki', badge: 9 },
   { t: '10. IPP → Metering Service: GET /entitlements', mode: 'arrow', f: 'p_meter_req', to: 'metering', c: '#e3b341', num: 10, fromRight: true, toLeft: true, yOff: -15 },
   { t: '11. Metering responds: hasAccess=true', mode: 'arrow', f: 'metering', to: 'p_meter_req', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 15 },
-  { t: '12. IPP → Gateway (request ready, native OpenAI format)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -130, toBottom: true, toXOff: 160 },
+  { t: '12. IPP → Gateway (request ready, native OpenAI format)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -60, toBottom: true, toXOff: -60 },
   { t: '13. Gateway routes to OpenAI', mode: 'arrow', f: 'gw', to: 'openai', c: '#58a6ff', num: 13, fromLeft: true, toRight: true, yOff: -10 },
   { t: '14. OpenAI responds (SSE streaming)', mode: 'arrow', f: 'openai', to: 'gw', c: '#3fb950', num: 14, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
+  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 140, toTop: true, toXOff: 140 },
   { t: '16. external-metering: extract token usage from SSE', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
   { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
-  { t: '18. IPP → Gateway (native response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 270 },
+  { t: '18. IPP → Gateway (native response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: -140, toBottom: true, toXOff: -140 },
   { t: '19. Response to Codex (OpenAI format)', mode: 'arrow', f: 'gw', to: 'codex', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
