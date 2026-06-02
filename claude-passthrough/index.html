@@ -210,7 +210,7 @@ let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
 let snapshots = [];
 
 // Logical canvas dimensions
-const LW = 1400, LH = 850;
+const LW = 1400, LH = 700;
 let ox = 0, oy = 0, sc = 1;
 
 function toggleTheme() {
@@ -227,8 +227,8 @@ const N = {
   user: { x: 350, y: 50, w: 120, h: 60, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
   codex: { x: 650, y: 50, w: 120, h: 60, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
-  cluster: { x: 170, y: 130, w: 950, h: 690, type: 'boundary' },
-  aigw: { x: 195, y: 155, w: 905, h: 655, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
+  cluster: { x: 170, y: 130, w: 950, h: 520, type: 'boundary' },
+  aigw: { x: 195, y: 155, w: 905, h: 490, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
 
   gw: { x: 280, y: 185, w: 720, h: 70, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
