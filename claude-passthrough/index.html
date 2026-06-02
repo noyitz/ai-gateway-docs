@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MaaS Claude Passthrough -- Metering & Usage Flow</title>
+<title>MaaS AI Coding Tools -- Passthrough & Usage Flow</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
@@ -128,14 +128,13 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="mobile-splash-content">
     <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
     <div class="badge"><span>Claude Code</span> Passthrough</div>
-    <h1>MaaS Claude Passthrough<br><span class="grad">Metering & Usage Flow</span></h1>
-    <p class="sub">Interactive animated architecture flow<br>for the Claude Code passthrough POC</p>
+    <h1>MaaS AI Coding Tools<br><span class="grad">Passthrough & Usage Flow</span></h1>
+    <p class="sub">Interactive animated architecture flow<br>for the AI coding tools passthrough POC</p>
     <div class="stats">
-      <div class="stat purple">Passthrough</div>
-      <div class="stat gold">Circuit Breaker</div>
-      <div class="stat orange">CloudEvents</div>
-      <div class="stat blue">PostgreSQL</div>
-      <div class="stat green">Fail-Open</div>
+      <div class="stat blue">4 Flows</div>
+      <div class="stat purple">2 Clients</div>
+      <div class="stat green">2 Providers</div>
+      <div class="stat gold">Passthrough</div>
     </div>
     <div class="laptop-msg">
       <div class="laptop-icon">&#128187;</div>
@@ -146,16 +145,19 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">MaaS Claude Passthrough &mdash; Metering & Usage Flow <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#d2a8ff"></span></div>
+<div class="viz-title">MaaS AI Coding Tools &mdash; Passthrough & Usage Flow <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#d2a8ff"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
     <select id="flow-select">
-      <option value="happy">Happy Path (Passthrough)</option>
+      <option value="happy">Claude Code → MaaS → Anthropic</option>
+      <option value="happyOpenAI">Codex → MaaS → OpenAI</option>
+      <option value="directClaude">Direct: Claude Code → Anthropic (no MaaS)</option>
+      <option value="directCodex">Direct: Codex → OpenAI (no MaaS)</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
-    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff;display:none">&#8635; Loop</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
     <button class="rst" onclick="doReset()">Reset</button>
   </div>
   <div class="steps-section" id="steps-section">
@@ -190,6 +192,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950;border-radius:3px"></div><span style="color:#3fb950">NEW</span> — created in POC</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0883e;border-radius:3px"></div><span style="color:#f0883e">MODIFIED</span> — code changed</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;border-radius:3px"></div><span style="color:#58a6ff">CONFIG PATCH</span> — cluster config changed</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff;border-radius:3px"></div><span style="color:#79c0ff">OPTIONAL</span> — native MaaS telemetry alternative</div>
   <div class="legend-item"><div class="legend-dot" style="background:#8b949e;border-radius:3px"></div>Unchanged (existing)</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Error</div>
   <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
@@ -222,6 +225,7 @@ function toggleTheme() {
 // ================================================================
 const N = {
   user: { x: 10, y: 160, w: 120, h: 70, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
+  codex: { x: 10, y: 280, w: 120, h: 70, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
   cluster: { x: 170, y: 60, w: 950, h: 730, type: 'boundary' },
   aigw: { x: 195, y: 90, w: 905, h: 690, type: 'container', label: 'AI Inference Gateway', color: '#58a6ff' },
@@ -229,13 +233,13 @@ const N = {
   gw: { x: 280, y: 115, w: 720, h: 75, label: 'Istio Gateway', sublabel: '(Envoy)', color: '#58a6ff', fs: 20 },
 
   wasm: { x: 225, y: 260, w: 255, h: 170, type: 'container', label: 'Kuadrant Wasm Shim', color: '#f0883e' },
-  auth: { x: 245, y: 310, w: 215, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'config' },
+  auth: { x: 245, y: 310, w: 215, h: 55, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 15, inner: true, pocStatus: 'optional-config' },
   rlimit: { x: 245, y: 375, w: 215, h: 45, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 13, inner: true },
 
   ipp: { x: 600, y: 220, w: 470, h: 380, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
   p_bfth:      { x: 630, y: 285, w: 410, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_meter_req: { x: 630, y: 330, w: 410, h: 44, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'new' },
+  p_meter_req: { x: 630, y: 330, w: 410, h: 44, label: 'external-metering', sublabel: '(request: circuit breaker)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
   p_mpr:       { x: 630, y: 380, w: 410, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, pocStatus: 'modified' },
   p_aki:       { x: 630, y: 420, w: 410, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
 
@@ -243,21 +247,24 @@ const N = {
   passthrough_note: { x: 630, y: 460, w: 410, h: 28, label: 'NO api-translation -- PASSTHROUGH MODE', color: '#d2a8ff', type: 'note', inner: true, fs: 11 },
 
   // Response plugins
-  p_meter_resp: { x: 630, y: 530, w: 410, h: 44, label: 'external-metering', sublabel: '(response: SSE usage extraction + CloudEvent)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'new' },
+  p_meter_resp: { x: 630, y: 530, w: 410, h: 44, label: 'external-metering', sublabel: '(response: SSE usage extraction + CloudEvent)', color: '#e3b341', type: 'plugin', inner: true, fs: 14, pocStatus: 'optional' },
 
   // External Metering System -- outside cluster, right side
-  metering: { x: 1170, y: 310, w: 200, h: 70, label: 'Metering Service', sublabel: 'Go HTTP Server', color: '#e3b341', fs: 15, pocStatus: 'new' },
-  pg_meter: { x: 1170, y: 400, w: 200, h: 50, label: 'PostgreSQL', sublabel: 'usage_events · model_pricing', color: '#8b949e', fs: 13, pocStatus: 'new', dbShape: true },
+  metering: { x: 1170, y: 310, w: 200, h: 70, label: 'Metering Service', sublabel: 'Go HTTP Server', color: '#e3b341', fs: 15, pocStatus: 'optional' },
+  pg_meter: { x: 1170, y: 400, w: 200, h: 50, label: 'PostgreSQL', sublabel: 'usage_events · model_pricing', color: '#8b949e', fs: 13, pocStatus: 'optional', dbShape: true },
 
-  // Model Provider -- outside cluster, bottom-left
+  // Model Providers -- outside cluster, bottom-left
   anthropic: { x: 10, y: 450, w: 145, h: 55, label: 'Anthropic', sublabel: 'claude-opus-4-6', color: '#3fb950', fs: 15 },
+  openai: { x: 10, y: 560, w: 145, h: 55, label: 'OpenAI', sublabel: 'gpt-5.5', color: '#3fb950', fs: 15 },
 
   // Grafana -- outside cluster, bottom-right
-  grafana: { x: 1170, y: 520, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'new' },
+  grafana: { x: 1170, y: 520, w: 200, h: 55, label: '📊 Grafana', sublabel: 'MaaS Usage Analytics', color: '#79c0ff', fs: 15, pocStatus: 'optional' },
 };
 
 const tips = {
   user: { t:'Claude Code CLI', d:'Anthropic\'s official CLI tool for Claude. In this POC, Claude Code is configured to send requests through the MaaS gateway instead of directly to Anthropic. This is done by setting the ANTHROPIC_BASE_URL environment variable to point at the gateway. Since Claude Code already speaks native Anthropic API format, no api-translation plugin is needed (passthrough mode).', dt:[['Config','ANTHROPIC_BASE_URL=https://gateway.example.com'],['Format','Native Anthropic Messages API'],['Auth','x-api-key header with MaaS API key'],['Protocol','HTTP/1.1 + SSE streaming'],['Model','claude-opus-4-6']], links:[['Claude Code Docs','https://docs.anthropic.com/en/docs/claude-code']] },
+  codex: { t:'OpenAI Codex CLI', d:'OpenAI\'s agentic coding tool. Routes through MaaS gateway using the same per-user MaaS API key as Claude Code. Configured via OPENAI_BASE_URL environment variable.', dt:[['Config','OPENAI_BASE_URL=https://gateway.example.com'],['Format','OpenAI Responses API'],['Auth','Authorization: Bearer with MaaS API key'],['Protocol','HTTP/1.1 + SSE streaming'],['Model','gpt-5.5']], links:[['Codex Docs','https://openai.com/index/codex/']] },
+  openai: { t:'OpenAI API', d:'OpenAI API endpoint for GPT models. In passthrough mode, requests arrive in native OpenAI format — no translation needed.', dt:[['Endpoint','api.openai.com'],['Auth','Bearer sk-proj-*'],['Models','gpt-5.5, gpt-4o-mini'],['API','/v1/responses'],['Streaming','SSE']], links:[['OpenAI API Docs','https://platform.openai.com/docs/api-reference']] },
   gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filter for payload processing. HTTPRoute for ext-claude-sonnet includes URLRewrite filter (ReplacePrefixMatch: /) to strip /llm/ext-claude-sonnet prefix — without this, Anthropic would receive /llm/ext-claude-sonnet/v1/messages instead of /v1/messages.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['HTTPRoute','ext-claude-sonnet'],['URLRewrite','ReplacePrefixMatch: / (strips /llm/ext-claude-sonnet prefix)'],['Mode','PASSTHROUGH (no format translation)'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io']] },
   p_mpr: { t:'model-provider-resolver (MODIFIED)', d:'Changed path validation to accept /v1/messages in addition to /chat/completions. This enables Anthropic Messages API passthrough — Claude Code sends native Anthropic format which uses /v1/messages, not the OpenAI /v1/chat/completions endpoint.', dt:[['Change','Path validation now accepts /v1/messages'],['File','pkg/plugins/model-provider-resolver/plugin.go'],['CRD','ExternalModel: ext-claude-sonnet'],['Output','CycleState: provider=anthropic, targetModel=claude-opus-4-6'],['Phase','Request']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing and metrics labeling.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
@@ -430,9 +437,9 @@ function drawBox(key) {
       ctx.fillText(n.label, x + w / 2, y + h / 2 + ts(2));
     }
     if (n.pocStatus) {
-      var pocLabel = n.pocStatus === 'new' ? 'NEW' : n.pocStatus === 'config' ? 'CONFIG PATCH' : 'MODIFIED';
-      var pocColor = n.pocStatus === 'new' ? '#3fb950' : n.pocStatus === 'config' ? '#58a6ff' : '#f0883e';
-      var pocW2 = ts(pocLabel === 'NEW' ? 32 : pocLabel === 'CONFIG PATCH' ? 72 : 58);
+      var pocLabel = n.pocStatus === 'new' ? 'NEW' : n.pocStatus === 'config' ? 'CONFIG PATCH' : n.pocStatus === 'optional' ? 'OPTIONAL' : n.pocStatus === 'optional-config' ? 'OPT. PATCH' : 'MODIFIED';
+      var pocColor = n.pocStatus === 'new' ? '#3fb950' : n.pocStatus === 'config' ? '#58a6ff' : (n.pocStatus === 'optional' || n.pocStatus === 'optional-config') ? '#79c0ff' : '#f0883e';
+      var pocW2 = ts(pocLabel === 'NEW' ? 32 : pocLabel === 'OPTIONAL' ? 58 : pocLabel === 'OPT. PATCH' ? 62 : pocLabel === 'CONFIG PATCH' ? 72 : pocLabel === 'MODIFIED' ? 58 : 58);
       var pocH2 = ts(14);
       var pocX2 = x + w - pocW2 - ts(4);
       var pocY2 = y + ts(3);
@@ -503,9 +510,9 @@ function drawBox(key) {
     });
   }
   if (n.pocStatus) {
-    var pocLabel = n.pocStatus === 'new' ? 'NEW' : n.pocStatus === 'config' ? 'CONFIG PATCH' : 'MODIFIED';
-    var pocColor = n.pocStatus === 'new' ? '#3fb950' : n.pocStatus === 'config' ? '#58a6ff' : '#f0883e';
-    var pocW = ts(pocLabel === 'NEW' ? 32 : pocLabel === 'CONFIG PATCH' ? 72 : 58);
+    var pocLabel = n.pocStatus === 'new' ? 'NEW' : n.pocStatus === 'config' ? 'CONFIG PATCH' : n.pocStatus === 'optional' ? 'OPTIONAL' : n.pocStatus === 'optional-config' ? 'OPT. PATCH' : 'MODIFIED';
+    var pocColor = n.pocStatus === 'new' ? '#3fb950' : n.pocStatus === 'config' ? '#58a6ff' : (n.pocStatus === 'optional' || n.pocStatus === 'optional-config') ? '#79c0ff' : '#f0883e';
+    var pocW = ts(pocLabel === 'NEW' ? 32 : pocLabel === 'OPTIONAL' ? 58 : pocLabel === 'OPT. PATCH' ? 62 : pocLabel === 'CONFIG PATCH' ? 72 : pocLabel === 'MODIFIED' ? 58 : 58);
     var pocH = ts(14);
     var pocX = x + w - pocW - ts(4);
     var pocY = y + ts(3);
@@ -1348,9 +1355,263 @@ function inspStepFailopen(stepNum) {
   }
 }
 
+function inspStepHappyOpenAI(stepNum) {
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '① Codex sends POST /v1/responses';
+      inspHeaders = [
+        { v: 'POST /v1/responses', s: 'highlight', id: 'h-path' },
+        { v: 'Authorization: Bearer sk-maas-abc123...', s: 'highlight', id: 'h-auth' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+      ];
+      inspBody = [
+        { v: '"model": "gpt-5.5"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What is MaaS?"', s: 'keep', id: 'b-input' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+      ];
+      inspCycle = [];
+      break;
+    case 2:
+      inspStepLabel = '② Gateway → Kuadrant / RHCL';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'highlight';
+      break;
+    case 3:
+      inspStepLabel = '③ Auth validates API key, injects identity headers';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'highlight';
+      inspHeaders.push({ v: 'X-MaaS-Username: customer-a', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'x-maas-subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
+      break;
+    case 4:
+      inspStepLabel = '④ Kuadrant → Gateway (auth complete)';
+      break;
+    case 5:
+      inspStepLabel = '⑤ Gateway → IPP (ext_proc)';
+      break;
+    case 6:
+      inspStepLabel = '⑥ body-field-to-header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: gpt-5.5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 7:
+      inspStepLabel = '⑦ external-metering: Circuit Breaker check';
+      break;
+    case 8:
+      inspStepLabel = '⑧ model-provider-resolver';
+      inspCycle = [
+        { v: 'provider = "openai"', s: 'add', id: 'c-prov' },
+        { v: 'targetModel = "gpt-5.5"', s: 'add', id: 'c-model' },
+        { v: 'endpoint = "https://api.openai.com"', s: 'add', id: 'c-ep' },
+      ];
+      break;
+    case 9:
+      inspStepLabel = '⑨ apikey-injection: swap MaaS key → real API key';
+      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'del';
+      inspHeaders.push({ v: 'Authorization: Bearer sk-proj-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 10:
+      inspStepLabel = '⑩ IPP → Metering Service: GET /entitlements';
+      setInspPhase('metering');
+      inspHeaders = [
+        { v: 'GET /api/v1/entitlements', s: 'gold', id: 'm-path' },
+        { v: 'subject=customer-a', s: 'gold', id: 'm-subj' },
+        { v: 'feature=gpt-5.5', s: 'gold', id: 'm-feat' },
+      ];
+      inspBody = [
+        { v: '-- awaiting metering response --', s: 'keep', id: 'm-wait' },
+      ];
+      inspCycle = [];
+      break;
+    case 11:
+      inspStepLabel = '⑪ Metering responds: hasAccess=true';
+      inspBody = [
+        { v: '"hasAccess": true', s: 'add', id: 'm-access' },
+        { v: '"balance": 9200', s: 'add', id: 'm-balance' },
+        { v: '"overage": false', s: 'add', id: 'm-overage' },
+      ];
+      break;
+    case 12:
+      inspStepLabel = '⑫ IPP → Gateway (native OpenAI — NO translation)';
+      setInspPhase('request');
+      inspHeaders = [
+        { v: 'POST /v1/responses', s: 'highlight', id: 'h-path' },
+        { v: 'Authorization: Bearer sk-proj-xxxxx...', s: 'highlight', id: 'h-xapi' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+      ];
+      inspBody = [
+        { v: '"model": "gpt-5.5"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What is MaaS?"', s: 'keep', id: 'b-input' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+      ];
+      inspCycle = [];
+      break;
+    case 13:
+      inspStepLabel = '⑬ Gateway routes to OpenAI';
+      break;
+    case 14:
+      inspStepLabel = '⑭ OpenAI responds (SSE streaming)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: text/event-stream', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: 'event: response.output_text.delta', s: 'keep', id: 'r-ev1' },
+        { v: 'data: {"type":"response.output_text.delta","delta":"Kubernetes is..."}', s: 'keep', id: 'r-d1' },
+        { v: '', s: 'keep', id: 'r-blank1' },
+        { v: 'event: response.completed', s: 'keep', id: 'r-ev2' },
+        { v: 'data: {"type":"response.completed","response":{"usage":{"input_tokens":8,"output_tokens":14,"total_tokens":22}}}', s: 'highlight', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 15:
+      inspStepLabel = '⑮ Gateway → IPP (response)';
+      break;
+    case 16:
+      inspStepLabel = '⑯ external-metering: extract token usage from SSE';
+      var u = inspBody.find(function(l) { return l.id === 'r-usage'; });
+      if (u) u.s = 'highlight';
+      inspCycle = [
+        { v: 'input_tokens = 8', s: 'add', id: 'c-pt' },
+        { v: 'output_tokens = 14', s: 'add', id: 'c-ct' },
+        { v: 'total_tokens = 22', s: 'add', id: 'c-tt' },
+      ];
+      break;
+    case 17:
+      inspStepLabel = '⑰ CloudEvents POST to Metering Service (async)';
+      setInspPhase('metering');
+      inspHeaders = [
+        { v: 'POST /api/v1/events', s: 'gold', id: 'ce-path' },
+        { v: 'ce-type: io.opendatahub.inference.usage', s: 'gold', id: 'ce-type' },
+        { v: 'ce-source: /inference-gateway/ipp', s: 'gold', id: 'ce-src' },
+        { v: 'ce-specversion: 1.0', s: 'gold', id: 'ce-spec' },
+        { v: 'Content-Type: application/cloudevents+json', s: 'gold', id: 'ce-ct' },
+      ];
+      inspBody = [
+        { v: '"subject": "customer-a"', s: 'gold', id: 'ce-subj' },
+        { v: '"feature": "gpt-5.5"', s: 'gold', id: 'ce-feat' },
+        { v: '"input_tokens": 8', s: 'gold', id: 'ce-pt' },
+        { v: '"output_tokens": 14', s: 'gold', id: 'ce-ct2' },
+        { v: '"total_tokens": 22', s: 'gold', id: 'ce-tt' },
+      ];
+      inspCycle = [];
+      break;
+    case 18:
+      inspStepLabel = '⑱ IPP → Gateway (native response)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: text/event-stream', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: 'event: response.output_text.delta', s: 'highlight', id: 'r-ev1' },
+        { v: 'data: {"type":"response.output_text.delta","delta":"Kubernetes is..."}', s: 'keep', id: 'r-d1' },
+        { v: '', s: 'keep', id: 'r-blank1' },
+        { v: 'event: response.completed', s: 'keep', id: 'r-ev2' },
+        { v: 'data: {"type":"response.completed","response":{"usage":{"input_tokens":8,"output_tokens":14,"total_tokens":22}}}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 19:
+      inspStepLabel = '⑲ Response to Codex (OpenAI format)';
+      var rc = inspBody.find(function(l) { return l.id === 'r-d1'; });
+      if (rc) rc.s = 'highlight';
+      break;
+  }
+}
+
+function inspStepDirectClaude(stepNum) {
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '① Claude Code → Anthropic (direct, real API key exposed)';
+      setInspPhase('request');
+      inspHeaders = [
+        { v: 'POST https://api.anthropic.com/v1/messages', s: 'warn', id: 'h-path' },
+        { v: 'x-api-key: sk-ant-api03-xxxxx... (REAL KEY — exposed to user)', s: 'warn', id: 'h-auth' },
+        { v: 'anthropic-version: 2023-06-01', s: 'keep', id: 'h-aver' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+      ];
+      inspBody = [
+        { v: '"model": "claude-opus-4-6"', s: 'keep', id: 'b-model' },
+        { v: '"messages": [{"role":"user","content":"Explain K8s"}]', s: 'keep', id: 'b-msgs' },
+        { v: '"max_tokens": 4096', s: 'keep', id: 'b-max' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+      ];
+      inspCycle = [
+        { v: 'No per-user tracking', s: 'warn', id: 'c-warn1' },
+        { v: 'No centralized key management', s: 'warn', id: 'c-warn2' },
+        { v: 'No model governance', s: 'warn', id: 'c-warn3' },
+      ];
+      break;
+    case 2:
+      inspStepLabel = '② Anthropic responds';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: text/event-stream', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: 'event: message_start', s: 'keep', id: 'r-ev1' },
+        { v: 'data: {"type":"message_start","message":{"model":"claude-opus-4-6"...}}', s: 'keep', id: 'r-d1' },
+        { v: '', s: 'keep', id: 'r-blank1' },
+        { v: 'event: content_block_delta', s: 'keep', id: 'r-ev2' },
+        { v: 'data: {"type":"content_block_delta","delta":{"text":"Kubernetes is..."}}', s: 'keep', id: 'r-d2' },
+        { v: '', s: 'keep', id: 'r-blank2' },
+        { v: 'event: message_delta', s: 'keep', id: 'r-ev3' },
+        { v: 'data: {"type":"message_delta","usage":{"output_tokens":256}}', s: 'keep', id: 'r-usage' },
+        { v: '', s: 'keep', id: 'r-blank3' },
+        { v: 'event: message_stop', s: 'keep', id: 'r-ev4' },
+        { v: 'data: {"type":"message_stop"}', s: 'keep', id: 'r-d4' },
+      ];
+      inspCycle = [];
+      break;
+  }
+}
+
+function inspStepDirectCodex(stepNum) {
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '① Codex → OpenAI (direct, real API key exposed)';
+      setInspPhase('request');
+      inspHeaders = [
+        { v: 'POST https://api.openai.com/v1/responses', s: 'warn', id: 'h-path' },
+        { v: 'Authorization: Bearer sk-proj-xxxxx... (REAL KEY — exposed to user)', s: 'warn', id: 'h-auth' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+      ];
+      inspBody = [
+        { v: '"model": "gpt-5.5"', s: 'keep', id: 'b-model' },
+        { v: '"input": "What is MaaS?"', s: 'keep', id: 'b-input' },
+        { v: '"stream": true', s: 'keep', id: 'b-stream' },
+      ];
+      inspCycle = [
+        { v: 'No per-user tracking', s: 'warn', id: 'c-warn1' },
+        { v: 'No centralized key management', s: 'warn', id: 'c-warn2' },
+        { v: 'No model governance', s: 'warn', id: 'c-warn3' },
+      ];
+      break;
+    case 2:
+      inspStepLabel = '② OpenAI responds';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: text/event-stream', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: 'event: response.output_text.delta', s: 'keep', id: 'r-ev1' },
+        { v: 'data: {"type":"response.output_text.delta","delta":"Kubernetes is..."}', s: 'keep', id: 'r-d1' },
+        { v: '', s: 'keep', id: 'r-blank1' },
+        { v: 'event: response.completed', s: 'keep', id: 'r-ev2' },
+        { v: 'data: {"type":"response.completed","response":{"usage":{"input_tokens":8,"output_tokens":14,"total_tokens":22}}}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+  }
+}
+
 function inspStep(stepNum) {
   resetStyles();
-  if (activeFlow === 'happy') { inspStepHappy(stepNum); }
+  if (activeFlow === 'happy') inspStepHappy(stepNum);
+  else if (activeFlow === 'happyOpenAI') inspStepHappyOpenAI(stepNum);
+  else if (activeFlow === 'directClaude') inspStepDirectClaude(stepNum);
+  else if (activeFlow === 'directCodex') inspStepDirectCodex(stepNum);
   else if (activeFlow === 'exhausted') { inspStepExhausted(stepNum); }
   else if (activeFlow === 'failopen') { inspStepFailopen(stepNum); }
   renderInsp();
@@ -1434,9 +1695,41 @@ const flowFailopen = [
   { t: '19. Response to Claude Code (with metering_status warning)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowMap = { happy: flowHappy, exhausted: flowExhausted, failopen: flowFailopen };
-const flowLabels = { happy: 'Happy Path (Passthrough)', exhausted: 'Budget Exhausted (429)', failopen: 'Metering Unavailable (fail-open)' };
-const flowOrder = ['happy'];
+const flowHappyOpenAI = [
+  { t: '1. Codex sends POST /v1/responses', mode: 'arrow', f: 'codex', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Kuadrant / RHCL', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
+  { t: '3. Auth validates API key, injects identity headers', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 4, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
+  { t: '5. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 5, glow: 'ipp', fromBottom: true, fromXOff: 100, toTop: true, toXOff: -190 },
+  { t: '6. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 6 },
+  { t: '7. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 7 },
+  { t: '8. model-provider-resolver: ext-openai → openai', mode: 'lightup', target: 'p_mpr', badge: 8 },
+  { t: '9. apikey-injection: MaaS key → real sk-proj-xxxxx', mode: 'lightup', target: 'p_aki', badge: 9 },
+  { t: '10. IPP → Metering Service: GET /entitlements', mode: 'arrow', f: 'p_meter_req', to: 'metering', c: '#e3b341', num: 10, fromRight: true, toLeft: true, yOff: -15 },
+  { t: '11. Metering responds: hasAccess=true', mode: 'arrow', f: 'metering', to: 'p_meter_req', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 15 },
+  { t: '12. IPP → Gateway (request ready, native OpenAI format)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -130, toBottom: true, toXOff: 160 },
+  { t: '13. Gateway routes to OpenAI', mode: 'arrow', f: 'gw', to: 'openai', c: '#58a6ff', num: 13, fromLeft: true, toRight: true, yOff: -10 },
+  { t: '14. OpenAI responds (SSE streaming)', mode: 'arrow', f: 'openai', to: 'gw', c: '#3fb950', num: 14, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 200, toTop: true, toXOff: -60 },
+  { t: '16. external-metering: extract token usage from SSE', mode: 'lightup', target: 'p_meter_resp', badge: 16 },
+  { t: '17. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 17, fromRight: true, toLeft: true, dashed: true },
+  { t: '18. IPP → Gateway (native response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 10, toBottom: true, toXOff: 270 },
+  { t: '19. Response to Codex (OpenAI format)', mode: 'arrow', f: 'gw', to: 'codex', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowDirectClaude = [
+  { t: '1. Claude Code → Anthropic (direct, real API key exposed)', mode: 'arrow', f: 'user', to: 'anthropic', c: '#f0883e', num: 1, fromBottom: true, toTop: true },
+  { t: '2. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'user', c: '#3fb950', num: 2, fromTop: true, toBottom: true, fromXOff: 30, toXOff: 30 },
+];
+
+const flowDirectCodex = [
+  { t: '1. Codex → OpenAI (direct, real API key exposed)', mode: 'arrow', f: 'codex', to: 'openai', c: '#f0883e', num: 1, fromBottom: true, toTop: true },
+  { t: '2. OpenAI responds', mode: 'arrow', f: 'openai', to: 'codex', c: '#3fb950', num: 2, fromTop: true, toBottom: true, fromXOff: 30, toXOff: 30 },
+];
+
+const flowMap = { happy: flowHappy, happyOpenAI: flowHappyOpenAI, directClaude: flowDirectClaude, directCodex: flowDirectCodex, exhausted: flowExhausted, failopen: flowFailopen };
+const flowLabels = { happy: 'Claude Code → MaaS → Anthropic', happyOpenAI: 'Codex → MaaS → OpenAI', directClaude: 'Direct: Claude Code → Anthropic', directCodex: 'Direct: Codex → OpenAI', exhausted: 'Budget Exhausted (429)', failopen: 'Metering Unavailable (fail-open)' };
+const flowOrder = ['happy', 'happyOpenAI', 'directClaude', 'directCodex'];
 let flow = flowHappy;
 
 function updateTitle() {
@@ -1682,8 +1975,8 @@ initSteps();
 updateTitle();
 draw();
 
-// Auto-start on page load
-setTimeout(function() { run(); }, 500);
+// Auto-start on page load — cycle through all flows
+setTimeout(function() { toggleLoop(); }, 500);
 
 // Mobile splash animation
 (function(){
