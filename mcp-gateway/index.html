@@ -933,10 +933,17 @@ function inspStepInvoke(stepNum) {
       ];
       break;
     case 7:
-      inspStepLabel = '⑦ Router returns routing decision';
+      inspStepLabel = '⑦ Hairpin: Router → back to Envoy';
+      inspCycle = [
+        { v: 'Routing decision returned via ext_proc', s: 'highlight', id: 'c-hairpin' },
+        { v: 'Target: http://weather-svc:8080/mcp', s: 'add', id: 'c-target' },
+        { v: 'Hairpin: request enters Router, bounces', s: 'add', id: 'c-hp2' },
+        { v: 'back to Envoy, then out to backend', s: 'add', id: 'c-hp3' },
+        { v: '(standard ext_proc pattern)', s: 'keep', id: 'c-hp4' },
+      ];
       break;
     case 8:
-      inspStepLabel = '⑧ Envoy routes to Weather Service';
+      inspStepLabel = '⑧ Envoy forwards to Weather Service';
       inspBody = [
         { v: '"method": "tools/call"', s: 'keep', id: 'b-method' },
         { v: '"params": {', s: 'keep', id: 'b-params' },
@@ -946,6 +953,7 @@ function inspStepInvoke(stepNum) {
       ];
       inspCycle = [
         { v: 'Prefix stripped: weather_ removed', s: 'highlight', id: 'c-strip2' },
+        { v: 'Backend sees "forecast" not "weather_forecast"', s: 'add', id: 'c-strip3' },
       ];
       break;
     case 9:
@@ -1147,16 +1155,16 @@ const flowDiscover = [
 
 const flowInvoke = [
   { t: '1. AI Agent calls weather_forecast(location="NYC")', mode: 'arrow', f: 'agent', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Envoy Gateway receives request', mode: 'lightup', target: 'gw', badge: 2 },
-  { t: '3. AuthPolicy validates JWT + checks tool role', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: -120, toTop: true, toXOff: 0 },
-  { t: '4. Gateway -> Broker (parses tool name)', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: 60, toTop: true, toXOff: -40 },
-  { t: '5. Broker -> Router (ext_proc gRPC)', mode: 'arrow', f: 'broker', to: 'router', c: '#d2a8ff', num: 5, fromBottom: true, toTop: true },
-  { t: '6. Router resolves prefix: weather_ -> Weather Service', mode: 'lightup', target: 'router', badge: 6 },
-  { t: '7. Router returns routing decision to Envoy', mode: 'arrow', f: 'router', to: 'gw', c: '#d2a8ff', num: 7, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 160 },
-  { t: '8. Envoy routes to Weather Service', mode: 'arrow', f: 'gw', to: 'weather', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -80, toTop: true, toXOff: -40, waypoints: [{x:550,y:210},{x:280,y:210},{x:280,y:620},{x:435,y:660}] },
-  { t: '9. Weather Service executes (forecast for NYC)', mode: 'lightup', target: 'weather', badge: 9 },
+  { t: '2. Envoy Gateway receives tools/call request', mode: 'lightup', target: 'gw', badge: 2 },
+  { t: '3. AuthPolicy validates JWT + checks tool:weather_forecast role', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: -120, toTop: true, toXOff: 0 },
+  { t: '4. Envoy → Broker (parses MCP message, extracts tool name)', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: 60, toTop: true, toXOff: -40 },
+  { t: '5. Broker → Router ext_proc (resolve prefix → backend)', mode: 'arrow', f: 'broker', to: 'router', c: '#d2a8ff', num: 5, fromBottom: true, toTop: true },
+  { t: '6. Router: weather_ prefix → Weather Service endpoint', mode: 'lightup', target: 'router', badge: 6 },
+  { t: '7. Router → Envoy (hairpin: routing decision back to proxy)', mode: 'arrow', f: 'router', to: 'gw', c: '#d2a8ff', num: 7, fromTop: true, fromXOff: -80, toBottom: true, toXOff: 160 },
+  { t: '8. Envoy forwards to Weather Service (prefix stripped)', mode: 'arrow', f: 'gw', to: 'weather', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -80, toTop: true, toXOff: -40, waypoints: [{x:550,y:210},{x:280,y:210},{x:280,y:620},{x:435,y:660}] },
+  { t: '9. Weather Service executes forecast("NYC") — prefix stripped', mode: 'lightup', target: 'weather', badge: 9 },
   { t: '10. Weather Service responds with result', mode: 'arrow', f: 'weather', to: 'gw', c: '#3fb950', num: 10, fromTop: true, toBottom: true, toXOff: -40, waypoints: [{x:475,y:640},{x:200,y:640},{x:200,y:200},{x:590,y:180}] },
-  { t: '11. Response flows back through Gateway', mode: 'lightup', target: 'gw', badge: 11 },
+  { t: '11. Envoy passes response back (no transformation)', mode: 'lightup', target: 'gw', badge: 11 },
   { t: '12. AI Agent receives: "NYC: Clear, 72°F"', mode: 'arrow', f: 'gw', to: 'agent', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
