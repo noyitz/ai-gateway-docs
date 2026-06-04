@@ -212,18 +212,18 @@ const N = {
 
   gw: { x: 280, y: 110, w: 700, h: 70, label: 'Envoy Gateway', sublabel: 'Reverse Proxy / TLS / ext_proc', color: '#58a6ff', fs: 20 },
 
-  broker: { x: 220, y: 240, w: 280, h: 65, label: 'Broker', sublabel: 'Tool Aggregation · /mcp', color: '#58a6ff', fs: 18 },
-  authctr: { x: 560, y: 220, w: 300, h: 110, type: 'container', label: 'Auth', color: '#f0883e' },
-  authpolicy: { x: 580, y: 255, w: 260, h: 60, label: 'AuthPolicy + Authorino', sublabel: 'JWT Validation · Tool ACL', color: '#f0883e', fs: 14, inner: true },
+  broker: { x: 330, y: 240, w: 280, h: 65, label: 'Broker', sublabel: 'Tool Aggregation · /mcp', color: '#58a6ff', fs: 18 },
+  authctr: { x: 650, y: 220, w: 300, h: 110, type: 'container', label: 'Auth', color: '#f0883e' },
+  authpolicy: { x: 670, y: 255, w: 260, h: 60, label: 'AuthPolicy + Authorino', sublabel: 'JWT Validation · Tool ACL', color: '#f0883e', fs: 14, inner: true },
 
-  router: { x: 220, y: 360, w: 280, h: 65, label: 'Router', sublabel: 'Prefix Routing · gRPC', color: '#d2a8ff', fs: 18 },
-  configmap: { x: 570, y: 370, w: 240, h: 50, label: 'ConfigMap', sublabel: 'Aggregated Server Config', color: '#8b949e', fs: 14 },
+  router: { x: 360, y: 360, w: 280, h: 65, label: 'Router', sublabel: 'Prefix Routing · gRPC', color: '#d2a8ff', fs: 18 },
+  configmap: { x: 680, y: 370, w: 240, h: 50, label: 'ConfigMap', sublabel: 'Aggregated Server Config', color: '#8b949e', fs: 14 },
 
-  controller: { x: 380, y: 470, w: 280, h: 65, label: 'Controller', sublabel: 'Backend Discovery', color: '#79c0ff', fs: 18 },
+  controller: { x: 390, y: 470, w: 280, h: 65, label: 'Controller', sublabel: 'Backend Discovery', color: '#79c0ff', fs: 18 },
 
   keycloak: { x: 1180, y: 260, w: 150, h: 65, label: 'Keycloak', sublabel: 'OAuth/OIDC · JWT', color: '#f0883e', fs: 16 },
 
-  k8s_api: { x: 920, y: 475, w: 180, h: 50, label: 'K8s API Server', sublabel: 'MCPServerRegistration CRDs', color: '#8b949e', fs: 13 },
+  k8s_api: { x: 710, y: 475, w: 180, h: 50, label: 'K8s API Server', sublabel: 'MCPServerRegistration CRDs', color: '#8b949e', fs: 13 },
 
   weather: { x: 350, y: 660, w: 250, h: 65, label: 'Weather Service', sublabel: 'prefix: weather_', color: '#3fb950', fs: 16 },
   calendar: { x: 700, y: 660, w: 250, h: 65, label: 'Calendar Service', sublabel: 'prefix: cal_', color: '#3fb950', fs: 16 },
@@ -1143,42 +1143,44 @@ let activeFlow = 'discover';
 const flowDiscover = [
   { t: '1. AI Agent sends tools/list to /mcp', mode: 'arrow', f: 'agent', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Envoy Gateway receives request', mode: 'lightup', target: 'gw', badge: 2 },
-  { t: '3. AuthPolicy validates JWT token', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: 120, toTop: true, toXOff: 0 },
-  { t: '4. AuthPolicy -> Keycloak JWKS', mode: 'arrow', f: 'authpolicy', to: 'keycloak', c: '#f0883e', num: 4, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:900,y:285},{x:1100,y:292}] },
-  { t: '5. AuthPolicy injects x-mcp-authorized', mode: 'arrow', f: 'authpolicy', to: 'gw', c: '#f0883e', num: 5, fromTop: true, toBottom: true, toXOff: 80 },
-  { t: '6. Gateway -> Broker', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 6, fromBottom: true, fromXOff: -120, toTop: true, toXOff: 0 },
-  { t: '7. Broker reads ConfigMap (aggregated tool list)', mode: 'arrow', f: 'broker', to: 'configmap', c: '#79c0ff', num: 7, fromRight: true, toLeft: true, yOff: 0 },
-  { t: '8. Broker returns aggregated tools with prefixes', mode: 'arrow', f: 'broker', to: 'gw', c: '#3fb950', num: 8, fromTop: true, toBottom: true, toXOff: -110 },
+  { t: '3. AuthPolicy validates JWT token', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: 160, toTop: true, toXOff: 0 },
+  { t: '4. AuthPolicy -> Keycloak JWKS', mode: 'arrow', f: 'authpolicy', to: 'keycloak', c: '#f0883e', num: 4, fromRight: true, toLeft: true },
+  { t: '5. AuthPolicy injects x-mcp-authorized', mode: 'arrow', f: 'authpolicy', to: 'gw', c: '#f0883e', num: 5, fromTop: true, toBottom: true, toXOff: 120 },
+  { t: '6. Gateway -> Broker', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 6, fromBottom: true, fromXOff: -60, toTop: true, toXOff: 0 },
+  { t: '7. Broker reads ConfigMap (aggregated tool list)', mode: 'arrow', f: 'broker', to: 'configmap', c: '#79c0ff', num: 7, fromRight: true, toLeft: true },
+  { t: '8. Broker returns aggregated tools with prefixes', mode: 'arrow', f: 'broker', to: 'gw', c: '#3fb950', num: 8, fromTop: true, toBottom: true, toXOff: -30 },
   { t: '9. Gateway -> AI Agent: tool catalog', mode: 'arrow', f: 'gw', to: 'agent', c: '#3fb950', num: 9, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowInvoke = [
   { t: '1. AI Agent calls weather_forecast(location="NYC")', mode: 'arrow', f: 'agent', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Envoy Gateway receives tools/call request', mode: 'lightup', target: 'gw', badge: 2 },
-  { t: '3. AuthPolicy validates JWT + checks tool:weather_forecast role', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: 120, toTop: true, toXOff: 0 },
-  { t: '4. Envoy → Broker (parses MCP message, extracts tool name)', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -120, toTop: true, toXOff: -40 },
-  { t: '5. Broker → Router ext_proc (resolve prefix → backend)', mode: 'arrow', f: 'broker', to: 'router', c: '#d2a8ff', num: 5, fromBottom: true, toTop: true },
+  { t: '3. AuthPolicy validates JWT + checks tool:weather_forecast role', mode: 'arrow', f: 'gw', to: 'authpolicy', c: '#f0883e', num: 3, glow: 'authctr', fromBottom: true, fromXOff: 160, toTop: true, toXOff: 0 },
+  { t: '4. Envoy → Broker (parses MCP message, extracts tool name)', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -60, toTop: true, toXOff: 0 },
+  { t: '5. Broker → Router ext_proc (resolve prefix → backend)', mode: 'arrow', f: 'broker', to: 'router', c: '#d2a8ff', num: 5, fromBottom: true, toTop: true, fromXOff: 0, toXOff: 0 },
   { t: '6. Router: weather_ prefix → Weather Service endpoint', mode: 'lightup', target: 'router', badge: 6 },
-  { t: '7. Router → Envoy (hairpin: routing decision back to proxy)', mode: 'arrow', f: 'router', to: 'gw', c: '#d2a8ff', num: 7, fromTop: true, fromXOff: -80, toBottom: true, toXOff: -160 },
-  { t: '8. Envoy forwards to Weather Service (prefix stripped)', mode: 'arrow', f: 'gw', to: 'weather', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -80, toTop: true, toXOff: -40, waypoints: [{x:550,y:200},{x:180,y:200},{x:180,y:620},{x:435,y:660}] },
+  { t: '7. Router → Envoy (hairpin: routing decision back to proxy)', mode: 'arrow', f: 'router', to: 'gw', c: '#d2a8ff', num: 7, fromTop: true, fromXOff: 60, toBottom: true, toXOff: -100 },
+  { t: '8. Envoy forwards to Weather Service (prefix stripped)', mode: 'arrow', f: 'gw', to: 'weather', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -160, toTop: true, toXOff: 0,
+    waypoints: [{x:480,y:200},{x:180,y:200},{x:180,y:640},{x:475,y:660}] },
   { t: '9. Weather Service executes forecast("NYC") — prefix stripped', mode: 'lightup', target: 'weather', badge: 9 },
-  { t: '10. Weather Service responds with result', mode: 'arrow', f: 'weather', to: 'gw', c: '#3fb950', num: 10, fromTop: true, toBottom: true, toXOff: -40, waypoints: [{x:475,y:640},{x:200,y:640},{x:200,y:200},{x:590,y:180}] },
+  { t: '10. Weather Service responds with result', mode: 'arrow', f: 'weather', to: 'gw', c: '#3fb950', num: 10, fromTop: true, toBottom: true, toXOff: 0,
+    waypoints: [{x:475,y:640},{x:160,y:640},{x:160,y:195},{x:630,y:180}] },
   { t: '11. Envoy passes response back (no transformation)', mode: 'lightup', target: 'gw', badge: 11 },
   { t: '12. AI Agent receives: "NYC: Clear, 72°F"', mode: 'arrow', f: 'gw', to: 'agent', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowProgressive = [
   { t: '1. AI Agent sends tools/list to /mcp', mode: 'arrow', f: 'agent', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '2. Gateway -> AuthPolicy -> Broker', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 2, fromBottom: true, fromXOff: -120, toTop: true },
+  { t: '2. Gateway -> AuthPolicy -> Broker', mode: 'arrow', f: 'gw', to: 'broker', c: '#58a6ff', num: 2, fromBottom: true, fromXOff: -60, toTop: true },
   { t: '3. Broker detects tool count > threshold', mode: 'lightup', target: 'broker', badge: 3 },
-  { t: '4. Broker returns meta-tools: discover_tools, select_tools', mode: 'arrow', f: 'broker', to: 'gw', c: '#3fb950', num: 4, fromTop: true, toBottom: true, toXOff: -110 },
-  { t: '5. AI Agent calls discover_tools', mode: 'arrow', f: 'agent', to: 'broker', c: '#79c0ff', num: 5, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:120,y:258},{x:220,y:258}] },
-  { t: '6. Broker returns server catalog (no schemas)', mode: 'arrow', f: 'broker', to: 'agent', c: '#79c0ff', num: 6, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:150,y:278},{x:80,y:310}] },
-  { t: '7. AI Agent calls select_tools(weather_forecast, cal_create_event)', mode: 'arrow', f: 'agent', to: 'broker', c: '#79c0ff', num: 7, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:120,y:248},{x:220,y:248}] },
+  { t: '4. Broker returns meta-tools: discover_tools, select_tools', mode: 'arrow', f: 'broker', to: 'gw', c: '#3fb950', num: 4, fromTop: true, toBottom: true, toXOff: -30 },
+  { t: '5. AI Agent calls discover_tools', mode: 'arrow', f: 'agent', to: 'broker', c: '#79c0ff', num: 5, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:150,y:258},{x:330,y:258}] },
+  { t: '6. Broker returns server catalog (no schemas)', mode: 'arrow', f: 'broker', to: 'agent', c: '#79c0ff', num: 6, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:250,y:278},{x:80,y:310}] },
+  { t: '7. AI Agent calls select_tools(weather_forecast, cal_create_event)', mode: 'arrow', f: 'agent', to: 'broker', c: '#79c0ff', num: 7, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:150,y:248},{x:330,y:248}] },
   { t: '8. Broker scopes session to selected tools', mode: 'lightup', target: 'broker', badge: 8 },
-  { t: '9. Broker fires notifications/tools/list_changed', mode: 'arrow', f: 'broker', to: 'agent', c: '#79c0ff', num: 9, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:150,y:288},{x:80,y:330}] },
-  { t: '10. AI Agent refreshes: tools/list', mode: 'arrow', f: 'agent', to: 'broker', c: '#58a6ff', num: 10, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:120,y:268},{x:220,y:268}] },
-  { t: '11. Broker returns FULL schemas for selected tools only', mode: 'arrow', f: 'broker', to: 'agent', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:150,y:298},{x:80,y:340}] },
+  { t: '9. Broker fires notifications/tools/list_changed', mode: 'arrow', f: 'broker', to: 'agent', c: '#79c0ff', num: 9, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:250,y:288},{x:80,y:330}] },
+  { t: '10. AI Agent refreshes: tools/list', mode: 'arrow', f: 'agent', to: 'broker', c: '#58a6ff', num: 10, fromRight: true, toLeft: true, yOff: 0, waypoints: [{x:150,y:268},{x:330,y:268}] },
+  { t: '11. Broker returns FULL schemas for selected tools only', mode: 'arrow', f: 'broker', to: 'agent', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 0, waypoints: [{x:250,y:298},{x:80,y:340}] },
   { t: '12. AI Agent has optimized working set', mode: 'lightup', target: 'agent' },
 ];
 
