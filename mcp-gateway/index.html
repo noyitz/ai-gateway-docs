@@ -228,7 +228,7 @@ const N = {
   weather: { x: 350, y: 660, w: 250, h: 65, label: 'Weather Service', sublabel: 'prefix: weather_', color: '#3fb950', fs: 16 },
   calendar: { x: 700, y: 660, w: 250, h: 65, label: 'Calendar Service', sublabel: 'prefix: cal_', color: '#3fb950', fs: 16 },
 
-  catalog: { x: 1180, y: 420, w: 150, h: 65, label: 'MCP Catalog', sublabel: 'AI Hub · Curated', color: '#d2a8ff', fs: 14 },
+  catalog: { x: 210, y: 560, w: 200, h: 55, label: 'MCP Catalog', sublabel: 'AI Hub · Curated Servers', color: '#d2a8ff', fs: 14 },
 };
 
 const tips = {
@@ -451,22 +451,37 @@ function drawBounds() {
   ctx.fillText('Backend MCP Servers', tx(335), ty(658));
   ctx.restore();
 
-  // Static dashed line: MCP Catalog → Backend Servers area
+  // Static dashed line: MCP Catalog → all Backend Servers
   ctx.save();
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.4;
   ctx.setLineDash([ts(5), ts(4)]);
   ctx.lineWidth = ts(1.5);
   ctx.strokeStyle = '#d2a8ff';
   ctx.beginPath();
   ctx.moveTo(tx(N.catalog.x + N.catalog.w / 2), ty(N.catalog.y + N.catalog.h));
   ctx.lineTo(tx(N.catalog.x + N.catalog.w / 2), ty(693));
-  ctx.lineTo(tx(N.calendar.x + N.calendar.w), ty(693));
+  ctx.lineTo(tx(N.calendar.x + N.calendar.w / 2), ty(693));
   ctx.stroke();
   ctx.setLineDash([]);
+  // arrowheads to both servers
+  var ahl = ts(6);
+  ctx.fillStyle = '#d2a8ff';
+  // arrow to weather
+  ctx.beginPath();
+  ctx.moveTo(tx(N.weather.x + N.weather.w / 2), ty(693));
+  ctx.lineTo(tx(N.weather.x + N.weather.w / 2) - ahl * 0.4, ty(693) - ahl);
+  ctx.lineTo(tx(N.weather.x + N.weather.w / 2) + ahl * 0.4, ty(693) - ahl);
+  ctx.fill();
+  // arrow to calendar
+  ctx.beginPath();
+  ctx.moveTo(tx(N.calendar.x + N.calendar.w / 2), ty(693));
+  ctx.lineTo(tx(N.calendar.x + N.calendar.w / 2) - ahl * 0.4, ty(693) - ahl);
+  ctx.lineTo(tx(N.calendar.x + N.calendar.w / 2) + ahl * 0.4, ty(693) - ahl);
+  ctx.fill();
   ctx.font = ts(9)+'px system-ui';
   ctx.fillStyle = '#d2a8ff88';
   ctx.textAlign = 'center';
-  ctx.fillText('one-click deploy', tx(N.catalog.x + N.catalog.w / 2), ty(N.catalog.y + N.catalog.h + 15));
+  ctx.fillText('one-click deploy', tx(N.catalog.x + N.catalog.w / 2 + 40), ty(N.catalog.y + N.catalog.h + 12));
   ctx.restore();
 }
 
