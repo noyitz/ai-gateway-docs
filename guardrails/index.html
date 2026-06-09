@@ -1406,98 +1406,104 @@ const flowHappy = [
   // Auth
   { t: '1. Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant (auth)', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
-  { t: '3. Auth validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   // Rate Limit
-  { t: '4. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 4 },
-  { t: '5. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 5, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -60 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   // IPP
-  { t: '6. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 6, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '8. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL
-  { t: '7. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 7 },
-  { t: '8. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 8, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '9. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 9, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '9. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 10, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '11. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 10 },
   // Request plugins
-  { t: '10. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
-  { t: '11. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 11 },
-  { t: '12. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 12 },
-  { t: '13. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 13 },
+  { t: '12. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 12 },
+  { t: '13. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 13 },
+  { t: '14. api-translation: OpenAI → Anthropic', mode: 'lightup', target: 'p_at_req', badge: 14 },
+  { t: '15. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 15 },
   // IPP -> Gateway -> Provider
-  { t: '14. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '15. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 15, fromLeft: true, toRight: true, yOff: -10 },
+  { t: '16. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '17. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 17, fromLeft: true, toRight: true, yOff: -10 },
   // Provider responds
-  { t: '16. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 16, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '18. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 18, fromRight: true, toLeft: true, yOff: 10 },
   // Response processing
-  { t: '17. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 17, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '18. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 18 },
+  { t: '19. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 19, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '20. api-translation: Anthropic → OpenAI', mode: 'lightup', target: 'p_at_resp', badge: 20 },
   // OUTPUT GUARDRAIL
-  { t: '19. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 19 },
-  { t: '20. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 20, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '21. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#3fb950', num: 21, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '21. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 21 },
+  { t: '22. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 22, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '23. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 10 },
   // BYO Guardrail
-  { t: '22. BYO Guardrail: custom output filter', mode: 'lightup', target: 'p_byo_guard', badge: 22 },
+  { t: '24. BYO Guardrail: custom output filter', mode: 'lightup', target: 'p_byo_guard', badge: 24 },
   // Return
-  { t: '23. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 23, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '25. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 25, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
   // Rate Limit token reporting
-  { t: '24. Kuadrant reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 24 },
-  { t: '25. Reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 25 },
-  { t: '26. Response to Client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 26, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '26. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 26 },
+  { t: '27. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 27 },
+  { t: '28. Response to Client', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 28, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowInputBlock = [
-  // Auth (same)
+  // Auth
   { t: '1. Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant (auth)', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
-  { t: '3. Auth validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   // Rate Limit
-  { t: '4. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 4 },
-  { t: '5. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 5, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -60 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   // IPP
-  { t: '6. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 6, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '8. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL
-  { t: '7. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 7 },
-  { t: '8. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 8, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '9. NeMo responds: BLOCKED (unsafe content)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#f85149', num: 9, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '9. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 10, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '11. NeMo responds: BLOCKED (unsafe content)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#f85149', num: 11, fromLeft: true, toRight: true, yOff: 10 },
   // BLOCKED
-  { t: '10. request-guard: INPUT BLOCKED', mode: 'lightup', target: 'p_rguard', badge: '✗', errColor: '#f85149' },
-  { t: '11. IPP → Gateway: 400 Bad Request', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 11, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '12. Gateway → Client: 400 (blocked by guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '12. request-guard: INPUT BLOCKED', mode: 'lightup', target: 'p_rguard', badge: '✗', errColor: '#f85149' },
+  { t: '13. IPP → Gateway: 400 Bad Request', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '14. Gateway → Client: 400 (blocked by guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 14, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowOutputBlock = [
   // Auth
   { t: '1. Client sends request', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant (auth)', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
-  { t: '3. Auth validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
+  { t: '4. Kuadrant → MaaS API (key validation)', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 4, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -30 },
+  { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   // Rate Limit
-  { t: '4. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 4 },
-  { t: '5. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 5, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -60 },
+  { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
+  { t: '7. Kuadrant → Gateway (auth + rate limit OK)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#f0883e', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
   // IPP
-  { t: '6. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 6, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '8. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL (passes)
-  { t: '7. request-guard: checks input safety', mode: 'lightup', target: 'p_rguard', badge: 7 },
-  { t: '8. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 8, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '9. NeMo responds: SAFE (input OK)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 9, fromLeft: true, toRight: true, yOff: 10 },
-  // Request plugins (internal model — no api-translation needed)
-  { t: '10. model-provider-resolver (internal model)', mode: 'lightup', target: 'p_mpr', badge: 10 },
-  { t: '11. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 11 },
+  { t: '9. request-guard: checks input safety', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 10, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '11. NeMo responds: SAFE (input OK)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 11, fromLeft: true, toRight: true, yOff: 10 },
+  // Request plugins (internal model)
+  { t: '12. model-provider-resolver (internal model)', mode: 'lightup', target: 'p_mpr', badge: 12 },
+  { t: '13. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 13 },
   // Route to InferencePool via EPP
-  { t: '12. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '13. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 13, fromBottom: true, fromXOff: -20, toTop: true },
-  { t: '14. EPP selects vLLM pods', mode: 'lightup', target: 'sched', badge: 14 },
-  { t: '15. Gateway → Sidecar → vLLM Decode', mode: 'arrow', f: 'gw', to: 'decode', c: '#58a6ff', num: 15, fromBottom: true, fromXOff: -160, toTop: true, glow: 'pool' },
-  { t: '16. vLLM generates response (unfiltered)', mode: 'lightup', target: 'decode', badge: 16 },
+  { t: '14. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '15. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 15, fromBottom: true, fromXOff: -20, toTop: true },
+  { t: '16. EPP selects vLLM pods', mode: 'lightup', target: 'sched', badge: 16 },
+  { t: '17. Gateway → Sidecar → vLLM Decode', mode: 'arrow', f: 'gw', to: 'decode', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -160, toTop: true, glow: 'pool' },
+  { t: '18. vLLM generates response (unfiltered)', mode: 'lightup', target: 'decode', badge: 18 },
   // vLLM responds
-  { t: '17. vLLM responds with unfiltered output', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 17, fromTop: true, toBottom: true, toXOff: -120 },
+  { t: '19. vLLM responds with unfiltered output', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 19, fromTop: true, toBottom: true, toXOff: -120 },
   // Response processing
-  { t: '18. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 18, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '20. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 20, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   // OUTPUT GUARDRAIL - FAILS
-  { t: '19. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 19 },
-  { t: '20. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 20, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '21. NeMo responds: BLOCKED (harmful content in vLLM output)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 21, fromLeft: true, toRight: true, yOff: 10 },
-  { t: '22. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
+  { t: '21. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 21 },
+  { t: '22. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 22, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '23. NeMo responds: BLOCKED (harmful content in vLLM output)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 23, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '24. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
   // Error response
-  { t: '23. IPP → Gateway: 400 (response blocked)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 23, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '24. Gateway → Client: 400 (blocked by output guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 24, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '25. IPP → Gateway: 400 (response blocked)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 25, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '26. Gateway → Client: 400 (blocked by output guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 26, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowMap = { happy: flowHappy, input_block: flowInputBlock, output_block: flowOutputBlock };
