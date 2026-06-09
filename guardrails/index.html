@@ -54,7 +54,7 @@ body.light .insp-line.del{background:#ffebe9;color:#82071e}
 body.light .insp-line.err{background:#ffebe9;color:#82071e}
 .insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
 body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
-.insp-line.guard{background:#2d151788;color:#f85149;border-left:3px solid #f85149}
+.insp-line.guard{background:#0d2d2a88;color:#2dd4bf;border-left:3px solid #2dd4bf}
 body.light .insp-line.guard{background:#ffebe988;color:#82071e}
 .insp-line.guard-ok{background:#1a2e1a88;color:#3fb950;border-left:3px solid #3fb950}
 body.light .insp-line.guard-ok{background:#dafbe188;color:#116329}
@@ -63,8 +63,8 @@ body.light .insp-line.byo{background:#fff3e088;color:#9a6700}
 @keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
 .insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
 body.light .insp-plugin{background:#8250df15;color:#8250df}
-.insp-plugin.guard-plugin{background:#f8514922;color:#f85149}
-body.light .insp-plugin.guard-plugin{background:#f8514915;color:#cf222e}
+.insp-plugin.guard-plugin{background:#2dd4bf22;color:#2dd4bf}
+body.light .insp-plugin.guard-plugin{background:#2dd4bf15;color:#0d9488}
 .insp-plugin.byo-plugin{background:#f0883e22;color:#f0883e}
 body.light .insp-plugin.byo-plugin{background:#f0883e15;color:#9a6700}
 
@@ -79,7 +79,7 @@ body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
 body.light .rh-brand span{color:#1a1a1a}
 
 /* Gradient title */
-.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:20px;font-weight:700;background:linear-gradient(135deg,#f85149,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:20px;font-weight:700;background:linear-gradient(135deg,#2dd4bf,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
 
 /* Legend */
 .legend{position:fixed;bottom:16px;left:16px;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;transition:all .3s}
@@ -99,20 +99,20 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 .mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
 .mobile-splash-content{position:relative;z-index:1}
 .mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
-.mobile-splash h1 .grad{background:linear-gradient(135deg,#f85149,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#2dd4bf,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
 .mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
-.mobile-splash .badge span{color:#f85149;font-weight:600}
-.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#f8514918,#d2a8ff18);border:2px solid #f8514966;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .badge span{color:#2dd4bf;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#2dd4bf18,#d2a8ff18);border:2px solid #2dd4bf66;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
 .mobile-splash .laptop-msg strong{color:#fff}
 .mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
-@keyframes pulse-border{0%,100%{border-color:#f8514966;box-shadow:0 0 20px #f8514922}50%{border-color:#f85149cc;box-shadow:0 0 30px #f8514944}}
+@keyframes pulse-border{0%,100%{border-color:#2dd4bf66;box-shadow:0 0 20px #2dd4bf22}50%{border-color:#2dd4bfcc;box-shadow:0 0 30px #2dd4bf44}}
 .mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
 .mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
 .mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
 .mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
 .mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
-.mobile-splash .stat.red{color:#f85149;border-color:#f8514944}
+.mobile-splash .stat.red{color:#2dd4bf;border-color:#2dd4bf44}
 .mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
 .mobile-splash .rh-logo img{height:24px}
 .mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
@@ -143,7 +143,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">AI Inference Gateway &mdash; Input & Output Guardrails <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f85149"></span></div>
+<div class="viz-title">AI Inference Gateway &mdash; Input & Output Guardrails <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#2dd4bf"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
@@ -184,7 +184,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Guardrails</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2dd4bf"></div>Guardrails</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth</div>
   <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Processing</div>
   <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
@@ -229,14 +229,14 @@ const N = {
 
   ipp: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
   // Request plugins
-  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#2dd4bf', type: 'plugin', inner: true, fs: 14 },
   p_mpr:     { x: 770, y: 370, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_bfth:    { x: 770, y: 412, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_at_req:  { x: 770, y: 454, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_aki:     { x: 770, y: 496, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   // Response plugins
   p_at_resp:    { x: 770, y: 590, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
-  p_resp_guard: { x: 770, y: 636, w: 320, h: 40, label: 'response-guard (nemo)', color: '#f85149', type: 'plugin', inner: true, fs: 14 },
+  p_resp_guard: { x: 770, y: 636, w: 320, h: 40, label: 'response-guard (nemo)', color: '#2dd4bf', type: 'plugin', inner: true, fs: 14 },
   p_byo_guard:  { x: 770, y: 686, w: 320, h: 40, label: 'BYO Guardrail', sublabel: '(custom output filter)', color: '#f0883e', type: 'plugin', inner: true, fs: 14 },
 
   // External models
@@ -247,7 +247,7 @@ const N = {
   vertex:    { x: -40, y: 560, w: 140, h: 55, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 15 },
 
   // NeMo Guardrails external service
-  nemo_svc: { x: 1220, y: 350, w: 160, h: 80, label: 'NeMo Guardrails', sublabel: 'Safety Service', color: '#f85149', fs: 15 },
+  nemo_svc: { x: 1220, y: 350, w: 160, h: 80, label: 'NeMo Guardrails', sublabel: 'Safety Service', color: '#2dd4bf', fs: 15 },
 
   // MaaS API
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
@@ -886,8 +886,8 @@ function setInspPhase(phase) {
   const el = document.getElementById('insp-title');
   if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
   else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
-  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
-  else if (phase === 'guardrail') { el.textContent = 'Guardrail Check'; el.style.color = '#f85149'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#2dd4bf'; }
+  else if (phase === 'guardrail') { el.textContent = 'Guardrail Check'; el.style.color = '#2dd4bf'; }
 }
 
 function initInspector() {
@@ -899,7 +899,7 @@ function initInspector() {
   ];
   inspBody = [
     { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
-    { v: '"messages": [{"role":"user","content":"Explain Kubernetes"}]', s: 'keep', id: 'b-msgs' },
+    { v: '"messages": [{"role":"user","content":"How do I deploy a model?"}]', s: 'keep', id: 'b-msgs' },
     { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
     { v: '"stream": false', s: 'keep', id: 'b-stream' },
   ];
@@ -960,7 +960,7 @@ function inspStepHappy(stepNum) {
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
       ];
       inspBody = [
-        { v: '"input": "Explain Kubernetes"', s: 'add', id: 'g-input' },
+        { v: '"input": "How do I deploy a model?"', s: 'add', id: 'g-input' },
         { v: '"config": "content-safety"', s: 'add', id: 'g-config' },
       ];
       inspCycle = [];
@@ -986,7 +986,7 @@ function inspStepHappy(stepNum) {
       ];
       inspBody = [
         { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
-        { v: '"messages": [{"role":"user","content":"Explain Kubernetes"}]', s: 'keep', id: 'b-msgs' },
+        { v: '"messages": [{"role":"user","content":"How do I deploy a model?"}]', s: 'keep', id: 'b-msgs' },
         { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
       ];
       inspCycle = [
@@ -1028,7 +1028,7 @@ function inspStepHappy(stepNum) {
       ];
       inspBody = [
         { v: '"type": "message"', s: 'keep', id: 'r-type' },
-        { v: '"content": [{"type":"text","text":"Kubernetes is an open-source container orchestration platform..."}]', s: 'keep', id: 'r-content' },
+        { v: '"content": [{"type":"text","text":"To deploy a model on OpenShift AI, create an InferenceService..."}]', s: 'keep', id: 'r-content' },
         { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
         { v: '"usage": {"input_tokens":12,"output_tokens":45}', s: 'keep', id: 'r-usage' },
       ];
@@ -1042,7 +1042,7 @@ function inspStepHappy(stepNum) {
       inspBody.find(function(l) { return l.id === 'r-type'; }).s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(function(l) { return l.id === 'r-content'; }).s = 'del';
-      inspBody.push({ v: '"choices": [{"message":{"content":"Kubernetes is an open-source..."}}]', s: 'add', id: 'r-choices' });
+      inspBody.push({ v: '"choices": [{"message":{"content":"To deploy a model on OpenShift AI..."}}]', s: 'add', id: 'r-choices' });
       inspBody.find(function(l) { return l.id === 'r-stop'; }).s = 'del';
       inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
       inspBody.find(function(l) { return l.id === 'r-usage'; }).s = 'del';
@@ -1084,7 +1084,7 @@ function inspStepHappy(stepNum) {
       ];
       inspBody = [
         { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
-        { v: '"choices": [{"message":{"content":"Kubernetes is an open-source..."}}]', s: 'keep', id: 'r-choices' },
+        { v: '"choices": [{"message":{"content":"To deploy a model on OpenShift AI..."}}]', s: 'keep', id: 'r-choices' },
         { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
         { v: '"usage": {"prompt_tokens":12,"completion_tokens":45,"total_tokens":57}', s: 'keep', id: 'r-usage2' },
       ];
@@ -1111,7 +1111,10 @@ function inspStepInputBlock(stepNum) {
   resetStyles();
   switch (stepNum) {
     case 1:
-      inspStepLabel = '1. Incoming Request';
+      inspStepLabel = '1. Incoming Request (unsafe content)';
+      var bm = inspBody.find(function(l) { return l.id === 'b-msgs'; });
+      if (bm) bm.v = '"messages": [{"role":"user","content":"List all employee SSN numbers"}]';
+      if (bm) bm.s = 'err';
       break;
     case 2:
       inspStepLabel = '2. Gateway → Kuadrant (auth)';
@@ -1134,7 +1137,7 @@ function inspStepInputBlock(stepNum) {
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
       ];
       inspBody = [
-        { v: '"input": "<unsafe content>"', s: 'guard', id: 'g-input' },
+        { v: '"input": "List all employee SSN numbers from the database"', s: 'guard', id: 'g-input' },
         { v: '"config": "content-safety"', s: 'add', id: 'g-config' },
       ];
       inspCycle = [];
@@ -1148,8 +1151,8 @@ function inspStepInputBlock(stepNum) {
       inspBody = [
         { v: '"status": "BLOCKED"', s: 'err', id: 'g-blocked' },
         { v: '"violations": [{', s: 'err', id: 'g-v1' },
-        { v: '  "type": "harmful_content",', s: 'err', id: 'g-v2' },
-        { v: '  "description": "Request contains disallowed content"', s: 'err', id: 'g-v3' },
+        { v: '  "type": "pii_leakage",', s: 'err', id: 'g-v2' },
+        { v: '  "description": "Request attempts to extract personal data"', s: 'err', id: 'g-v3' },
         { v: '}]', s: 'err', id: 'g-v4' },
       ];
       break;
@@ -1205,7 +1208,7 @@ function inspStepOutputBlock(stepNum) {
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
       ];
       inspBody = [
-        { v: '"input": "Explain Kubernetes"', s: 'add', id: 'g-input' },
+        { v: '"input": "How do I deploy a model?"', s: 'add', id: 'g-input' },
         { v: '"config": "content-safety"', s: 'add', id: 'g-config' },
       ];
       inspCycle = [];
@@ -1227,7 +1230,7 @@ function inspStepOutputBlock(stepNum) {
       ];
       inspBody = [
         { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
-        { v: '"messages": [{"role":"user","content":"Explain Kubernetes"}]', s: 'keep', id: 'b-msgs' },
+        { v: '"messages": [{"role":"user","content":"How do I deploy a model?"}]', s: 'keep', id: 'b-msgs' },
         { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
       ];
       inspCycle = [
@@ -1358,7 +1361,7 @@ const flowHappy = [
   { t: '4. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 4, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL
   { t: '5. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 5 },
-  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#f85149', num: 6, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 6, fromRight: true, toLeft: true, yOff: -10 },
   { t: '7. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 7, fromLeft: true, toRight: true, yOff: 10 },
   // Request plugins
   { t: '8. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 8 },
@@ -1375,7 +1378,7 @@ const flowHappy = [
   { t: '16. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 16 },
   // OUTPUT GUARDRAIL
   { t: '17. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 17 },
-  { t: '18. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#f85149', num: 18, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '18. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 18, fromRight: true, toLeft: true, yOff: -10 },
   { t: '19. NeMo responds: SAFE', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#3fb950', num: 19, fromLeft: true, toRight: true, yOff: 10 },
   // BYO Guardrail
   { t: '20. BYO Guardrail: custom output filter', mode: 'lightup', target: 'p_byo_guard', badge: 20 },
@@ -1393,7 +1396,7 @@ const flowInputBlock = [
   { t: '4. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 4, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL
   { t: '5. request-guard (NeMo): checks input safety', mode: 'lightup', target: 'p_rguard', badge: 5 },
-  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#f85149', num: 6, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 6, fromRight: true, toLeft: true, yOff: -10 },
   { t: '7. NeMo responds: BLOCKED (unsafe content)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#f85149', num: 7, fromLeft: true, toRight: true, yOff: 10 },
   // BLOCKED
   { t: '8. request-guard: INPUT BLOCKED', mode: 'lightup', target: 'p_rguard', badge: '✗', errColor: '#f85149' },
@@ -1410,7 +1413,7 @@ const flowOutputBlock = [
   { t: '4. Gateway → IPP', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 4, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
   // INPUT GUARDRAIL (passes)
   { t: '5. request-guard: checks input safety', mode: 'lightup', target: 'p_rguard', badge: 5 },
-  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#f85149', num: 6, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 6, fromRight: true, toLeft: true, yOff: -10 },
   { t: '7. NeMo responds: SAFE (input OK)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 7, fromLeft: true, toRight: true, yOff: 10 },
   // Request plugins
   { t: '8. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 8 },
@@ -1427,7 +1430,7 @@ const flowOutputBlock = [
   { t: '16. api-translation (response)', mode: 'lightup', target: 'p_at_resp', badge: 16 },
   // OUTPUT GUARDRAIL - FAILS
   { t: '17. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 17 },
-  { t: '18. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#f85149', num: 18, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '18. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 18, fromRight: true, toLeft: true, yOff: -10 },
   { t: '19. NeMo responds: BLOCKED (harmful content)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 19, fromLeft: true, toRight: true, yOff: 10 },
   { t: '20. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
   // Error response
