@@ -1221,70 +1221,63 @@ function inspStepOutputBlock(stepNum) {
       ];
       break;
     case 8:
-      inspStepLabel = '8. model-provider-resolver';
+      inspStepLabel = '8. model-provider-resolver (internal model)';
       setInspPhase('request');
       inspHeaders = [
-        { v: 'POST /llm/ext-anthropic/v1/chat/completions', s: 'keep', id: 'h-path' },
+        { v: 'POST /v1/chat/completions', s: 'keep', id: 'h-path' },
         { v: 'Authorization: Bearer sk-oai-abc123...', s: 'keep', id: 'h-auth' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
       ];
       inspBody = [
-        { v: '"model": "claude-haiku-4-5-20251001"', s: 'keep', id: 'b-model' },
+        { v: '"model": "llama-4-scout"', s: 'keep', id: 'b-model' },
         { v: '"messages": [{"role":"user","content":"How do I deploy a model?"}]', s: 'keep', id: 'b-msgs' },
-        { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+        { v: '"max_tokens": 256', s: 'keep', id: 'b-max' },
       ];
       inspCycle = [
-        { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
-        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
+        { v: 'type = "inferencepool"', s: 'add', id: 'c-type' },
+        { v: 'pool = "llama-4-scout-pool"', s: 'add', id: 'c-pool' },
       ];
       break;
     case 9:
       inspStepLabel = '9. body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-scout', s: 'add', id: 'h-xmodel' });
       break;
     case 10:
-      inspStepLabel = '10. api-translation (request)';
-      inspHeaders.find(function(l) { return l.id === 'h-path'; }).s = 'del';
-      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
-      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
-      inspHeaders.find(function(l) { return l.id === 'h-auth'; }).s = 'del';
+      inspStepLabel = '10. IPP → Gateway (request ready)';
       break;
     case 11:
-      inspStepLabel = '11. apikey-injection';
-      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      inspStepLabel = '11. Gateway → EPP (pod selection)';
       break;
     case 12:
-      inspStepLabel = '12. IPP → Gateway (request ready)';
+      inspStepLabel = '12. EPP selects vLLM pods';
       break;
     case 13:
-      inspStepLabel = '13. Gateway routes to Anthropic';
+      inspStepLabel = '13. Gateway → vLLM Decode Pod';
       break;
     case 14:
-      inspStepLabel = '14. Anthropic responds';
+      inspStepLabel = '14. vLLM generates response (unfiltered)';
+      inspCycle = [
+        { v: 'model = llama-4-scout (self-hosted)', s: 'highlight', id: 'c-model' },
+        { v: 'no provider content filtering', s: 'err', id: 'c-nofilter' },
+      ];
+      break;
+    case 15:
+      inspStepLabel = '15. vLLM responds with unfiltered output';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
       ];
       inspBody = [
-        { v: '"type": "message"', s: 'keep', id: 'r-type' },
-        { v: '"content": [{"type":"text","text":"<harmful content in response>"}]', s: 'keep', id: 'r-content' },
-        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
-        { v: '"usage": {"input_tokens":12,"output_tokens":45}', s: 'keep', id: 'r-usage' },
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"<unfiltered vLLM output>"}}]', s: 'err', id: 'r-choices' },
+        { v: '"model": "llama-4-scout"', s: 'keep', id: 'r-model' },
+        { v: '"usage": {"prompt_tokens":15,"completion_tokens":52}', s: 'keep', id: 'r-usage' },
       ];
       inspCycle = [];
       break;
-    case 15:
-      inspStepLabel = '15. Gateway → IPP (response)';
-      break;
     case 16:
-      inspStepLabel = '16. api-translation (response)';
-      inspBody.find(function(l) { return l.id === 'r-type'; }).s = 'del';
-      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
-      inspBody.find(function(l) { return l.id === 'r-content'; }).s = 'del';
-      inspBody.push({ v: '"choices": [{"message":{"content":"<harmful content>"}}]', s: 'add', id: 'r-choices' });
-      inspBody.find(function(l) { return l.id === 'r-stop'; }).s = 'del';
-      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
+      inspStepLabel = '16. Gateway → IPP (response)';
       break;
     case 17:
       inspStepLabel = '17. response-guard (NeMo): checks output safety';
@@ -1297,7 +1290,7 @@ function inspStepOutputBlock(stepNum) {
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
       ];
       inspBody = [
-        { v: '"output": "<harmful content in response>"', s: 'guard', id: 'g-output' },
+        { v: '"output": "<unfiltered vLLM output>"', s: 'guard', id: 'g-output' },
         { v: '"config": "content-safety"', s: 'add', id: 'g-config' },
       ];
       inspCycle = [];
@@ -1312,7 +1305,7 @@ function inspStepOutputBlock(stepNum) {
         { v: '"status": "BLOCKED"', s: 'err', id: 'g-blocked' },
         { v: '"violations": [{', s: 'err', id: 'g-v1' },
         { v: '  "type": "harmful_output",', s: 'err', id: 'g-v2' },
-        { v: '  "description": "Model response contains restricted content"', s: 'err', id: 'g-v3' },
+        { v: '  "description": "Self-hosted model output contains restricted content"', s: 'err', id: 'g-v3' },
         { v: '}]', s: 'err', id: 'g-v4' },
       ];
       break;
@@ -1415,23 +1408,23 @@ const flowOutputBlock = [
   { t: '5. request-guard: checks input safety', mode: 'lightup', target: 'p_rguard', badge: 5 },
   { t: '6. IPP → NeMo Service: evaluate input', mode: 'arrow', f: 'p_rguard', to: 'nemo_svc', c: '#2dd4bf', num: 6, fromRight: true, toLeft: true, yOff: -10 },
   { t: '7. NeMo responds: SAFE (input OK)', mode: 'arrow', f: 'nemo_svc', to: 'p_rguard', c: '#3fb950', num: 7, fromLeft: true, toRight: true, yOff: 10 },
-  // Request plugins
-  { t: '8. model-provider-resolver', mode: 'lightup', target: 'p_mpr', badge: 8 },
+  // Request plugins (internal model — no api-translation needed)
+  { t: '8. model-provider-resolver (internal model)', mode: 'lightup', target: 'p_mpr', badge: 8 },
   { t: '9. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 9 },
-  { t: '10. api-translation (request)', mode: 'lightup', target: 'p_at_req', badge: 10 },
-  { t: '11. apikey-injection', mode: 'lightup', target: 'p_aki', badge: 11 },
-  // Route to provider
-  { t: '12. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '13. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 13, fromLeft: true, toRight: true, yOff: -10 },
-  // Provider responds
-  { t: '14. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 14, fromRight: true, toLeft: true, yOff: 10 },
+  // Route to InferencePool via EPP
+  { t: '10. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 10, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '11. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 11, fromBottom: true, fromXOff: -20, toTop: true },
+  { t: '12. EPP selects vLLM pods', mode: 'lightup', target: 'sched', badge: 12 },
+  { t: '13. Gateway → Sidecar → vLLM Decode', mode: 'arrow', f: 'gw', to: 'decode', c: '#58a6ff', num: 13, fromBottom: true, fromXOff: -160, toTop: true, glow: 'pool' },
+  { t: '14. vLLM generates response (unfiltered)', mode: 'lightup', target: 'decode', badge: 14 },
+  // vLLM responds
+  { t: '15. vLLM responds with unfiltered output', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 15, fromTop: true, toBottom: true, toXOff: -120 },
   // Response processing
-  { t: '15. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 15, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '16. api-translation (response)', mode: 'lightup', target: 'p_at_resp', badge: 16 },
+  { t: '16. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   // OUTPUT GUARDRAIL - FAILS
   { t: '17. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 17 },
   { t: '18. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 18, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '19. NeMo responds: BLOCKED (harmful content)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 19, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '19. NeMo responds: BLOCKED (harmful content in vLLM output)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 19, fromLeft: true, toRight: true, yOff: 10 },
   { t: '20. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
   // Error response
   { t: '21. IPP → Gateway: 400 (response blocked)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 21, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
