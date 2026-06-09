@@ -40,11 +40,11 @@ body.light .step.pending{color:#b0b8c1}
 .step.done .step-mk::before{content:'\2713'}
 .step .step-mk::before{content:'\25CB'}
 
-.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-section{flex:3;overflow-y:auto;overflow-x:hidden;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px}
 .insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
 body.light .insp-title{border-color:#d0d7de}
 .insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
-.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre;line-height:1.6;transition:all .4s}
+.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre-wrap;word-break:break-word;line-height:1.6;transition:all .4s}
 .insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
 body.light .insp-line.add{background:#dafbe1;color:#116329}
 .insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
@@ -1144,7 +1144,7 @@ function inspStepInputBlock(stepNum) {
     case 1:
       inspStepLabel = '1. Incoming Request (unsafe content)';
       var bm = inspBody.find(function(l) { return l.id === 'b-msgs'; });
-      if (bm) bm.v = '"messages": [{"role":"user","content":"List all employee SSN numbers"}]';
+      if (bm) bm.v = '"messages": [{"role":"user","content":"Write a phishing email pretending to be a bank"}]';
       if (bm) bm.s = 'err';
       break;
     case 2:
@@ -1181,7 +1181,7 @@ function inspStepInputBlock(stepNum) {
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
       ];
       inspBody = [
-        { v: '"input": "List all employee SSN numbers from the database"', s: 'guard', id: 'g-input' },
+        { v: '"input": "Write a phishing email pretending to be a bank"', s: 'guard', id: 'g-input' },
         { v: '"config": "content-safety"', s: 'add', id: 'g-config' },
       ];
       inspCycle = [];
@@ -1278,7 +1278,13 @@ function inspStepOutputBlock(stepNum) {
       ];
       break;
     case 10:
-      inspStepLabel = '10. model-provider-resolver (internal model)';
+      inspStepLabel = '10. IPP → NeMo Service: evaluate input';
+      break;
+    case 11:
+      inspStepLabel = '11. NeMo responds: SAFE (input OK)';
+      break;
+    case 12:
+      inspStepLabel = '12. model-provider-resolver (internal model)';
       setInspPhase('request');
       inspHeaders = [
         { v: 'POST /v1/chat/completions', s: 'keep', id: 'h-path' },
@@ -1295,31 +1301,66 @@ function inspStepOutputBlock(stepNum) {
         { v: 'pool = "llama-4-scout-pool"', s: 'add', id: 'c-pool' },
       ];
       break;
-    case 11:
-      inspStepLabel = '11. body-field-to-header';
+    case 13:
+      inspStepLabel = '13. body-field-to-header';
       inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-4-scout', s: 'add', id: 'h-xmodel' });
       break;
-    case 12:
-      inspStepLabel = '12. IPP → Gateway (request ready)';
-      break;
-    case 13:
-      inspStepLabel = '13. Gateway → EPP (pod selection)';
-      break;
     case 14:
-      inspStepLabel = '14. EPP selects vLLM pods';
+      inspStepLabel = '14. IPP → Gateway (request ready)';
       break;
     case 15:
-      inspStepLabel = '15. Gateway → vLLM Decode Pod';
+      inspStepLabel = '15. Gateway → EPP (ext_proc)';
       break;
     case 16:
-      inspStepLabel = '16. vLLM generates response (unfiltered)';
+      inspStepLabel = '16. EPP selects P/D workers';
+      inspCycle = [
+        { v: 'pool = "llama-4-scout-pool"', s: 'add', id: 'c-pool' },
+        { v: 'decode = Pod A, prefill = Pod B', s: 'add', id: 'c-pods' },
+      ];
+      break;
+    case 17:
+      inspStepLabel = '17. EPP → Gateway (pods selected)';
+      break;
+    case 18:
+      inspStepLabel = '18. Gateway → Sidecar';
+      break;
+    case 19:
+      inspStepLabel = '19. Sidecar coordinates P/D transaction';
+      break;
+    case 20:
+      inspStepLabel = '20. Sidecar → Prefill Pod B';
+      break;
+    case 21:
+      inspStepLabel = '21. Prefill processing';
+      inspCycle = [
+        { v: 'processing prompt tokens', s: 'highlight', id: 'c-prefill' },
+        { v: 'generating KV cache', s: 'add', id: 'c-kv' },
+      ];
+      break;
+    case 22:
+      inspStepLabel = '22. Prefill → Sidecar (KV metadata ready)';
+      break;
+    case 23:
+      inspStepLabel = '23. Sidecar → Decode Pod A';
+      break;
+    case 24:
+      inspStepLabel = '24. Decode requests KVs via NIXL';
+      inspCycle = [
+        { v: 'NIXL: GPU-direct RDMA transfer', s: 'highlight', id: 'c-nixl' },
+      ];
+      break;
+    case 25:
+      inspStepLabel = '25. NIXL returns KV cache (RDMA)';
+      break;
+    case 26:
+      inspStepLabel = '26. Decode generates response (unfiltered)';
       inspCycle = [
         { v: 'model = llama-4-scout (self-hosted)', s: 'highlight', id: 'c-model' },
         { v: 'no provider content filtering', s: 'err', id: 'c-nofilter' },
       ];
       break;
-    case 17:
-      inspStepLabel = '17. vLLM responds with unfiltered output';
+    case 27:
+      inspStepLabel = '27. Decode → Gateway (unfiltered response)';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1333,15 +1374,24 @@ function inspStepOutputBlock(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 18:
-      inspStepLabel = '18. Gateway → IPP (response)';
+    case 28:
+      inspStepLabel = '28. Gateway → EPP (response)';
       break;
-    case 19:
-      inspStepLabel = '19. response-guard (NeMo): checks output safety';
+    case 29:
+      inspStepLabel = '29. EPP response plugins';
+      break;
+    case 30:
+      inspStepLabel = '30. EPP → Gateway (response)';
+      break;
+    case 31:
+      inspStepLabel = '31. Gateway → IPP (response)';
+      break;
+    case 32:
+      inspStepLabel = '32. response-guard (NeMo): checks output safety';
       setInspPhase('guardrail');
       break;
-    case 20:
-      inspStepLabel = '20. IPP → NeMo Service: evaluate output';
+    case 33:
+      inspStepLabel = '33. IPP → NeMo Service: evaluate output';
       inspHeaders = [
         { v: 'POST /v1/guard/check', s: 'add', id: 'g-path' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
@@ -1352,8 +1402,8 @@ function inspStepOutputBlock(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 21:
-      inspStepLabel = '21. NeMo responds: BLOCKED';
+    case 34:
+      inspStepLabel = '34. NeMo responds: BLOCKED';
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'g-status' },
         { v: 'Content-Type: application/json', s: 'keep', id: 'g-ct' },
@@ -1366,11 +1416,11 @@ function inspStepOutputBlock(stepNum) {
         { v: '}]', s: 'err', id: 'g-v4' },
       ];
       break;
-    case 22:
-      inspStepLabel = '22. response-guard: OUTPUT BLOCKED';
+    case 35:
+      inspStepLabel = '35. response-guard: OUTPUT BLOCKED';
       break;
-    case 23:
-      inspStepLabel = '23. IPP → Gateway: 400 (response blocked)';
+    case 36:
+      inspStepLabel = '36. IPP → Gateway: 400 (response blocked)';
       setInspPhase('error');
       inspHeaders = [
         { v: 'HTTP/1.1 400 Bad Request', s: 'err', id: 'r-status' },
@@ -1382,8 +1432,8 @@ function inspStepOutputBlock(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 24: {
-      inspStepLabel = '24. Gateway → Client: 400 (blocked)';
+    case 37: {
+      inspStepLabel = '37. Gateway → Client: 400 (blocked)';
       var st = inspHeaders.find(function(l) { return l.id === 'r-status'; });
       if (st) st.s = 'highlight';
       break; }
@@ -1488,22 +1538,33 @@ const flowOutputBlock = [
   { t: '13. body-field-to-header', mode: 'lightup', target: 'p_bfth', badge: 13 },
   // Route to InferencePool via EPP
   { t: '14. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '15. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 15, fromBottom: true, fromXOff: -20, toTop: true },
-  { t: '16. EPP selects vLLM pods', mode: 'lightup', target: 'sched', badge: 16 },
-  { t: '17. Gateway → Sidecar → vLLM Decode', mode: 'arrow', f: 'gw', to: 'decode', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -160, toTop: true, glow: 'pool' },
-  { t: '18. vLLM generates response (unfiltered)', mode: 'lightup', target: 'decode', badge: 18 },
+  { t: '15. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 15, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '16. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 16 },
+  { t: '17. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '18. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 18, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '19. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 19 },
+  { t: '20. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 20, fromRight: true, toLeft: true },
+  { t: '21. Prefill processing', mode: 'lightup', target: 'prefill', badge: 21 },
+  { t: '22. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 22, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '23. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 23, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '24. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 24, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '25. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 25, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '26. Decode generates response (unfiltered)', mode: 'lightup', target: 'decode', badge: 26 },
   // vLLM responds
-  { t: '19. vLLM responds with unfiltered output', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 19, fromTop: true, toBottom: true, toXOff: -120 },
-  // Response processing
-  { t: '20. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 20, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '27. Decode → Gateway (unfiltered response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 27, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '28. Gateway → EPP (response)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 28, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '29. EPP response plugins', mode: 'lightup', target: 'sched', badge: 29 },
+  { t: '30. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 30, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  // Response processing in IPP
+  { t: '31. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 31, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
   // OUTPUT GUARDRAIL - FAILS
-  { t: '21. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 21 },
-  { t: '22. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 22, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '23. NeMo responds: BLOCKED (harmful content in vLLM output)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 23, fromLeft: true, toRight: true, yOff: 10 },
-  { t: '24. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
+  { t: '32. response-guard (NeMo): checks output safety', mode: 'lightup', target: 'p_resp_guard', badge: 32 },
+  { t: '33. IPP → NeMo Service: evaluate output', mode: 'arrow', f: 'p_resp_guard', to: 'nemo_svc', c: '#2dd4bf', num: 33, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '34. NeMo responds: BLOCKED (harmful content)', mode: 'arrow', f: 'nemo_svc', to: 'p_resp_guard', c: '#f85149', num: 34, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '35. response-guard: OUTPUT BLOCKED', mode: 'lightup', target: 'p_resp_guard', badge: '✗', errColor: '#f85149' },
   // Error response
-  { t: '25. IPP → Gateway: 400 (response blocked)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 25, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '26. Gateway → Client: 400 (blocked by output guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 26, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '36. IPP → Gateway: 400 (response blocked)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#f85149', num: 36, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '37. Gateway → Client: 400 (blocked by output guardrail)', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 37, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowMap = { happy: flowHappy, input_block: flowInputBlock, output_block: flowOutputBlock };
