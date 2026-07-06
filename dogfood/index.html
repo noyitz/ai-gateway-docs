@@ -154,6 +154,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <option value="happyOpenAI">Codex → MaaS → OpenAI</option>
       <option value="directClaude">Direct: Claude Code → Anthropic (no MaaS)</option>
       <option value="directCodex">Direct: Codex → OpenAI (no MaaS)</option>
+      <option value="headroom">Claude Code → Headroom → MaaS → Anthropic</option>
     </select>
     <button class="start" onclick="run()">&#9654; Start</button>
     <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
@@ -227,6 +228,8 @@ const N = {
   user: { x: 350, y: 30, w: 120, h: 55, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
   codex: { x: 650, y: 30, w: 120, h: 55, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
+  headroom: { x: 280, y: 160, w: 720, h: 60, label: 'Headroom Proxy', sublabel: 'SmartCrusher · LogCompressor · Kompress ML · CCR · GPU', color: '#39d2c0', fs: 17, pocStatus: 'new' },
+
   cluster: { x: 170, y: 105, w: 950, h: 580, type: 'boundary' },
   aigw: { x: 195, y: 130, w: 905, h: 550, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
 
@@ -263,6 +266,7 @@ const N = {
 
 const tips = {
   user: { t:'Claude Code CLI', d:'Anthropic\'s official CLI tool for Claude. In this POC, Claude Code is configured to send requests through the MaaS gateway instead of directly to Anthropic. This is done by setting the ANTHROPIC_BASE_URL environment variable to point at the gateway. Since Claude Code already speaks native Anthropic API format, no api-translation plugin is needed (passthrough mode).', dt:[['Config','ANTHROPIC_BASE_URL=https://gateway.example.com'],['Format','Native Anthropic Messages API'],['Auth','x-api-key header with MaaS API key'],['Protocol','HTTP/1.1 + SSE streaming'],['Model','claude-opus-4-6']], links:[['Claude Code Docs','https://docs.anthropic.com/en/docs/claude-code']] },
+  headroom: { t:'Headroom Proxy (Context Compression)', d:'Transparent proxy that compresses LLM conversation history before forwarding to MaaS. Reduces token costs by 50-80% on tool outputs (build logs, JSON, grep results). Stores originals in CCR (SQLite) so the LLM can retrieve them if needed. GPU-accelerated via PyTorch CUDA for the Kompress ML engine.', dt:[['Architecture','Option A — transparent proxy before MaaS'],['Compression','SmartCrusher (JSON, 60-74%), LogCompressor (logs, 65-80%), Kompress ML (text, 10-35%)'],['CCR','Compress-Cache-Retrieve — originals stored in SQLite, LLM calls headroom_retrieve to get them back'],['GPU','PyTorch + CUDA on NVIDIA L4, ~134ms Kompress latency (vs ~1s on CPU)'],['Protected','User messages, system prompts, fresh tool outputs, errors — never compressed'],['Endpoints','/v1/messages (Anthropic), /v1/responses (OpenAI), /dashboard, /stats'],['Config','ANTHROPIC_BASE_URL=https://headroom-service-... (no /v1)'],['Fail-Open','Compression failure → request passes through uncompressed']], links:[['Headroom Gateway','https://github.com/yossiovadia/headroom-gateway'],['Upstream Headroom','https://github.com/headroomlabs-ai/headroom']] },
   codex: { t:'OpenAI Codex CLI', d:'OpenAI\'s agentic coding tool. Routes through MaaS gateway using the same per-user MaaS API key as Claude Code. Configured via OPENAI_BASE_URL environment variable.', dt:[['Config','OPENAI_BASE_URL=https://gateway.example.com'],['Format','OpenAI Responses API'],['Auth','Authorization: Bearer with MaaS API key'],['Protocol','HTTP/1.1 + SSE streaming'],['Model','gpt-5.5']], links:[['Codex Docs','https://openai.com/index/codex/']] },
   openai: { t:'OpenAI API', d:'OpenAI API endpoint for GPT models. In passthrough mode, requests arrive in native OpenAI format — no translation needed.', dt:[['Endpoint','api.openai.com'],['Auth','Bearer sk-proj-*'],['Models','gpt-5.5, gpt-4o-mini'],['API','/v1/responses'],['Streaming','SSE']], links:[['OpenAI API Docs','https://platform.openai.com/docs/api-reference']] },
   gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filter for payload processing. HTTPRoute for ext-claude-sonnet includes URLRewrite filter (ReplacePrefixMatch: /) to strip /llm/ext-claude-sonnet prefix — without this, Anthropic would receive /llm/ext-claude-sonnet/v1/messages instead of /v1/messages.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc)'],['HTTPRoute','ext-claude-sonnet'],['URLRewrite','ReplacePrefixMatch: / (strips /llm/ext-claude-sonnet prefix)'],['Mode','PASSTHROUGH (no format translation)'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io']] },
@@ -354,6 +358,7 @@ function ts(s) { return s * sc; }
 function drawBox(key) {
   const n = N[key], c = C();
   if (!n || n.type === 'boundary' || n.type === 'container') return;
+  if (key === 'headroom' && activeFlow !== 'headroom') return;
   const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
   const isA = activeNodes.has(key), hasBadge = badges[key] != null;
   ctx.save();
@@ -579,7 +584,7 @@ function drawBounds() {
     ctx.save();
     // Request plugins section (includes passthrough note)
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(325), ts(435), ts(215), ts(8));
+    ctx.roundRect(tx(618), ty(325 + (window._headroomOffset || 0)), ts(435), ts(215), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -590,11 +595,11 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(630), ty(335));
+    ctx.fillText('Request Plugins →', tx(630), ty(335 + (window._headroomOffset || 0)));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(555), ts(435), ts(70), ts(8));
+    ctx.roundRect(tx(618), ty(555 + (window._headroomOffset || 0)), ts(435), ts(70), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -605,7 +610,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(630), ty(563));
+    ctx.fillText('← Response Plugins', tx(630), ty(563 + (window._headroomOffset || 0)));
     ctx.restore();
   }
 
@@ -913,6 +918,23 @@ class Dot {
 // ================================================================
 function draw() {
   ctx.clearRect(0, 0, W, H);
+  // When headroom flow is active, expand cluster and shift everything
+  // down to make room for the headroom box at the top
+  var _hOff = activeFlow === 'headroom' ? 100 : 0;
+  N.cluster.h = 580 + _hOff;
+  N.aigw.h = 550 + _hOff;
+  N.gw.y = 160 + _hOff;
+  N.wasm.y = 310 + _hOff; N.auth.y = 355 + _hOff; N.rlimit.y = 415 + _hOff;
+  N.ipp.y = 290 + _hOff; N.ipp.h = 370;
+  N.p_bfth.y = 340 + _hOff; N.p_meter_req.y = 380 + _hOff;
+  N.p_mpr.y = 425 + _hOff; N.p_aki.y = 465 + _hOff;
+  N.passthrough_note.y = 504 + _hOff;
+  N.p_meter_resp.y = 570 + _hOff;
+  N.anthropic.y = 340 + _hOff; N.openai.y = 420 + _hOff;
+  N.metering.y = 350 + _hOff; N.pg_meter.y = 435 + _hOff;
+  N.grafana.y = 555 + _hOff;
+  // Store offset for section labels drawn in drawBounds
+  window._headroomOffset = _hOff;
   drawBounds();
   drawLines();
   Object.keys(N).forEach(function(k) { drawBox(k); });
@@ -1614,7 +1636,236 @@ function inspStep(stepNum) {
   else if (activeFlow === 'directCodex') inspStepDirectCodex(stepNum);
   else if (activeFlow === 'exhausted') { inspStepExhausted(stepNum); }
   else if (activeFlow === 'failopen') { inspStepFailopen(stepNum); }
+  else if (activeFlow === 'headroom') { inspStepHeadroom(stepNum); }
   renderInsp();
+}
+
+// ================================================================
+// INSPECTOR: HEADROOM FLOW
+// ================================================================
+function inspStepHeadroom(stepNum) {
+  inspHeaders = []; inspBody = []; inspCycle = []; inspStepLabel = '';
+  switch(stepNum) {
+    case 1:
+      inspStepLabel = 'Claude Code → Headroom Proxy';
+      inspHeaders = [
+        { v: 'POST /v1/messages HTTP/1.1', s: 'keep' },
+        { v: 'Host: headroom-service-...', s: 'add' },
+        { v: 'x-api-key: sk-oai-xxxxx (MaaS key)', s: 'keep' },
+        { v: 'Content-Type: application/json', s: 'keep' },
+        { v: 'anthropic-version: 2023-06-01', s: 'keep' },
+      ];
+      inspBody = [
+        { v: '{ "model": "claude-opus-4-8",', s: 'keep' },
+        { v: '  "messages": [ ... 150K+ tokens ... ],', s: 'highlight' },
+        { v: '  "max_tokens": 8192 }', s: 'keep' },
+      ];
+      break;
+    case 2:
+      inspStepLabel = 'Headroom — Content Detection';
+      inspBody = [
+        { v: 'ContentRouter scans each message:', s: 'keep' },
+        { v: '  user messages → PROTECTED', s: 'keep' },
+        { v: '  system prompts → PROTECTED', s: 'keep' },
+        { v: '  fresh tool outputs → EXCLUDED', s: 'keep' },
+        { v: '  stale tool outputs → COMPRESS ✓', s: 'add' },
+        { v: '  error outputs → PROTECTED', s: 'keep' },
+      ];
+      break;
+    case 3:
+      inspStepLabel = 'Headroom — Compression';
+      inspBody = [
+        { v: 'Engines applied per content type:', s: 'keep' },
+        { v: '  JSON arrays → SmartCrusher (Rust, <15ms)', s: 'add' },
+        { v: '  Build logs  → LogCompressor (<20ms)', s: 'add' },
+        { v: '  Grep output → SearchCompressor (<20ms)', s: 'add' },
+        { v: '  Free text   → Kompress ML (GPU, ~134ms)', s: 'add' },
+        { v: '', s: 'keep' },
+        { v: 'Before: 150,000 tokens', s: 'del' },
+        { v: 'After:   45,000 tokens (70% saved)', s: 'add' },
+      ];
+      break;
+    case 4:
+      inspStepLabel = 'Headroom — CCR Store';
+      inspBody = [
+        { v: 'Originals stored in CCR (SQLite on PVC)', s: 'add' },
+        { v: 'Hash → original content mapping', s: 'keep' },
+        { v: 'TTL: 30 minutes, max 1000 entries', s: 'keep' },
+        { v: 'LLM can retrieve via headroom_retrieve tool', s: 'keep' },
+      ];
+      break;
+    case 5:
+      inspStepLabel = 'Headroom — Tool Injection';
+      inspBody = [
+        { v: 'tools: [', s: 'keep' },
+        { v: '  ...existing tools...,', s: 'keep' },
+        { v: '  { "name": "headroom_retrieve",', s: 'add' },
+        { v: '    "description": "Retrieve original",', s: 'add' },
+        { v: '    "input_schema": { "hash": "string" } }', s: 'add' },
+        { v: ']', s: 'keep' },
+      ];
+      break;
+    case 6:
+      inspStepLabel = 'Headroom → Gateway (compressed)';
+      inspHeaders = [
+        { v: 'POST /v1/messages HTTP/1.1', s: 'keep' },
+        { v: 'Host: maas.<cluster-domain>', s: 'add' },
+        { v: 'x-api-key: sk-oai-xxxxx (passed through)', s: 'keep' },
+        { v: 'Content-Length: 45000 (was 150000)', s: 'add' },
+      ];
+      inspBody = [
+        { v: '{ "model": "claude-opus-4-8",', s: 'keep' },
+        { v: '  "messages": [ ... 45K tokens (compressed) ... ],', s: 'add' },
+        { v: '  "tools": [ ..., headroom_retrieve ],', s: 'add' },
+        { v: '  "max_tokens": 8192 }', s: 'keep' },
+      ];
+      break;
+    case 7:
+      inspStepLabel = 'Gateway → Kuadrant Wasm Shim';
+      inspHeaders = [
+        { v: 'x-api-key: sk-oai-xxxxx', s: 'keep' },
+        { v: 'X-Gateway-Model-Name: (not yet set)', s: 'keep' },
+      ];
+      break;
+    case 8:
+      inspStepLabel = 'Auth validates x-api-key';
+      inspHeaders = [
+        { v: 'x-api-key: sk-oai-xxxxx → validated ✓', s: 'highlight' },
+        { v: 'X-MaaS-Username: customer-a', s: 'add' },
+        { v: 'X-MaaS-Group: ai-eng', s: 'add' },
+        { v: 'X-MaaS-Subscription: default', s: 'add' },
+      ];
+      break;
+    case 9:
+      inspStepLabel = 'Kuadrant → Gateway (auth complete)';
+      inspHeaders = [{ v: 'Auth complete — request proceeds to IPP', s: 'keep' }];
+      break;
+    case 10:
+      inspStepLabel = 'Gateway → IPP (ext_proc)';
+      inspHeaders = [{ v: 'Request enters payload processing pipeline', s: 'keep' }];
+      break;
+    case 11:
+      inspStepLabel = 'body-field-to-header';
+      inspHeaders = [
+        { v: 'X-Gateway-Model-Name: claude-opus-4-8', s: 'add' },
+      ];
+      inspBody = [
+        { v: '{ "model": "claude-opus-4-8" ... }', s: 'keep' },
+        { v: '(compressed body from Headroom — 45K tokens)', s: 'highlight' },
+      ];
+      break;
+    case 12:
+      inspStepLabel = 'external-metering: Circuit Breaker';
+      inspHeaders = [
+        { v: 'X-MaaS-Username: customer-a', s: 'highlight' },
+      ];
+      inspCycle = [
+        { v: 'username: customer-a', s: 'add' },
+        { v: 'subscription: default', s: 'add' },
+      ];
+      break;
+    case 13:
+      inspStepLabel = 'model-provider-resolver';
+      inspCycle = [
+        { v: 'provider: anthropic', s: 'add' },
+        { v: 'targetModel: claude-opus-4-8', s: 'add' },
+        { v: 'apiFormat: messages', s: 'add' },
+      ];
+      break;
+    case 14:
+      inspStepLabel = 'apikey-injection';
+      inspHeaders = [
+        { v: 'x-api-key: sk-oai-xxxxx', s: 'del' },
+        { v: 'x-api-key: sk-ant-api03-xxxxx (real key)', s: 'add' },
+      ];
+      break;
+    case 15:
+      inspStepLabel = 'Metering: balance check';
+      inspBody = [
+        { v: 'GET /api/v1/customers/customer-a/entitlements/inference-tokens/value', s: 'keep' },
+      ];
+      break;
+    case 16:
+      inspStepLabel = 'Metering: hasAccess=true';
+      inspBody = [
+        { v: '{ "hasAccess": true, "balance": 4850 }', s: 'add' },
+      ];
+      break;
+    case 17:
+      inspStepLabel = 'IPP → Gateway (native format)';
+      inspBody = [
+        { v: 'Compressed body forwarded — no api-translation (passthrough)', s: 'keep' },
+      ];
+      break;
+    case 18:
+      inspStepLabel = 'Gateway routes to Anthropic';
+      inspHeaders = [
+        { v: 'Host: api.anthropic.com', s: 'add' },
+        { v: 'x-api-key: sk-ant-api03-xxxxx', s: 'keep' },
+      ];
+      break;
+    case 19:
+      inspStepLabel = 'Anthropic responds (SSE)';
+      inspHeaders = [{ v: 'HTTP/1.1 200 OK', s: 'keep' }, { v: 'content-type: text/event-stream', s: 'keep' }];
+      break;
+    case 20:
+      inspStepLabel = 'Gateway → IPP (response)';
+      inspBody = [{ v: 'SSE chunks flow through response plugins', s: 'keep' }];
+      break;
+    case 21:
+      inspStepLabel = 'external-metering: extract usage';
+      inspBody = [
+        { v: 'Extracts from SSE: input_tokens, output_tokens', s: 'add' },
+      ];
+      break;
+    case 22:
+      inspStepLabel = 'CloudEvents POST (async)';
+      inspBody = [
+        { v: 'POST /api/v1/events (non-blocking)', s: 'keep' },
+        { v: '{ user: "customer-a", model: "claude-opus-4-8",', s: 'keep' },
+        { v: '  prompt_tokens: 45000, completion_tokens: 2500 }', s: 'keep' },
+      ];
+      break;
+    case 23:
+      inspStepLabel = 'Gateway → Headroom (response)';
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep' },
+        { v: 'content-type: application/json', s: 'keep' },
+        { v: 'x-headroom-tokens-before: 150000', s: 'add' },
+        { v: 'x-headroom-tokens-after: 45000', s: 'add' },
+        { v: 'x-headroom-tokens-saved: 105000', s: 'add' },
+      ];
+      break;
+    case 24:
+      inspStepLabel = 'Headroom — CCR Intercept';
+      inspBody = [
+        { v: 'If LLM called headroom_retrieve(hash="..."):', s: 'keep' },
+        { v: '  1. Intercept tool_use in response', s: 'add' },
+        { v: '  2. Look up hash in CCR SQLite store', s: 'add' },
+        { v: '  3. Send continuation request with original', s: 'add' },
+        { v: '  4. Return final answer to client', s: 'add' },
+        { v: '', s: 'keep' },
+        { v: 'User never sees the round-trip', s: 'keep' },
+      ];
+      break;
+    case 25:
+      inspStepLabel = 'Headroom → Claude Code (response)';
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep' },
+        { v: 'x-headroom-tokens-before: 150000', s: 'add' },
+        { v: 'x-headroom-tokens-after: 45000', s: 'add' },
+        { v: 'x-headroom-tokens-saved: 105000', s: 'add' },
+        { v: 'x-headroom-model: claude-opus-4-8', s: 'add' },
+      ];
+      inspBody = [
+        { v: '{ "content": [ { "text": "..." } ],', s: 'keep' },
+        { v: '  "usage": { "input_tokens": 45000,', s: 'keep' },
+        { v: '             "output_tokens": 2500 } }', s: 'keep' },
+        { v: '', s: 'keep' },
+        { v: 'Cost saved: $1.58 this request (70% reduction)', s: 'add' },
+      ];
+      break;
+  }
 }
 
 // ================================================================
@@ -1731,9 +1982,40 @@ const flowDirectCodex = [
     waypoints: [{ x: 55, y: 50 }, { x: 140, y: 50 }] },
 ];
 
-const flowMap = { happy: flowHappy, happyOpenAI: flowHappyOpenAI, directClaude: flowDirectClaude, directCodex: flowDirectCodex, exhausted: flowExhausted, failopen: flowFailopen };
-const flowLabels = { happy: 'Claude Code → MaaS → Anthropic', happyOpenAI: 'Codex → MaaS → OpenAI', directClaude: 'Direct: Claude Code → Anthropic', directCodex: 'Direct: Codex → OpenAI', exhausted: 'Budget Exhausted (429)', failopen: 'Metering Unavailable (fail-open)' };
-const flowOrder = ['happy', 'happyOpenAI', 'directClaude', 'directCodex'];
+const flowHeadroom = [
+  // HEADROOM COMPRESSION PHASE
+  { t: '1. Claude Code sends POST /v1/messages → Headroom Proxy', mode: 'arrow', f: 'user', to: 'headroom', c: '#39d2c0', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: -150 },
+  { t: '2. Headroom: ContentRouter detects content types (JSON, logs, text)', mode: 'lightup', target: 'headroom', badge: 2 },
+  { t: '3. Headroom: compress stale tool outputs (SmartCrusher, LogCompressor, Kompress ML)', mode: 'lightup', target: 'headroom', badge: 3 },
+  { t: '4. Headroom: store originals in CCR (SQLite on PVC) for retrieval', mode: 'lightup', target: 'headroom', badge: 4 },
+  { t: '5. Headroom: inject headroom_retrieve tool into request', mode: 'lightup', target: 'headroom', badge: 5 },
+  { t: '6. Headroom forwards compressed request → Gateway', mode: 'arrow', f: 'headroom', to: 'gw', c: '#58a6ff', num: 6, fromBottom: true, toTop: true, fromXOff: 0, toXOff: 0 },
+  // MAAS PIPELINE (same as happy path)
+  { t: '7. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 7, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
+  { t: '8. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 8 },
+  { t: '9. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 9, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -70 },
+  { t: '10. Gateway → IPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 10, glow: 'ipp', fromBottom: true, fromXOff: 60, toTop: true, toXOff: 60 },
+  { t: '11. body-field-to-header: model → X-Gateway-Model-Name', mode: 'lightup', target: 'p_bfth', badge: 11 },
+  { t: '12. external-metering: Circuit Breaker check', mode: 'lightup', target: 'p_meter_req', badge: 12 },
+  { t: '13. model-provider-resolver: resolve model → provider', mode: 'lightup', target: 'p_mpr', badge: 13 },
+  { t: '14. apikey-injection: MaaS key → real provider key', mode: 'lightup', target: 'p_aki', badge: 14 },
+  { t: '15. IPP → Metering Service: GET /entitlements', mode: 'arrow', f: 'p_meter_req', to: 'metering', c: '#e3b341', num: 15, fromRight: true, toLeft: true, yOff: -15 },
+  { t: '16. Metering responds: hasAccess=true', mode: 'arrow', f: 'metering', to: 'p_meter_req', c: '#3fb950', num: 16, fromLeft: true, toRight: true, yOff: 15 },
+  { t: '17. IPP → Gateway (compressed body, native format)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -60, toBottom: true, toXOff: -60 },
+  { t: '18. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 18, fromLeft: true, toRight: true, yOff: -10 },
+  // RESPONSE PATH
+  { t: '19. Anthropic responds (SSE streaming)', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '20. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 20, fromBottom: true, fromXOff: 140, toTop: true, toXOff: 140 },
+  { t: '21. external-metering: extract token usage from SSE', mode: 'lightup', target: 'p_meter_resp', badge: 21 },
+  { t: '22. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 22, fromRight: true, toLeft: true, dashed: true },
+  { t: '23. IPP → Gateway → Headroom (response passthrough)', mode: 'arrow', f: 'gw', to: 'headroom', c: '#3fb950', num: 23, fromTop: true, toBottom: true, fromXOff: -200, toXOff: -200 },
+  { t: '24. Headroom: CCR intercept (if LLM called headroom_retrieve → retrieval round-trip)', mode: 'lightup', target: 'headroom', badge: 24 },
+  { t: '25. Response to Claude Code (+ x-headroom-tokens-saved headers)', mode: 'arrow', f: 'headroom', to: 'user', c: '#3fb950', num: 25, fromTop: true, toBottom: true, fromXOff: -150, toXOff: 0 },
+];
+
+const flowMap = { happy: flowHappy, happyOpenAI: flowHappyOpenAI, directClaude: flowDirectClaude, directCodex: flowDirectCodex, exhausted: flowExhausted, failopen: flowFailopen, headroom: flowHeadroom };
+const flowLabels = { happy: 'Claude Code → MaaS → Anthropic', happyOpenAI: 'Codex → MaaS → OpenAI', directClaude: 'Direct: Claude Code → Anthropic', directCodex: 'Direct: Codex → OpenAI', exhausted: 'Budget Exhausted (429)', failopen: 'Metering Unavailable (fail-open)', headroom: 'Claude Code → Headroom → MaaS → Anthropic' };
+const flowOrder = ['happy', 'happyOpenAI', 'directClaude', 'directCodex', 'headroom'];
 let flow = flowHappy;
 
 function updateTitle() {
