@@ -228,7 +228,7 @@ const N = {
   user: { x: 350, y: 30, w: 120, h: 55, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
   codex: { x: 650, y: 30, w: 120, h: 55, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
-  headroom: { x: 225, y: 700, w: 400, h: 65, label: 'Headroom Proxy', sublabel: 'SmartCrusher · LogCompressor · Kompress ML · CCR · GPU', color: '#39d2c0', fs: 16, pocStatus: 'new' },
+  headroom: { x: 1170, y: 640, w: 200, h: 65, label: 'Headroom Proxy', sublabel: 'compression · CCR · GPU', color: '#39d2c0', fs: 14, pocStatus: 'new' },
 
   cluster: { x: 170, y: 105, w: 950, h: 580, type: 'boundary' },
   aigw: { x: 195, y: 130, w: 905, h: 550, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
@@ -918,12 +918,6 @@ class Dot {
 // ================================================================
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  // Expand cluster + container when headroom flow is active
-  if (activeFlow === 'headroom') {
-    N.cluster.h = 700; N.aigw.h = 670;
-  } else {
-    N.cluster.h = 580; N.aigw.h = 550;
-  }
   drawBounds();
   drawLines();
   Object.keys(N).forEach(function(k) { drawBox(k); });
@@ -1973,12 +1967,12 @@ const flowDirectCodex = [
 
 const flowHeadroom = [
   // HEADROOM COMPRESSION PHASE
-  { t: '1. Claude Code sends POST /v1/messages → Headroom Proxy', mode: 'arrow', f: 'user', to: 'headroom', c: '#39d2c0', num: 1, fromBottom: true, toTop: true, fromXOff: 0, toXOff: -100 },
+  { t: '1. Claude Code sends POST /v1/messages → Headroom Proxy', mode: 'arrow', f: 'user', to: 'headroom', c: '#39d2c0', num: 1, fromBottom: true, toTop: true, fromXOff: 30, toXOff: 0 },
   { t: '2. Headroom: ContentRouter detects content types (JSON, logs, text)', mode: 'lightup', target: 'headroom', badge: 2 },
   { t: '3. Headroom: compress stale tool outputs (SmartCrusher, LogCompressor, Kompress ML)', mode: 'lightup', target: 'headroom', badge: 3 },
   { t: '4. Headroom: store originals in CCR (SQLite on PVC) for retrieval', mode: 'lightup', target: 'headroom', badge: 4 },
   { t: '5. Headroom: inject headroom_retrieve tool into request', mode: 'lightup', target: 'headroom', badge: 5 },
-  { t: '6. Headroom forwards compressed request → Gateway', mode: 'arrow', f: 'headroom', to: 'gw', c: '#58a6ff', num: 6, fromTop: true, toBottom: true, fromXOff: 100, toXOff: -100 },
+  { t: '6. Headroom forwards compressed request → Gateway', mode: 'arrow', f: 'headroom', to: 'gw', c: '#58a6ff', num: 6, fromLeft: true, toRight: true, yOff: 0 },
   // MAAS PIPELINE (same as happy path)
   { t: '7. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 7, glow: 'wasm', fromBottom: true, fromXOff: -120, toTop: true, toXOff: -20 },
   { t: '8. Auth validates x-api-key, injects X-MaaS-Username', mode: 'lightup', target: 'auth', badge: 8 },
@@ -1997,9 +1991,9 @@ const flowHeadroom = [
   { t: '20. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 20, fromBottom: true, fromXOff: 140, toTop: true, toXOff: 140 },
   { t: '21. external-metering: extract token usage from SSE', mode: 'lightup', target: 'p_meter_resp', badge: 21 },
   { t: '22. CloudEvents POST to Metering Service (async)', mode: 'arrow', f: 'p_meter_resp', to: 'metering', c: '#e3b341', num: 22, fromRight: true, toLeft: true, dashed: true },
-  { t: '23. IPP → Gateway → Headroom (response passthrough)', mode: 'arrow', f: 'gw', to: 'headroom', c: '#3fb950', num: 23, fromBottom: true, toTop: true, fromXOff: -200, toXOff: 100 },
+  { t: '23. IPP → Gateway → Headroom (response passthrough)', mode: 'arrow', f: 'gw', to: 'headroom', c: '#3fb950', num: 23, fromRight: true, toLeft: true, yOff: 10 },
   { t: '24. Headroom: CCR intercept (if LLM called headroom_retrieve → retrieval round-trip)', mode: 'lightup', target: 'headroom', badge: 24 },
-  { t: '25. Response to Claude Code (+ x-headroom-tokens-saved headers)', mode: 'arrow', f: 'headroom', to: 'user', c: '#3fb950', num: 25, fromTop: true, toBottom: true, fromXOff: -100, toXOff: 0 },
+  { t: '25. Response to Claude Code (+ x-headroom-tokens-saved headers)', mode: 'arrow', f: 'headroom', to: 'user', c: '#3fb950', num: 25, fromTop: true, toBottom: true, fromXOff: 0, toXOff: 30 },
 ];
 
 const flowMap = { happy: flowHappy, happyOpenAI: flowHappyOpenAI, directClaude: flowDirectClaude, directCodex: flowDirectCodex, exhausted: flowExhausted, failopen: flowFailopen, headroom: flowHeadroom };
