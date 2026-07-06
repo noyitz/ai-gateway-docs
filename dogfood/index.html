@@ -228,7 +228,7 @@ const N = {
   user: { x: 350, y: 30, w: 120, h: 55, label: 'Claude Code', sublabel: 'ANTHROPIC_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F4BB}' },
   codex: { x: 650, y: 30, w: 120, h: 55, label: 'Codex', sublabel: 'OPENAI_BASE_URL=gateway', type: 'icon', iconEmoji: '\u{1F916}' },
 
-  headroom: { x: 230, y: 160, w: 680, h: 60, label: 'Headroom Proxy', sublabel: 'SmartCrusher · LogCompressor · Kompress ML · CCR · GPU', color: '#39d2c0', fs: 17, pocStatus: 'new' },
+  headroom: { x: 280, y: 160, w: 720, h: 60, label: 'Headroom Proxy', sublabel: 'SmartCrusher · LogCompressor · Kompress ML · CCR · GPU', color: '#39d2c0', fs: 17, pocStatus: 'new' },
 
   cluster: { x: 170, y: 105, w: 950, h: 580, type: 'boundary' },
   aigw: { x: 195, y: 130, w: 905, h: 550, type: 'container', label: 'AI Inference Gateway / OpenShift AI', color: '#58a6ff' },
@@ -584,7 +584,7 @@ function drawBounds() {
     ctx.save();
     // Request plugins section (includes passthrough note)
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(325), ts(435), ts(215), ts(8));
+    ctx.roundRect(tx(618), ty(325 + (window._headroomOffset || 0)), ts(435), ts(215), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -595,11 +595,11 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(630), ty(335));
+    ctx.fillText('Request Plugins →', tx(630), ty(335 + (window._headroomOffset || 0)));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(618), ty(555), ts(435), ts(70), ts(8));
+    ctx.roundRect(tx(618), ty(555 + (window._headroomOffset || 0)), ts(435), ts(70), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -610,7 +610,7 @@ function drawBounds() {
     ctx.font = 'bold '+ts(10)+'px system-ui';
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(630), ty(563));
+    ctx.fillText('← Response Plugins', tx(630), ty(563 + (window._headroomOffset || 0)));
     ctx.restore();
   }
 
@@ -925,7 +925,7 @@ function draw() {
   N.aigw.h = 550 + _hOff;
   N.gw.y = 160 + _hOff;
   N.wasm.y = 310 + _hOff; N.auth.y = 355 + _hOff; N.rlimit.y = 415 + _hOff;
-  N.ipp.y = 290 + _hOff;
+  N.ipp.y = 290 + _hOff; N.ipp.h = 370 + _hOff;
   N.p_bfth.y = 340 + _hOff; N.p_meter_req.y = 380 + _hOff;
   N.p_mpr.y = 425 + _hOff; N.p_aki.y = 465 + _hOff;
   N.passthrough_note.y = 504 + _hOff;
@@ -933,6 +933,8 @@ function draw() {
   N.anthropic.y = 340 + _hOff; N.openai.y = 420 + _hOff;
   N.metering.y = 350 + _hOff; N.pg_meter.y = 435 + _hOff;
   N.grafana.y = 555 + _hOff;
+  // Store offset for section labels drawn in drawBounds
+  window._headroomOffset = _hOff;
   drawBounds();
   drawLines();
   Object.keys(N).forEach(function(k) { drawBox(k); });
