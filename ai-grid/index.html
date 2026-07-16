@@ -610,25 +610,29 @@ function inspStepSpokeEast(sn){
     case 3:inspStepLabel='3. Authorino -> MaaS API (validate key)';break;
     case 4:inspStepLabel='4. MaaS API: key valid';inspHeaders.push({v:'x-maas-username: dev-user',s:'add',id:'h-user'});inspHeaders.push({v:'x-maas-subscription: gpu-pool',s:'add',id:'h-sub'});break;
     case 5:inspStepLabel='5. Kuadrant: rate limit (gold tier)';inspCycle=[{v:'tier = "gold" → bucket 10 req/min',s:'add',id:'c-tier'}];break;
-    case 6:inspStepLabel='6. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: llama-4-scout',s:'add',id:'h-xmodel'});break;
-    case 7:inspStepLabel='7. IPP: model-provider-resolver';inspCycle.push({v:'type = "inferencepool"',s:'add',id:'c-type'});inspCycle.push({v:'CycleState: provider, endpoint, api-format',s:'add',id:'c-cs'});break;
-    case 8:inspStepLabel='8. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspHeaders.find(function(l){return l.id==='h-sub';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
-    case 9:inspStepLabel='9. metering-circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
-    case 10:inspStepLabel='10. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
-    case 11:inspStepLabel='11. model-provider-resolver -> EPP (Hub)';inspCycle.push({v:'spoke-east load = 0.3',s:'add',id:'c-eload'});inspCycle.push({v:'spoke-west load = 0.7',s:'add',id:'c-wload'});break;
-    case 12:inspStepLabel='12. EPP (Hub): pick spoke-east';var ce=inspCycle.find(function(l){return l.id==='c-eload';});if(ce)ce.s='highlight';inspCycle.push({v:'chosen = "spoke-east"',s:'add',id:'c-chosen'});break;
-    case 13:inspStepLabel='13. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-east-xxx...',s:'add',id:'h-spoke'});break;
-    case 14:inspStepLabel='14. Forward to spoke-east Istio';break;
-    case 15:inspStepLabel='15. Spoke EPP: pick P/D workers';break;
-    case 16:inspStepLabel='16. Sidecar -> Prefill Pod';break;
-    case 17:inspStepLabel='17. Prefill processing';break;
-    case 18:inspStepLabel='18. NIXL: KV cache transfer (RDMA)';break;
-    case 19:inspStepLabel='19. Decode: auto-regressive generation';break;
-    case 20:inspStepLabel='20. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "llama-4-scout"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hello!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}',s:'keep',id:'r-usage'}];inspCycle=[];break;
-    case 21:inspStepLabel='21. Response: spoke-east -> hub';break;
-    case 22:inspStepLabel='22. metering-collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
-    case 23:inspStepLabel='23. IPP: api-translation (response)';break;
-    case 24:inspStepLabel='24. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
+    case 6:inspStepLabel='6. Gateway -> IPP';break;
+    case 7:inspStepLabel='7. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: llama-4-scout',s:'add',id:'h-xmodel'});break;
+    case 8:inspStepLabel='8. IPP: model-provider-resolver';inspCycle.push({v:'type = "inferencepool"',s:'add',id:'c-type'});inspCycle.push({v:'CycleState: provider, endpoint, api-format',s:'add',id:'c-cs'});break;
+    case 9:inspStepLabel='9. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspHeaders.find(function(l){return l.id==='h-sub';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
+    case 10:inspStepLabel='10. IPP: metering-circuit-break';break;
+    case 11:inspStepLabel='11. circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
+    case 12:inspStepLabel='12. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
+    case 13:inspStepLabel='13. IPP: api-translation (request)';break;
+    case 14:inspStepLabel='14. resolver -> EPP (Hub)';inspCycle.push({v:'spoke-east load = 0.3',s:'add',id:'c-eload'});inspCycle.push({v:'spoke-west load = 0.7',s:'add',id:'c-wload'});break;
+    case 15:inspStepLabel='15. EPP (Hub): pick spoke-east';var ce=inspCycle.find(function(l){return l.id==='c-eload';});if(ce)ce.s='highlight';inspCycle.push({v:'chosen = "spoke-east"',s:'add',id:'c-chosen'});break;
+    case 16:inspStepLabel='16. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-east-xxx...',s:'add',id:'h-spoke'});break;
+    case 17:inspStepLabel='17. Forward to spoke-east Istio';break;
+    case 18:inspStepLabel='18. Spoke EPP: pick P/D workers';break;
+    case 19:inspStepLabel='19. Sidecar -> Prefill Pod';break;
+    case 20:inspStepLabel='20. Prefill processing';break;
+    case 21:inspStepLabel='21. NIXL: KV cache transfer (RDMA)';break;
+    case 22:inspStepLabel='22. Decode: auto-regressive generation';break;
+    case 23:inspStepLabel='23. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "llama-4-scout"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hello!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}',s:'keep',id:'r-usage'}];inspCycle=[];break;
+    case 24:inspStepLabel='24. Response: spoke-east -> hub';break;
+    case 25:inspStepLabel='25. IPP: metering-collection';break;
+    case 26:inspStepLabel='26. collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
+    case 27:inspStepLabel='27. IPP: api-translation (response)';break;
+    case 28:inspStepLabel='28. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
   }
   renderInsp();
 }
@@ -640,25 +644,29 @@ function inspStepSpokeWest(sn){
     case 3:inspStepLabel='3. Authorino -> MaaS API';break;
     case 4:inspStepLabel='4. MaaS API: key valid';inspHeaders.push({v:'x-maas-username: prod-user',s:'add',id:'h-user'});inspHeaders.push({v:'x-maas-subscription: gpu-pool',s:'add',id:'h-sub'});break;
     case 5:inspStepLabel='5. Kuadrant: rate limit (silver tier)';inspCycle=[{v:'tier = "silver" → bucket 3 req/min',s:'add',id:'c-tier'}];break;
-    case 6:inspStepLabel='6. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: qwen-3',s:'add',id:'h-xmodel'});break;
-    case 7:inspStepLabel='7. IPP: model-provider-resolver';inspCycle.push({v:'type = "inferencepool"',s:'add',id:'c-type'});inspCycle.push({v:'CycleState: provider, endpoint, api-format',s:'add',id:'c-cs'});break;
-    case 8:inspStepLabel='8. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspHeaders.find(function(l){return l.id==='h-sub';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
-    case 9:inspStepLabel='9. metering-circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
-    case 10:inspStepLabel='10. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
-    case 11:inspStepLabel='11. model-provider-resolver -> EPP (Hub)';inspCycle.push({v:'spoke-east load = 0.8',s:'add',id:'c-eload'});inspCycle.push({v:'spoke-west load = 0.2',s:'add',id:'c-wload'});break;
-    case 12:inspStepLabel='12. EPP (Hub): pick spoke-west';var cw=inspCycle.find(function(l){return l.id==='c-wload';});if(cw)cw.s='highlight';inspCycle.push({v:'chosen = "spoke-west"',s:'add',id:'c-chosen'});break;
-    case 13:inspStepLabel='13. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-west-xxx...',s:'add',id:'h-spoke'});break;
-    case 14:inspStepLabel='14. Forward to spoke-west Istio';break;
-    case 15:inspStepLabel='15. Spoke EPP: pick P/D workers';break;
-    case 16:inspStepLabel='16. Sidecar -> Prefill Pod';break;
-    case 17:inspStepLabel='17. Prefill processing';break;
-    case 18:inspStepLabel='18. NIXL: KV cache transfer (RDMA)';break;
-    case 19:inspStepLabel='19. Decode: auto-regressive generation';break;
-    case 20:inspStepLabel='20. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "qwen-3"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hi!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":3,"total_tokens":11}',s:'keep',id:'r-usage'}];inspCycle=[];break;
-    case 21:inspStepLabel='21. Response: spoke-west -> hub';break;
-    case 22:inspStepLabel='22. metering-collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (11 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
-    case 23:inspStepLabel='23. IPP: api-translation (response)';break;
-    case 24:inspStepLabel='24. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
+    case 6:inspStepLabel='6. Gateway -> IPP';break;
+    case 7:inspStepLabel='7. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: qwen-3',s:'add',id:'h-xmodel'});break;
+    case 8:inspStepLabel='8. IPP: model-provider-resolver';inspCycle.push({v:'type = "inferencepool"',s:'add',id:'c-type'});inspCycle.push({v:'CycleState: provider, endpoint, api-format',s:'add',id:'c-cs'});break;
+    case 9:inspStepLabel='9. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspHeaders.find(function(l){return l.id==='h-sub';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
+    case 10:inspStepLabel='10. IPP: metering-circuit-break';break;
+    case 11:inspStepLabel='11. circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
+    case 12:inspStepLabel='12. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
+    case 13:inspStepLabel='13. IPP: api-translation (request)';break;
+    case 14:inspStepLabel='14. resolver -> EPP (Hub)';inspCycle.push({v:'spoke-east load = 0.8',s:'add',id:'c-eload'});inspCycle.push({v:'spoke-west load = 0.2',s:'add',id:'c-wload'});break;
+    case 15:inspStepLabel='15. EPP (Hub): pick spoke-west';var cw=inspCycle.find(function(l){return l.id==='c-wload';});if(cw)cw.s='highlight';inspCycle.push({v:'chosen = "spoke-west"',s:'add',id:'c-chosen'});break;
+    case 16:inspStepLabel='16. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-west-xxx...',s:'add',id:'h-spoke'});break;
+    case 17:inspStepLabel='17. Forward to spoke-west Istio';break;
+    case 18:inspStepLabel='18. Spoke EPP: pick P/D workers';break;
+    case 19:inspStepLabel='19. Sidecar -> Prefill Pod';break;
+    case 20:inspStepLabel='20. Prefill processing';break;
+    case 21:inspStepLabel='21. NIXL: KV cache transfer (RDMA)';break;
+    case 22:inspStepLabel='22. Decode: auto-regressive generation';break;
+    case 23:inspStepLabel='23. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "qwen-3"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hi!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":3,"total_tokens":11}',s:'keep',id:'r-usage'}];inspCycle=[];break;
+    case 24:inspStepLabel='24. Response: spoke-west -> hub';break;
+    case 25:inspStepLabel='25. IPP: metering-collection';break;
+    case 26:inspStepLabel='26. collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (11 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
+    case 27:inspStepLabel='27. IPP: api-translation (response)';break;
+    case 28:inspStepLabel='28. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
   }
   renderInsp();
 }
@@ -670,18 +678,21 @@ function inspStepExternal(sn){
     case 3:inspStepLabel='3. Authorino -> MaaS API';break;
     case 4:inspStepLabel='4. MaaS API: key valid';inspHeaders.push({v:'x-maas-username: dev-user',s:'add',id:'h-user'});break;
     case 5:inspStepLabel='5. Kuadrant: rate limit check';break;
-    case 6:inspStepLabel='6. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: claude-haiku-4-5',s:'add',id:'h-xmodel'});break;
-    case 7:inspStepLabel='7. IPP: model-provider-resolver (external)';inspCycle=[{v:'type = "external"',s:'add',id:'c-type'},{v:'provider = "anthropic"',s:'add',id:'c-prov'}];break;
-    case 8:inspStepLabel='8. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
-    case 9:inspStepLabel='9. metering-circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
-    case 10:inspStepLabel='10. IPP: stream-usage-enforcer';break;
-    case 11:inspStepLabel='11. IPP: api-translation (OpenAI -> Anthropic)';inspHeaders.find(function(l){return l.id==='h-path';}).s='del';inspHeaders.push({v:'POST /v1/messages',s:'add',id:'h-path2'});inspHeaders.push({v:'anthropic-version: 2023-06-01',s:'add',id:'h-aver'});break;
-    case 12:inspStepLabel='12. IPP: apikey-injection';inspHeaders.find(function(l){return l.id==='h-auth';}).s='del';inspHeaders.push({v:'x-api-key: sk-ant-api03-xxxxx...',s:'add',id:'h-xapi'});break;
-    case 13:inspStepLabel='13. Forward to Anthropic';var xapi=inspHeaders.find(function(l){return l.id==='h-xapi';});if(xapi)xapi.s='highlight';break;
-    case 14:inspStepLabel='14. Anthropic responds';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"type": "message"',s:'keep',id:'r-type'},{v:'"content": [{"type":"text","text":"Hello!"}]',s:'keep',id:'r-content'},{v:'"stop_reason": "end_turn"',s:'keep',id:'r-stop'},{v:'"usage": {"input_tokens":8,"output_tokens":2}',s:'keep',id:'r-usage'}];inspCycle=[];break;
-    case 15:inspStepLabel='15. metering-collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
-    case 16:inspStepLabel='16. IPP: api-translation (response)';inspBody.find(function(l){return l.id==='r-type';}).s='del';inspBody.push({v:'"object": "chat.completion"',s:'add',id:'r-obj'});inspBody.find(function(l){return l.id==='r-content';}).s='del';inspBody.push({v:'"choices": [{"message":{"content":"Hello!"}}]',s:'add',id:'r-choices'});inspBody.find(function(l){return l.id==='r-stop';}).s='del';inspBody.push({v:'"finish_reason": "stop"',s:'add',id:'r-finish'});break;
-    case 17:inspStepLabel='17. Response to client (OpenAI format)';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
+    case 6:inspStepLabel='6. Gateway -> IPP';break;
+    case 7:inspStepLabel='7. IPP: model-extractor';inspHeaders.push({v:'X-Gateway-Model-Name: claude-haiku-4-5',s:'add',id:'h-xmodel'});break;
+    case 8:inspStepLabel='8. IPP: model-provider-resolver (external)';inspCycle=[{v:'type = "external"',s:'add',id:'c-type'},{v:'provider = "anthropic"',s:'add',id:'c-prov'}];break;
+    case 9:inspStepLabel='9. IPP: maas-headers-guard';inspHeaders.find(function(l){return l.id==='h-user';}).s='del';inspCycle.push({v:'CycleState: maas-headers stored',s:'add',id:'c-maas'});break;
+    case 10:inspStepLabel='10. IPP: metering-circuit-break';break;
+    case 11:inspStepLabel='11. circuit-break -> Metering System';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
+    case 12:inspStepLabel='12. IPP: stream-usage-enforcer';break;
+    case 13:inspStepLabel='13. IPP: api-translation (OpenAI -> Anthropic)';inspHeaders.find(function(l){return l.id==='h-path';}).s='del';inspHeaders.push({v:'POST /v1/messages',s:'add',id:'h-path2'});inspHeaders.push({v:'anthropic-version: 2023-06-01',s:'add',id:'h-aver'});break;
+    case 14:inspStepLabel='14. IPP: apikey-injection';inspHeaders.find(function(l){return l.id==='h-auth';}).s='del';inspHeaders.push({v:'x-api-key: sk-ant-api03-xxxxx...',s:'add',id:'h-xapi'});break;
+    case 15:inspStepLabel='15. Forward to Anthropic';var xapi=inspHeaders.find(function(l){return l.id==='h-xapi';});if(xapi)xapi.s='highlight';break;
+    case 16:inspStepLabel='16. Anthropic responds';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"type": "message"',s:'keep',id:'r-type'},{v:'"content": [{"type":"text","text":"Hello!"}]',s:'keep',id:'r-content'},{v:'"stop_reason": "end_turn"',s:'keep',id:'r-stop'},{v:'"usage": {"input_tokens":8,"output_tokens":2}',s:'keep',id:'r-usage'}];inspCycle=[];break;
+    case 17:inspStepLabel='17. IPP: metering-collection';break;
+    case 18:inspStepLabel='18. collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
+    case 19:inspStepLabel='19. IPP: api-translation (response)';inspBody.find(function(l){return l.id==='r-type';}).s='del';inspBody.push({v:'"object": "chat.completion"',s:'add',id:'r-obj'});inspBody.find(function(l){return l.id==='r-content';}).s='del';inspBody.push({v:'"choices": [{"message":{"content":"Hello!"}}]',s:'add',id:'r-choices'});inspBody.find(function(l){return l.id==='r-stop';}).s='del';inspBody.push({v:'"finish_reason": "stop"',s:'add',id:'r-finish'});break;
+    case 20:inspStepLabel='20. Response to client (OpenAI format)';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
   }
   renderInsp();
 }
@@ -698,27 +709,31 @@ var flowSpokeEast=[
   {t:'3. Authorino -> MaaS API (key validation)',mode:'arrow',f:'auth',to:'maas',c:'#f0883e',num:3,fromBottom:true,toTop:true},
   {t:'4. MaaS API: key valid, wristband minted',mode:'lightup',target:'maas',badge:4},
   {t:'5. Kuadrant: rate limit (Limitador)',mode:'arrow',f:'gw',to:'rlimit',c:'#e3b341',num:5,fromBottom:true,fromXOff:-60,toTop:true},
-  {t:'6. IPP: model-extractor',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
-  {t:'7. IPP: model-provider-resolver',mode:'lightup',target:'p_mpr',badge:7},
-  {t:'8. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:8},
-  {t:'9. metering-circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:9,fromRight:true,toLeft:true},
-  {t:'10. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:10},
-  {t:'11. model-provider-resolver -> EPP (Hub)',mode:'arrow',f:'p_mpr',to:'hub_epp',c:'#79c0ff',num:11,fromRight:true,toLeft:true},
-  {t:'12. EPP (Hub): pick spoke-east (lowest load)',mode:'lightup',target:'hub_epp',badge:12},
-  {t:'13. IPP: apikey-injection (spoke-east cred)',mode:'lightup',target:'p_aki',badge:13},
-  {t:'14. Forward to spoke-east Istio',mode:'arrow',f:'gw',to:'gw_east',c:'#58a6ff',num:14,fromBottom:true,fromXOff:-200,toTop:true,
+  {t:'6. Gateway -> IPP',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
+  {t:'7. IPP: model-extractor',mode:'lightup',target:'p_model_ext',badge:7},
+  {t:'8. IPP: model-provider-resolver',mode:'lightup',target:'p_mpr',badge:8},
+  {t:'9. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:9},
+  {t:'10. IPP: metering-circuit-break',mode:'lightup',target:'p_meter_cb',badge:10},
+  {t:'11. circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:11,fromRight:true,toLeft:true},
+  {t:'12. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:12},
+  {t:'13. IPP: api-translation (request)',mode:'lightup',target:'p_at_req',badge:13},
+  {t:'14. resolver -> EPP (Hub)',mode:'arrow',f:'p_mpr',to:'hub_epp',c:'#79c0ff',num:14,fromRight:true,toLeft:true},
+  {t:'15. EPP (Hub): pick spoke-east (lowest load)',mode:'lightup',target:'hub_epp',badge:15},
+  {t:'16. IPP: apikey-injection (spoke-east cred)',mode:'lightup',target:'p_aki',badge:16},
+  {t:'17. Forward to spoke-east Istio',mode:'arrow',f:'gw',to:'gw_east',c:'#58a6ff',num:17,fromBottom:true,fromXOff:-200,toTop:true,
     waypoints:[{x:210,y:690},{x:240,y:760}],glow:'spoke_east'},
-  {t:'15. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_east',to:'epp_east',c:'#79c0ff',num:15,fromBottom:true,toTop:true},
-  {t:'16. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_east',to:'prefill_east',c:'#58a6ff',num:16,fromRight:true,toLeft:true},
-  {t:'17. Prefill processing',mode:'lightup',target:'prefill_east',badge:17},
-  {t:'18. NIXL: KV cache transfer',mode:'arrow',f:'prefill_east',to:'nixl_east',c:'#8b949e',num:18,fromLeft:true,toRight:true},
-  {t:'19. Decode: generation',mode:'arrow',f:'nixl_east',to:'decode_east',c:'#8b949e',num:19,fromLeft:true,toRight:true},
-  {t:'20. Decode complete',mode:'lightup',target:'decode_east',badge:20},
-  {t:'21. Response: spoke-east -> hub',mode:'arrow',f:'gw_east',to:'gw',c:'#3fb950',num:21,fromTop:true,toBottom:true,toXOff:-250,
+  {t:'18. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_east',to:'epp_east',c:'#79c0ff',num:18,fromBottom:true,toTop:true},
+  {t:'19. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_east',to:'prefill_east',c:'#58a6ff',num:19,fromRight:true,toLeft:true},
+  {t:'20. Prefill processing',mode:'lightup',target:'prefill_east',badge:20},
+  {t:'21. NIXL: KV cache transfer',mode:'arrow',f:'prefill_east',to:'nixl_east',c:'#8b949e',num:21,fromLeft:true,toRight:true},
+  {t:'22. Decode: generation',mode:'arrow',f:'nixl_east',to:'decode_east',c:'#8b949e',num:22,fromLeft:true,toRight:true},
+  {t:'23. Decode complete',mode:'lightup',target:'decode_east',badge:23},
+  {t:'24. Response: spoke-east -> hub',mode:'arrow',f:'gw_east',to:'gw',c:'#3fb950',num:24,fromTop:true,toBottom:true,toXOff:-250,
     waypoints:[{x:180,y:730},{x:180,y:680}]},
-  {t:'22. metering-collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:22,fromRight:true,toLeft:true},
-  {t:'23. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:23},
-  {t:'24. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:24,fromLeft:true,toRight:true,yOff:10},
+  {t:'25. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:25},
+  {t:'26. collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:26,fromRight:true,toLeft:true},
+  {t:'27. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:27},
+  {t:'28. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:28,fromLeft:true,toRight:true,yOff:10},
 ];
 
 var flowSpokeWest=[
@@ -727,27 +742,31 @@ var flowSpokeWest=[
   {t:'3. Authorino -> MaaS API',mode:'arrow',f:'auth',to:'maas',c:'#f0883e',num:3,fromBottom:true,toTop:true},
   {t:'4. MaaS API: key valid, wristband minted',mode:'lightup',target:'maas',badge:4},
   {t:'5. Kuadrant: rate limit (Limitador)',mode:'arrow',f:'gw',to:'rlimit',c:'#e3b341',num:5,fromBottom:true,fromXOff:-60,toTop:true},
-  {t:'6. IPP: model-extractor',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
-  {t:'7. IPP: model-provider-resolver',mode:'lightup',target:'p_mpr',badge:7},
-  {t:'8. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:8},
-  {t:'9. metering-circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:9,fromRight:true,toLeft:true},
-  {t:'10. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:10},
-  {t:'11. model-provider-resolver -> EPP (Hub)',mode:'arrow',f:'p_mpr',to:'hub_epp',c:'#79c0ff',num:11,fromRight:true,toLeft:true},
-  {t:'12. EPP (Hub): pick spoke-west (lowest load)',mode:'lightup',target:'hub_epp',badge:12},
-  {t:'13. IPP: apikey-injection (spoke-west cred)',mode:'lightup',target:'p_aki',badge:13},
-  {t:'14. Forward to spoke-west Istio',mode:'arrow',f:'gw',to:'gw_west',c:'#58a6ff',num:14,fromBottom:true,fromXOff:-50,toTop:true,
+  {t:'6. Gateway -> IPP',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
+  {t:'7. IPP: model-extractor',mode:'lightup',target:'p_model_ext',badge:7},
+  {t:'8. IPP: model-provider-resolver',mode:'lightup',target:'p_mpr',badge:8},
+  {t:'9. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:9},
+  {t:'10. IPP: metering-circuit-break',mode:'lightup',target:'p_meter_cb',badge:10},
+  {t:'11. circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:11,fromRight:true,toLeft:true},
+  {t:'12. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:12},
+  {t:'13. IPP: api-translation (request)',mode:'lightup',target:'p_at_req',badge:13},
+  {t:'14. resolver -> EPP (Hub)',mode:'arrow',f:'p_mpr',to:'hub_epp',c:'#79c0ff',num:14,fromRight:true,toLeft:true},
+  {t:'15. EPP (Hub): pick spoke-west (lowest load)',mode:'lightup',target:'hub_epp',badge:15},
+  {t:'16. IPP: apikey-injection (spoke-west cred)',mode:'lightup',target:'p_aki',badge:16},
+  {t:'17. Forward to spoke-west Istio',mode:'arrow',f:'gw',to:'gw_west',c:'#58a6ff',num:17,fromBottom:true,fromXOff:-50,toTop:true,
     waypoints:[{x:510,y:690},{x:720,y:760}],glow:'spoke_west'},
-  {t:'15. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_west',to:'epp_west',c:'#79c0ff',num:15,fromBottom:true,toTop:true},
-  {t:'16. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_west',to:'prefill_west',c:'#58a6ff',num:16,fromRight:true,toLeft:true},
-  {t:'17. Prefill processing',mode:'lightup',target:'prefill_west',badge:17},
-  {t:'18. NIXL: KV cache transfer',mode:'arrow',f:'prefill_west',to:'nixl_west',c:'#8b949e',num:18,fromLeft:true,toRight:true},
-  {t:'19. Decode: generation',mode:'arrow',f:'nixl_west',to:'decode_west',c:'#8b949e',num:19,fromLeft:true,toRight:true},
-  {t:'20. Decode complete',mode:'lightup',target:'decode_west',badge:20},
-  {t:'21. Response: spoke-west -> hub',mode:'arrow',f:'gw_west',to:'gw',c:'#3fb950',num:21,fromTop:true,toBottom:true,toXOff:100,
+  {t:'18. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_west',to:'epp_west',c:'#79c0ff',num:18,fromBottom:true,toTop:true},
+  {t:'19. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_west',to:'prefill_west',c:'#58a6ff',num:19,fromRight:true,toLeft:true},
+  {t:'20. Prefill processing',mode:'lightup',target:'prefill_west',badge:20},
+  {t:'21. NIXL: KV cache transfer',mode:'arrow',f:'prefill_west',to:'nixl_west',c:'#8b949e',num:21,fromLeft:true,toRight:true},
+  {t:'22. Decode: generation',mode:'arrow',f:'nixl_west',to:'decode_west',c:'#8b949e',num:22,fromLeft:true,toRight:true},
+  {t:'23. Decode complete',mode:'lightup',target:'decode_west',badge:23},
+  {t:'24. Response: spoke-west -> hub',mode:'arrow',f:'gw_west',to:'gw',c:'#3fb950',num:24,fromTop:true,toBottom:true,toXOff:100,
     waypoints:[{x:780,y:730},{x:780,y:680}]},
-  {t:'22. metering-collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:22,fromRight:true,toLeft:true},
-  {t:'23. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:23},
-  {t:'24. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:24,fromLeft:true,toRight:true,yOff:10},
+  {t:'25. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:25},
+  {t:'26. collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:26,fromRight:true,toLeft:true},
+  {t:'27. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:27},
+  {t:'28. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:28,fromLeft:true,toRight:true,yOff:10},
 ];
 
 var flowExternal=[
@@ -756,20 +775,23 @@ var flowExternal=[
   {t:'3. Authorino -> MaaS API',mode:'arrow',f:'auth',to:'maas',c:'#f0883e',num:3,fromBottom:true,toTop:true},
   {t:'4. MaaS API: key valid',mode:'lightup',target:'maas',badge:4},
   {t:'5. Kuadrant: rate limit',mode:'arrow',f:'gw',to:'rlimit',c:'#e3b341',num:5,fromBottom:true,fromXOff:-60,toTop:true},
-  {t:'6. IPP: model-extractor',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
-  {t:'7. IPP: model-provider-resolver (external)',mode:'lightup',target:'p_mpr',badge:7},
-  {t:'8. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:8},
-  {t:'9. metering-circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:9,fromRight:true,toLeft:true},
-  {t:'10. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:10},
-  {t:'11. IPP: api-translation (OpenAI -> Anthropic)',mode:'lightup',target:'p_at_req',badge:11},
-  {t:'12. IPP: apikey-injection',mode:'lightup',target:'p_aki',badge:12},
-  {t:'13. Forward to Anthropic',mode:'arrow',f:'gw',to:'anthropic',c:'#e3b341',num:13,fromBottom:true,fromXOff:250,toTop:true,
+  {t:'6. Gateway -> IPP',mode:'arrow',f:'gw',to:'p_model_ext',c:'#d2a8ff',num:6,fromBottom:true,fromXOff:80,toTop:true},
+  {t:'7. IPP: model-extractor',mode:'lightup',target:'p_model_ext',badge:7},
+  {t:'8. IPP: model-provider-resolver (external)',mode:'lightup',target:'p_mpr',badge:8},
+  {t:'9. IPP: maas-headers-guard (strip x-maas-*)',mode:'lightup',target:'p_maas_guard',badge:9},
+  {t:'10. IPP: metering-circuit-break',mode:'lightup',target:'p_meter_cb',badge:10},
+  {t:'11. circuit-break -> Metering System',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:11,fromRight:true,toLeft:true},
+  {t:'12. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:12},
+  {t:'13. IPP: api-translation (OpenAI -> Anthropic)',mode:'lightup',target:'p_at_req',badge:13},
+  {t:'14. IPP: apikey-injection',mode:'lightup',target:'p_aki',badge:14},
+  {t:'15. Forward to Anthropic',mode:'arrow',f:'gw',to:'anthropic',c:'#e3b341',num:15,fromBottom:true,fromXOff:250,toTop:true,
     waypoints:[{x:960,y:680},{x:1055,y:780}]},
-  {t:'14. Anthropic responds',mode:'arrow',f:'anthropic',to:'gw',c:'#3fb950',num:14,fromTop:true,toBottom:true,toXOff:200,
+  {t:'16. Anthropic responds',mode:'arrow',f:'anthropic',to:'gw',c:'#3fb950',num:16,fromTop:true,toBottom:true,toXOff:200,
     waypoints:[{x:1020,y:740},{x:900,y:670}]},
-  {t:'15. metering-collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:15,fromRight:true,toLeft:true},
-  {t:'16. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:16},
-  {t:'17. Response to client (OpenAI format)',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:17,fromLeft:true,toRight:true,yOff:10},
+  {t:'17. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:17},
+  {t:'18. collection -> Metering System',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:18,fromRight:true,toLeft:true},
+  {t:'19. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:19},
+  {t:'20. Response to client (OpenAI format)',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:20,fromLeft:true,toRight:true,yOff:10},
 ];
 
 var flowMap={spoke_east:flowSpokeEast,spoke_west:flowSpokeWest,external:flowExternal};
