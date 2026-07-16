@@ -610,20 +610,18 @@ function inspStepSpokeEast(sn){
     case 12:inspStepLabel='12. IPP: metering-circuit-break';break;
     case 13:inspStepLabel='13. circuit-break -> External Metering';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
     case 14:inspStepLabel='14. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
-    case 15:inspStepLabel='15. IPP: api-translation (request)';break;
-    case 16:inspStepLabel='16. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-east-xxx...',s:'add',id:'h-spoke'});break;
-    case 17:inspStepLabel='17. Forward to spoke-east Istio';break;
-    case 18:inspStepLabel='18. Spoke EPP: pick P/D workers';break;
-    case 19:inspStepLabel='19. Sidecar -> Prefill Pod';break;
-    case 20:inspStepLabel='20. Prefill processing';break;
-    case 21:inspStepLabel='21. NIXL: KV cache transfer (RDMA)';break;
-    case 22:inspStepLabel='22. Decode: auto-regressive generation';break;
-    case 23:inspStepLabel='23. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "llama-4-scout"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hello!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}',s:'keep',id:'r-usage'}];inspCycle=[];break;
-    case 24:inspStepLabel='24. Response: spoke-east -> hub';break;
-    case 25:inspStepLabel='25. IPP: metering-collection';break;
-    case 26:inspStepLabel='26. collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
-    case 27:inspStepLabel='27. IPP: api-translation (response)';break;
-    case 28:inspStepLabel='28. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
+    case 15:inspStepLabel='15. IPP: apikey-injection (strip auth, mTLS)';var ha=inspHeaders.find(function(l){return l.id==='h-auth';});if(ha)ha.s='del';inspCycle.push({v:'authType = "none" → strip Authorization header',s:'add',id:'c-strip'});break;
+    case 16:inspStepLabel='16. Forward to spoke-east (mTLS)';break;
+    case 17:inspStepLabel='17. Spoke EPP: pick P/D workers';break;
+    case 18:inspStepLabel='18. Sidecar -> Prefill Pod';break;
+    case 19:inspStepLabel='19. Prefill processing';break;
+    case 20:inspStepLabel='20. NIXL: KV cache transfer (RDMA)';break;
+    case 21:inspStepLabel='21. Decode: auto-regressive generation';break;
+    case 22:inspStepLabel='22. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "llama-4-scout"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hello!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}',s:'keep',id:'r-usage'}];inspCycle=[];break;
+    case 23:inspStepLabel='23. Response: spoke-east -> hub';break;
+    case 24:inspStepLabel='24. IPP: metering-collection';break;
+    case 25:inspStepLabel='25. collection -> External Metering';inspCycle=[{v:'CloudEvent: inference.tokens.used (10 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
+    case 26:inspStepLabel='26. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
   }
   renderInsp();
 }
@@ -644,20 +642,18 @@ function inspStepSpokeWest(sn){
     case 12:inspStepLabel='12. IPP: metering-circuit-break';break;
     case 13:inspStepLabel='13. circuit-break -> External Metering';inspCycle.push({v:'GET /entitlements/inference-tokens/value → hasAccess=true',s:'add',id:'c-meter'});break;
     case 14:inspStepLabel='14. IPP: stream-usage-enforcer';inspBody.push({v:'"stream_options": {"include_usage": true}',s:'add',id:'b-streamopt'});break;
-    case 15:inspStepLabel='15. IPP: api-translation (request)';break;
-    case 16:inspStepLabel='16. IPP: apikey-injection';inspHeaders.push({v:'X-Spoke-Token: sk-west-xxx...',s:'add',id:'h-spoke'});break;
-    case 17:inspStepLabel='17. Forward to spoke-west Istio';break;
-    case 18:inspStepLabel='18. Spoke EPP: pick P/D workers';break;
-    case 19:inspStepLabel='19. Sidecar -> Prefill Pod';break;
-    case 20:inspStepLabel='20. Prefill processing';break;
-    case 21:inspStepLabel='21. NIXL: KV cache transfer (RDMA)';break;
-    case 22:inspStepLabel='22. Decode: auto-regressive generation';break;
-    case 23:inspStepLabel='23. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "qwen-3"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hi!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":3,"total_tokens":11}',s:'keep',id:'r-usage'}];inspCycle=[];break;
-    case 24:inspStepLabel='24. Response: spoke-west -> hub';break;
-    case 25:inspStepLabel='25. IPP: metering-collection';break;
-    case 26:inspStepLabel='26. collection -> Metering System';inspCycle=[{v:'CloudEvent: inference.tokens.used (11 tokens)',s:'add',id:'c-ce'}];var ru=inspBody.find(function(l){return l.id==='r-usage';});if(ru)ru.s='highlight';break;
-    case 27:inspStepLabel='27. IPP: api-translation (response)';break;
-    case 28:inspStepLabel='28. Response to client';var rc=inspBody.find(function(l){return l.id==='r-choices';});if(rc)rc.s='highlight';break;
+    case 15:inspStepLabel='15. IPP: apikey-injection (strip auth, mTLS)';var ha2=inspHeaders.find(function(l){return l.id==='h-auth';});if(ha2)ha2.s='del';inspCycle.push({v:'authType = "none" → strip Authorization header',s:'add',id:'c-strip'});break;
+    case 16:inspStepLabel='16. Forward to spoke-west (mTLS)';break;
+    case 17:inspStepLabel='17. Spoke EPP: pick P/D workers';break;
+    case 18:inspStepLabel='18. Sidecar -> Prefill Pod';break;
+    case 19:inspStepLabel='19. Prefill processing';break;
+    case 20:inspStepLabel='20. NIXL: KV cache transfer (RDMA)';break;
+    case 21:inspStepLabel='21. Decode: auto-regressive generation';break;
+    case 22:inspStepLabel='22. Decode complete';setInspPhase('response');inspHeaders=[{v:'HTTP/1.1 200 OK',s:'keep',id:'r-status'},{v:'Content-Type: application/json',s:'keep',id:'r-ct'}];inspBody=[{v:'"object": "chat.completion"',s:'keep',id:'r-obj'},{v:'"model": "qwen-3"',s:'keep',id:'r-model'},{v:'"choices": [{"message":{"content":"Hi!"}}]',s:'keep',id:'r-choices'},{v:'"usage": {"prompt_tokens":8,"completion_tokens":3,"total_tokens":11}',s:'keep',id:'r-usage'}];inspCycle=[];break;
+    case 23:inspStepLabel='23. Response: spoke-west -> hub';break;
+    case 24:inspStepLabel='24. IPP: metering-collection';break;
+    case 25:inspStepLabel='25. collection -> External Metering';inspCycle=[{v:'CloudEvent: inference.tokens.used (11 tokens)',s:'add',id:'c-ce'}];var ru2=inspBody.find(function(l){return l.id==='r-usage';});if(ru2)ru2.s='highlight';break;
+    case 26:inspStepLabel='26. Response to client';var rc2=inspBody.find(function(l){return l.id==='r-choices';});if(rc2)rc2.s='highlight';break;
   }
   renderInsp();
 }
@@ -709,20 +705,18 @@ var flowSpokeEast=[
   {t:'12. IPP: metering-circuit-break',mode:'lightup',target:'p_meter_cb',badge:12},
   {t:'13. circuit-break -> External Metering',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:13,fromRight:true,toLeft:true},
   {t:'14. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:14},
-  {t:'15. IPP: api-translation (request)',mode:'lightup',target:'p_at_req',badge:15},
-  {t:'16. IPP: apikey-injection (spoke-east cred)',mode:'lightup',target:'p_aki',badge:16},
-  {t:'17. Forward to spoke-east Istio',mode:'arrow',f:'gw',to:'gw_east',c:'#58a6ff',num:17,fromBottom:true,fromXOff:-200,toTop:true,glow:'spoke_east'},
-  {t:'18. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_east',to:'epp_east',c:'#79c0ff',num:18,fromBottom:true,toTop:true},
-  {t:'19. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_east',to:'prefill_east',c:'#58a6ff',num:19,fromRight:true,toLeft:true},
-  {t:'20. Prefill processing',mode:'lightup',target:'prefill_east',badge:20},
-  {t:'21. NIXL: KV cache transfer',mode:'arrow',f:'prefill_east',to:'nixl_east',c:'#8b949e',num:21,fromLeft:true,toRight:true},
-  {t:'22. Decode: generation',mode:'arrow',f:'nixl_east',to:'decode_east',c:'#8b949e',num:22,fromLeft:true,toRight:true},
-  {t:'23. Decode complete',mode:'lightup',target:'decode_east',badge:23},
-  {t:'24. Response: spoke-east -> hub',mode:'arrow',f:'gw_east',to:'gw',c:'#3fb950',num:24,fromTop:true,toBottom:true,toXOff:-250},
-  {t:'25. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:25},
-  {t:'26. collection -> External Metering',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:26,fromRight:true,toLeft:true},
-  {t:'27. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:27},
-  {t:'28. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:28,fromLeft:true,toRight:true,yOff:10},
+  {t:'15. IPP: apikey-injection (strip auth, mTLS)',mode:'lightup',target:'p_aki',badge:15},
+  {t:'16. Forward to spoke-east (mTLS)',mode:'arrow',f:'gw',to:'gw_east',c:'#58a6ff',num:16,fromBottom:true,fromXOff:-200,toTop:true,glow:'spoke_east'},
+  {t:'17. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_east',to:'epp_east',c:'#79c0ff',num:17,fromBottom:true,toTop:true},
+  {t:'18. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_east',to:'prefill_east',c:'#58a6ff',num:18,fromRight:true,toLeft:true},
+  {t:'19. Prefill processing',mode:'lightup',target:'prefill_east',badge:19},
+  {t:'20. NIXL: KV cache transfer',mode:'arrow',f:'prefill_east',to:'nixl_east',c:'#8b949e',num:20,fromLeft:true,toRight:true},
+  {t:'21. Decode: generation',mode:'arrow',f:'nixl_east',to:'decode_east',c:'#8b949e',num:21,fromLeft:true,toRight:true},
+  {t:'22. Decode complete',mode:'lightup',target:'decode_east',badge:22},
+  {t:'23. Response: spoke-east -> hub',mode:'arrow',f:'gw_east',to:'gw',c:'#3fb950',num:23,fromTop:true,toBottom:true,toXOff:-250},
+  {t:'24. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:24},
+  {t:'25. collection -> External Metering',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:25,fromRight:true,toLeft:true},
+  {t:'26. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:26,fromLeft:true,toRight:true,yOff:10},
 ];
 
 var flowSpokeWest=[
@@ -740,20 +734,18 @@ var flowSpokeWest=[
   {t:'12. IPP: metering-circuit-break',mode:'lightup',target:'p_meter_cb',badge:12},
   {t:'13. circuit-break -> External Metering',mode:'arrow',f:'p_meter_cb',to:'meter_sys',c:'#e3b341',num:13,fromRight:true,toLeft:true},
   {t:'14. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:14},
-  {t:'15. IPP: api-translation (request)',mode:'lightup',target:'p_at_req',badge:15},
-  {t:'16. IPP: apikey-injection (spoke-west cred)',mode:'lightup',target:'p_aki',badge:16},
-  {t:'17. Forward to spoke-west Istio',mode:'arrow',f:'gw',to:'gw_west',c:'#58a6ff',num:17,fromBottom:true,fromXOff:-50,toTop:true,glow:'spoke_west'},
-  {t:'18. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_west',to:'epp_west',c:'#79c0ff',num:18,fromBottom:true,toTop:true},
-  {t:'19. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_west',to:'prefill_west',c:'#58a6ff',num:19,fromRight:true,toLeft:true},
-  {t:'20. Prefill processing',mode:'lightup',target:'prefill_west',badge:20},
-  {t:'21. NIXL: KV cache transfer',mode:'arrow',f:'prefill_west',to:'nixl_west',c:'#8b949e',num:21,fromLeft:true,toRight:true},
-  {t:'22. Decode: generation',mode:'arrow',f:'nixl_west',to:'decode_west',c:'#8b949e',num:22,fromLeft:true,toRight:true},
-  {t:'23. Decode complete',mode:'lightup',target:'decode_west',badge:23},
-  {t:'24. Response: spoke-west -> hub',mode:'arrow',f:'gw_west',to:'gw',c:'#3fb950',num:24,fromTop:true,toBottom:true,toXOff:100},
-  {t:'25. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:25},
-  {t:'26. collection -> External Metering',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:26,fromRight:true,toLeft:true},
-  {t:'27. IPP: api-translation (response)',mode:'lightup',target:'p_at_resp',badge:27},
-  {t:'28. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:28,fromLeft:true,toRight:true,yOff:10},
+  {t:'15. IPP: apikey-injection (strip auth, mTLS)',mode:'lightup',target:'p_aki',badge:15},
+  {t:'16. Forward to spoke-west (mTLS)',mode:'arrow',f:'gw',to:'gw_west',c:'#58a6ff',num:16,fromBottom:true,fromXOff:-50,toTop:true,glow:'spoke_west'},
+  {t:'17. Spoke EPP: pick P/D workers',mode:'arrow',f:'gw_west',to:'epp_west',c:'#79c0ff',num:17,fromBottom:true,toTop:true},
+  {t:'18. Sidecar -> Prefill Pod',mode:'arrow',f:'sidecar_west',to:'prefill_west',c:'#58a6ff',num:18,fromRight:true,toLeft:true},
+  {t:'19. Prefill processing',mode:'lightup',target:'prefill_west',badge:19},
+  {t:'20. NIXL: KV cache transfer',mode:'arrow',f:'prefill_west',to:'nixl_west',c:'#8b949e',num:20,fromLeft:true,toRight:true},
+  {t:'21. Decode: generation',mode:'arrow',f:'nixl_west',to:'decode_west',c:'#8b949e',num:21,fromLeft:true,toRight:true},
+  {t:'22. Decode complete',mode:'lightup',target:'decode_west',badge:22},
+  {t:'23. Response: spoke-west -> hub',mode:'arrow',f:'gw_west',to:'gw',c:'#3fb950',num:23,fromTop:true,toBottom:true,toXOff:100},
+  {t:'24. IPP: metering-collection',mode:'lightup',target:'p_meter_col',badge:24},
+  {t:'25. collection -> External Metering',mode:'arrow',f:'p_meter_col',to:'meter_sys',c:'#e3b341',num:25,fromRight:true,toLeft:true},
+  {t:'26. Response to client',mode:'arrow',f:'gw',to:'client',c:'#3fb950',num:26,fromLeft:true,toRight:true,yOff:10},
 ];
 
 var flowExternal=[
