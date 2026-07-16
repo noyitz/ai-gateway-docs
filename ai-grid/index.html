@@ -237,11 +237,11 @@ var N = {
   p_meter_col: { x: 515, y: 520, w: 320, h: 32, label: 'metering-collection', sublabel: '(external-metering)', color: '#e3b341', type: 'plugin', fs: 12 },
   p_at_resp:   { x: 515, y: 560, w: 320, h: 32, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', fs: 13 },
 
-  // hub-EPP (right of IPP)
-  hub_epp: { x: 900, y: 195, w: 200, h: 90, label: 'hub-EPP', sublabel: 'Pick best cluster by load', color: '#79c0ff', fs: 14 },
+  // hub-EPP (right, aligned with metering box)
+  hub_epp: { x: 890, y: 195, w: 260, h: 90, label: 'hub-EPP', sublabel: 'Pick best cluster by load', color: '#79c0ff', fs: 14 },
 
-  // External Metering System (below hub-EPP)
-  meter_sys: { x: 900, y: 320, w: 200, h: 90, label: 'Metering System', sublabel: 'Budget + Usage', color: '#e3b341', fs: 13 },
+  // External Metering System (below hub-EPP, same x/w)
+  meter_sys: { x: 890, y: 320, w: 260, h: 90, label: 'Metering System', sublabel: 'Budget + Usage', color: '#e3b341', fs: 13 },
 
   // ── InferencePool — Spoke East ──
   spoke_east: { x: 30, y: 700, w: 420, h: 380, type: 'container', label: 'InferencePool — llm-d East', color: '#3fb950', rhoai: true },
@@ -469,8 +469,8 @@ function drawBounds() {
   // Dashed lines from metering plugins to metering system
   ctx.save(); ctx.setLineDash([ts(4),ts(4)]);
   ctx.strokeStyle=isDark?'#e3b34155':'#e3b34144'; ctx.lineWidth=ts(1.5);
-  ctx.beginPath(); ctx.moveTo(tx(835),ty(329)); ctx.lineTo(tx(900),ty(345)); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx(835),ty(536)); ctx.lineTo(tx(900),ty(380)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(329)); ctx.lineTo(tx(890),ty(350)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(536)); ctx.lineTo(tx(890),ty(390)); ctx.stroke();
   ctx.setLineDash([]);
   ctx.restore();
 
