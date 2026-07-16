@@ -238,10 +238,10 @@ var N = {
   p_at_resp:   { x: 515, y: 560, w: 320, h: 32, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', fs: 13 },
 
   // hub-EPP (right of IPP)
-  hub_epp: { x: 900, y: 220, w: 200, h: 110, label: 'hub-EPP', sublabel: 'Score spokes by load', color: '#79c0ff', fs: 14 },
-  epp_pick: { x: 915, y: 350, w: 170, h: 35, label: 'Pick best cluster', color: '#79c0ff', fs: 11 },
-  epp_affinity: { x: 915, y: 395, w: 80, h: 28, label: 'Load', color: '#79c0ff', fs: 10 },
-  epp_load: { x: 1005, y: 395, w: 80, h: 28, label: 'Affinity', color: '#79c0ff', fs: 10 },
+  hub_epp: { x: 900, y: 195, w: 200, h: 90, label: 'hub-EPP', sublabel: 'Pick best cluster by load', color: '#79c0ff', fs: 14 },
+
+  // External Metering System (below hub-EPP)
+  meter_sys: { x: 900, y: 320, w: 200, h: 90, label: 'Metering System', sublabel: 'Budget + Usage', color: '#e3b341', fs: 13 },
 
   // ── InferencePool — Spoke East ──
   spoke_east: { x: 30, y: 700, w: 420, h: 380, type: 'container', label: 'InferencePool — llm-d East', color: '#3fb950', rhoai: true },
@@ -283,7 +283,8 @@ var tips = {
   p_aki: { t:'apikey-injection', d:'Reads credential reference (Secret name/namespace) and auth type from CycleState. Looks up the Kubernetes Secret from a label-filtered informer cache (ipp-managed=true). Generates and injects the appropriate auth header.', dt:[['Auth Types','APIKey (Bearer), SigV4 (AWS), OAuth2 (GCP)'],['Security','Only caches Secrets labeled ipp-managed=true'],['Phase','Request']], links:[['Source','https://github.com/opendatahub-io/ai-gateway-payload-processing/tree/main/pkg/plugins/apikey-injection']] },
   p_meter_col: { t:'metering-collection (external-metering)', d:'Response phase of the external-metering plugin. Extracts token usage from the response body (prompt_tokens, completion_tokens, total_tokens) and reports a CloudEvent (inference.tokens.used) to the metering service. Streaming variant processes SSE chunks incrementally and handles payloads split across chunk boundaries.', dt:[['API','POST /api/v1/events (CloudEvent)'],['Event Type','inference.tokens.used'],['Extracts','prompt_tokens, completion_tokens, total_tokens'],['Streaming','Processes SSE chunks, handles split payloads'],['Also Supports','Anthropic input/output_tokens, cached tokens, reasoning tokens'],['Phase','Response'],['Same Plugin As','metering-circuit-break (request phase)']], links:[['Source','https://github.com/opendatahub-io/ai-gateway-payload-processing/tree/main/pkg/plugins/external-metering']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic Messages → OpenAI format'],['Phase','Response']] },
-  hub_epp: { t:'hub-EPP', d:'Hub-level Endpoint Picker. Scrapes load metrics from spoke clusters via mTLS :9090 and scores them. Same EPP core as spoke-level, one tier up.', dt:[['Metrics','mTLS :9090 scrape'],['Selection','Load + affinity'],['Output','Chosen spoke cluster']], links:[['GIE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
+  hub_epp: { t:'hub-EPP', d:'Hub-level Endpoint Picker. Scrapes load metrics from spoke clusters via mTLS :9090 and scores them to pick the best cluster. Same EPP core as spoke-level, one tier up.', dt:[['Metrics','mTLS :9090 scrape'],['Selection','Load + affinity'],['Output','Chosen spoke cluster']], links:[['GIE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
+  meter_sys: { t:'External Metering System', d:'External metering service that tracks token budgets and usage per user. The metering-circuit-break plugin checks balance before requests, and metering-collection reports usage after responses via CloudEvents.', dt:[['Balance API','GET /api/v1/customers/{user}/entitlements/{key}/value'],['Usage API','POST /api/v1/events (CloudEvent)'],['Event Type','inference.tokens.used'],['Integrates With','OpenMeter, Stripe, custom billing']] },
   gw_east: { t:'Istio Gateway (East)', d:'Envoy gateway in llm-d East. Receives requests from hub, runs spoke-level EPP for pod selection.', dt:[['Filters','EPP (ext_proc)'],['Role','Cross-cluster ingress + EPP dispatch']] },
   gw_west: { t:'Istio Gateway (West)', d:'Envoy gateway in llm-d West. Same role as East gateway.', dt:[['Filters','EPP (ext_proc)']] },
   epp_east: { t:'EPP — Endpoint Picker (East)', d:'Spoke-level EPP. Selects prefill/decode workers based on load and KV cache locality. Publishes pool load on :9090 for hub-EPP.', dt:[['Function','Pod selection + load publish'],['Metrics',':9090']], links:[['GIE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
@@ -464,6 +465,14 @@ function drawBounds() {
   ctx.save(); ctx.font='bold '+ts(12)+'px system-ui';
   ctx.fillStyle=isDark?'#3fb950aa':'#3fb95099'; ctx.textAlign='center';
   ctx.fillText('External Providers',tx(1115),ty(725)); ctx.restore();
+
+  // Dashed lines from metering plugins to metering system
+  ctx.save(); ctx.setLineDash([ts(4),ts(4)]);
+  ctx.strokeStyle=isDark?'#e3b34155':'#e3b34144'; ctx.lineWidth=ts(1.5);
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(329)); ctx.lineTo(tx(900),ty(345)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(536)); ctx.lineTo(tx(900),ty(380)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
 
   // Load scrape dashed lines from hub-EPP to spoke EPPs
   ctx.save(); ctx.setLineDash([ts(4),ts(4)]);
@@ -689,7 +698,7 @@ var flowSpokeEast=[
   {t:'8. IPP: metering-circuit-break (budget check)',mode:'lightup',target:'p_meter_cb',badge:8},
   {t:'9. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:9},
   {t:'10. hub-EPP: score spokes by load',mode:'arrow',f:'gw',to:'hub_epp',c:'#79c0ff',num:10,fromBottom:true,fromXOff:200,toTop:true},
-  {t:'11. hub-EPP: pick spoke-east (lowest load)',mode:'lightup',target:'epp_pick',badge:11},
+  {t:'11. hub-EPP: pick spoke-east (lowest load)',mode:'lightup',target:'hub_epp',badge:11},
   {t:'12. IPP: apikey-injection (spoke-east cred)',mode:'lightup',target:'p_aki',badge:12},
   {t:'13. Forward to spoke-east Istio',mode:'arrow',f:'gw',to:'gw_east',c:'#58a6ff',num:13,fromBottom:true,fromXOff:-200,toTop:true,
     waypoints:[{x:210,y:650},{x:240,y:720}],glow:'spoke_east'},
@@ -717,7 +726,7 @@ var flowSpokeWest=[
   {t:'8. IPP: metering-circuit-break (budget check)',mode:'lightup',target:'p_meter_cb',badge:8},
   {t:'9. IPP: stream-usage-enforcer',mode:'lightup',target:'p_stream_use',badge:9},
   {t:'10. hub-EPP: score spokes by load',mode:'arrow',f:'gw',to:'hub_epp',c:'#79c0ff',num:10,fromBottom:true,fromXOff:200,toTop:true},
-  {t:'11. hub-EPP: pick spoke-west (lowest load)',mode:'lightup',target:'epp_pick',badge:11},
+  {t:'11. hub-EPP: pick spoke-west (lowest load)',mode:'lightup',target:'hub_epp',badge:11},
   {t:'12. IPP: apikey-injection (spoke-west cred)',mode:'lightup',target:'p_aki',badge:12},
   {t:'13. Forward to spoke-west Istio',mode:'arrow',f:'gw',to:'gw_west',c:'#58a6ff',num:13,fromBottom:true,fromXOff:-50,toTop:true,
     waypoints:[{x:510,y:650},{x:720,y:720}],glow:'spoke_west'},
