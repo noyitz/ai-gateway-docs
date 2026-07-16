@@ -180,6 +180,23 @@ footer a:hover{color:var(--accent)}
   </div>
 </a>
 
+<a href="ai-grid/" class="card" style="border-color:#79c0ff44">
+  <div class="card-header">
+    <div class="card-icon" style="background:#79c0ff22;border:1px solid #79c0ff44">&#128421;</div>
+    <div>
+      <div class="card-title">AI Grid &mdash; LLM-d Hub &amp; Spoke</div>
+      <div class="card-subtitle">Hub EPP scores spokes &middot; IPP injects credentials &middot; Spoke EPP picks pods</div>
+    </div>
+  </div>
+  <div class="card-desc">Hub-and-spoke architecture where the hub gateway runs EPP to score spoke clusters by live load, picks the best destination, and IPP injects per-spoke credentials. Each spoke runs its own EPP for pod selection, jwt_authn for wristband validation, and per-tier rate limiting. External provider fallback when no internal capacity.</div>
+  <div class="card-stats">
+    <span class="stat stat-blue">3 Flows</span>
+    <span class="stat stat-green">1 Hub</span>
+    <span class="stat stat-gold">2 Spokes</span>
+    <span class="stat stat-purple">External Fallback</span>
+  </div>
+</a>
+
 <a href="multi-cluster/" class="card">
   <div class="card-header">
     <div class="card-icon" style="background:#3fb95022;border:1px solid #3fb95044">&#127760;</div>
