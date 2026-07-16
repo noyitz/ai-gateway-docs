@@ -238,11 +238,11 @@ var N = {
   p_meter_col: { x: 515, y: 560, w: 320, h: 32, label: 'metering-collection', sublabel: '(external-metering)', color: '#e3b341', type: 'plugin', fs: 12 },
   p_at_resp:   { x: 515, y: 599, w: 320, h: 32, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', fs: 13 },
 
-  // EPP (Hub) (right, aligned with metering box)
-  hub_epp: { x: 890, y: 195, w: 260, h: 90, label: 'EPP (Hub)', sublabel: 'Pick best cluster by load', color: '#79c0ff', fs: 14 },
+  // EPP (Hub) (right, vertically centered with IPP)
+  hub_epp: { x: 890, y: 305, w: 260, h: 90, label: 'EPP (Hub)', sublabel: 'Pick best cluster by load', color: '#79c0ff', fs: 14 },
 
   // External Metering System (below hub-EPP, same x/w)
-  meter_sys: { x: 890, y: 320, w: 260, h: 90, label: 'Metering System', sublabel: 'Budget + Usage', color: '#e3b341', fs: 13 },
+  meter_sys: { x: 890, y: 425, w: 260, h: 90, label: 'External Metering', sublabel: 'Budget + Usage', color: '#e3b341', fs: 13 },
 
   // ── InferencePool — Spoke East ──
   spoke_east: { x: 30, y: 740, w: 420, h: 380, type: 'container', label: 'InferencePool — llm-d East', color: '#3fb950', rhoai: true },
@@ -286,7 +286,7 @@ var tips = {
   p_meter_col: { t:'metering-collection (external-metering)', d:'Response phase of the external-metering plugin. Extracts token usage from the response body (prompt_tokens, completion_tokens, total_tokens) and reports a CloudEvent (inference.tokens.used) to the metering service. Streaming variant processes SSE chunks incrementally and handles payloads split across chunk boundaries.', dt:[['API','POST /api/v1/events (CloudEvent)'],['Event Type','inference.tokens.used'],['Extracts','prompt_tokens, completion_tokens, total_tokens'],['Streaming','Processes SSE chunks, handles split payloads'],['Also Supports','Anthropic input/output_tokens, cached tokens, reasoning tokens'],['Phase','Response'],['Same Plugin As','metering-circuit-break (request phase)']], links:[['Source','https://github.com/opendatahub-io/ai-gateway-payload-processing/tree/main/pkg/plugins/external-metering']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic Messages → OpenAI format'],['Phase','Response']] },
   hub_epp: { t:'EPP (Hub)', d:'Hub-level Endpoint Picker, called by model-provider-resolver. Scrapes load metrics from spoke clusters via mTLS :9090 and scores them to pick the best cluster. Same EPP core as spoke-level, one tier up.', dt:[['Called By','model-provider-resolver plugin'],['Metrics','mTLS :9090 scrape from spoke EPPs'],['Selection','Load + affinity'],['Output','Chosen spoke cluster']], links:[['GIE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
-  meter_sys: { t:'External Metering System', d:'External metering service that tracks token budgets and usage per user. The metering-circuit-break plugin checks balance before requests, and metering-collection reports usage after responses via CloudEvents.', dt:[['Balance API','GET /api/v1/customers/{user}/entitlements/{key}/value'],['Usage API','POST /api/v1/events (CloudEvent)'],['Event Type','inference.tokens.used'],['Integrates With','OpenMeter, Stripe, custom billing']] },
+  meter_sys: { t:'External Metering', d:'External metering service that tracks token budgets and usage per user. The metering-circuit-break plugin checks balance before requests, and metering-collection reports usage after responses via CloudEvents.', dt:[['Balance API','GET /api/v1/customers/{user}/entitlements/{key}/value'],['Usage API','POST /api/v1/events (CloudEvent)'],['Event Type','inference.tokens.used'],['Integrates With','OpenMeter, Stripe, custom billing']] },
   gw_east: { t:'Istio Gateway (East)', d:'Envoy gateway in llm-d East. Receives requests from hub, runs spoke-level EPP for pod selection.', dt:[['Filters','EPP (ext_proc)'],['Role','Cross-cluster ingress + EPP dispatch']] },
   gw_west: { t:'Istio Gateway (West)', d:'Envoy gateway in llm-d West. Same role as East gateway.', dt:[['Filters','EPP (ext_proc)']] },
   epp_east: { t:'EPP — Endpoint Picker (East)', d:'Spoke-level EPP. Selects prefill/decode workers based on load and KV cache locality. Publishes pool load on :9090 for hub-EPP.', dt:[['Function','Pod selection + load publish'],['Metrics',':9090']], links:[['GIE','https://github.com/kubernetes-sigs/gateway-api-inference-extension']] },
@@ -471,16 +471,16 @@ function drawBounds() {
   // Dashed lines from metering plugins to metering system
   ctx.save(); ctx.setLineDash([ts(4),ts(4)]);
   ctx.strokeStyle=isDark?'#e3b34155':'#e3b34144'; ctx.lineWidth=ts(1.5);
-  ctx.beginPath(); ctx.moveTo(tx(835),ty(368)); ctx.lineTo(tx(890),ty(355)); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx(835),ty(576)); ctx.lineTo(tx(890),ty(390)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(368)); ctx.lineTo(tx(890),ty(460)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(835),ty(576)); ctx.lineTo(tx(890),ty(490)); ctx.stroke();
   ctx.setLineDash([]);
   ctx.restore();
 
   // Load scrape dashed lines from hub-EPP to spoke EPPs
   ctx.save(); ctx.setLineDash([ts(4),ts(4)]);
   ctx.strokeStyle=isDark?'#e3b34155':'#e3b34144'; ctx.lineWidth=ts(1.5);
-  ctx.beginPath(); ctx.moveTo(tx(1020),ty(285)); ctx.lineTo(tx(500),ty(710)); ctx.lineTo(tx(230),ty(765)); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx(1020),ty(285)); ctx.lineTo(tx(720),ty(765)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(1020),ty(395)); ctx.lineTo(tx(500),ty(710)); ctx.lineTo(tx(230),ty(765)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx(1020),ty(395)); ctx.lineTo(tx(720),ty(765)); ctx.stroke();
   ctx.setLineDash([]);
   ctx.font=ts(9)+'px system-ui'; ctx.fillStyle=isDark?'#e3b34188':'#e3b34177'; ctx.textAlign='center';
   ctx.fillText('load scrape · mTLS :9090',tx(350),ty(720));
