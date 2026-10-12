@@ -179,7 +179,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Rejected (401 / 429)</div>
   <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Praxis Filters / Vertex-specific</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Control Plane (MaaS / Metering)</div>
-  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#8b949e">Click any component for details</div>
+  <div style="margin-top:5px;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -275,6 +276,27 @@ const tips = {
   glm: { t: 'IBM Curvebender — GLM', d: 'The GLM model (rits/zai-org/glm-5-3) is served by an IBM Curvebender LiteLLM gateway at litellm.cb.ete.res.ibm.com. LiteLLM presents an Anthropic-dialect endpoint, so the unified route reaches it with no dialect translation. The gateway injects a Bearer LiteLLM key and forces the Host/SNI; the EnMaaS egress IP is allowlisted upstream.', dt: [['Endpoint','litellm.cb.ete.res.ibm.com:443'],['Model id','rits/zai-org/glm-5-3'],['Dialect','Anthropic (via LiteLLM)'],['Credential','Bearer CB_LITELLM_API_KEY']], links: [['LiteLLM','https://github.com/BerriAI/litellm']] },
 };
 
+// The short tooltip above explains what a filter does; these longer notes
+// explain why it is a separate stage in the EnMaaS pipeline.
+const filterWhy = {
+  f_auth: 'Authentication must happen before policy, routing, metering, or provider access. It establishes the trusted user identity used by every later stage.',
+  f_catalog: 'Clients need one stable model list even though the models live behind different providers. Keeping discovery in Praxis prevents provider-specific catalogs from leaking through.',
+  f_access: 'Authentication answers “who is calling?”; this filter answers “may that caller use this model?”. Separating them lets group policy change without changing credential validation.',
+  f_guard: 'Identity headers are trusted internally, so client versions must be removed before the gateway adds its own identity. This prevents impersonation and quota attribution errors.',
+  f_mth: 'Routing should not need to parse every request body. Promoting the model once creates a simple, consistent routing signal for the rest of the chain.',
+  f_mtp: 'Public model names and backend names are different concerns. This mapping lets EnMaaS expose stable names while changing the provider or provider-specific model identifier behind the gateway.',
+  f_vertex: 'Vertex is not wire-compatible with the public Anthropic Messages API. This filter keeps clients on the Anthropic API while hiding Vertex rawPredict translation and response reconstruction.',
+  f_router: 'Routing is isolated from translation and authentication so new models or providers can be added as routing rules without rewriting the rest of the proxy.',
+  f_gcp: 'Vertex requires Google OAuth, while callers use EnMaaS API keys. This stage bridges those credential systems and keeps Google service-account material out of client traffic.',
+  f_norm: 'Different model servers accept different content-block shapes. A compatibility stage lets clients use one API contract instead of learning backend-specific payload restrictions.',
+  f_meter_pre: 'Quota must be checked before the request reaches a paid or capacity-limited backend. It is deliberately fail-open so a metering outage does not take down inference traffic.',
+  f_cred: 'The client credential authenticates to EnMaaS, not to the upstream provider. This stage performs the credential exchange and prevents OpenAI, Vertex, or Curvebender secrets from reaching clients.',
+  f_lb: 'Each upstream has different DNS, Host, TLS-SNI, and connection requirements. Keeping those details here means routing rules do not need to contain transport mechanics.',
+  f_tcount: 'Providers report usage in different response formats and streaming positions. A common token count is required for both quota decisions and accurate billing.',
+  f_tusage: 'Clients need immediate feedback about remaining capacity. Returning quota headers avoids a separate status request and gives tools a standard rate-limit signal.',
+  f_meter_post: 'Usage must be recorded after the final response, including streaming token counts and failures. Sending a standard CloudEvent decouples Praxis from the database and dashboard implementation.'
+};
+
 let overlayWasRunning = false, highlightKey = null;
 function showOverlay(key) {
   const tip = tips[key], n = N[key];
@@ -289,6 +311,7 @@ function showOverlay(key) {
   document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
   document.getElementById('overlay-desc').textContent = tip.d;
   let dh = '';
+  if (filterWhy[key]) dh += `<div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid ${n.color || '#58a6ff'};background:#58a6ff0d;color:#c9d1d9;line-height:1.5;font-family:system-ui"><strong style="display:block;color:${n.color || '#58a6ff'};font-size:12px;margin-bottom:3px">Why this filter exists</strong>${esc(filterWhy[key])}</div>`;
   if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
   if (tip.links && tip.links.length) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
   document.getElementById('overlay-details').innerHTML = dh;
