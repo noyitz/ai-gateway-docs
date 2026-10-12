@@ -324,19 +324,11 @@ function showOverlay(key) {
   card.style.left = cx + 'px';
   card.style.top = cy + 'px';
   ov.style.display = 'block';
-  const hb = document.getElementById('highlight-box');
-  hb.style.left = nx + 'px';
-  hb.style.top = ny + 'px';
-  hb.width = undefined;
-  hb.style.width = nw + 'px';
-  hb.style.height = nh + 'px';
-  hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
-  hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
-  hb.style.background = isDark ? '#161b22' : '#f6f8fa';
-  hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
-  hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
-  hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
-  hb.style.transform = 'none';
+  // The canvas renderer already draws the selected component's outline using
+  // the same logical coordinates and scale as the node. Do not add a second
+  // HTML frame here: it can drift from the canvas after responsive resizing
+  // and creates a confusing duplicate label.
+  document.getElementById('highlight-box').style.display = 'none';
   draw();
 }
 function closeOverlay() {
@@ -779,7 +771,7 @@ function draw() {
   dots = dots.filter(d => d.alive);
   if (highlightKey && N[highlightKey]) {
     const n = N[highlightKey];
-    const pad = 8;
+    const pad = 0;
     ctx.save();
     ctx.shadowColor = n.color || '#58a6ff';
     ctx.shadowBlur = ts(30);
