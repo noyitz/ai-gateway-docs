@@ -162,5 +162,22 @@ opencode --standalone
   if(!reduced&&"IntersectionObserver"in window)new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!running){running=true;requestAnimationFrame(frame)}else if(!e.isIntersecting)running=false})},{threshold:.01}).observe(cv);
 })();
 </script>
+<script>
+(function () {
+  function reportHeight() {
+    window.parent.postMessage({
+      type: "enmaas-welcome-height",
+      height: Math.ceil(document.documentElement.scrollHeight)
+    }, "*");
+  }
+
+  window.addEventListener("load", reportHeight);
+  window.addEventListener("resize", reportHeight);
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(reportHeight).observe(document.documentElement);
+  }
+  setTimeout(reportHeight, 100);
+})();
+</script>
 </body>
 </html>
