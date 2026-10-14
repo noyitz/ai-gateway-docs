@@ -218,16 +218,16 @@ const N = {
 
   reqF: { x: 174, y: 210, w: 507, h: 452, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
   // In-process request filters, executed top-to-bottom per request
-  f_auth:       { x: 188, y: 238, w: 480, h: 28, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#58a6ff', inner: true, fs: 12 },
-  f_catalog:    { x: 188, y: 269, w: 480, h: 28, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', inner: true, fs: 12 },
-  f_reject:     { x: 188, y: 300, w: 480, h: 28, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', inner: true, fs: 12 },
+  f_auth:       { x: 188, y: 238, w: 480, h: 28, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_catalog:    { x: 188, y: 269, w: 480, h: 28, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_reject:     { x: 188, y: 300, w: 480, h: 28, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_access:     { x: 188, y: 331, w: 480, h: 28, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#f0883e', inner: true, fs: 12 },
   f_guard:      { x: 188, y: 362, w: 480, h: 28, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
   f_mth:        { x: 188, y: 393, w: 480, h: 28, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
-  f_mtp:        { x: 188, y: 424, w: 480, h: 28, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', inner: true, fs: 12 },
-  f_vertex:     { x: 188, y: 455, w: 480, h: 28, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', inner: true, fs: 12 },
+  f_mtp:        { x: 188, y: 424, w: 480, h: 28, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_vertex:     { x: 188, y: 455, w: 480, h: 28, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_router:     { x: 188, y: 486, w: 480, h: 28, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
-  f_gcp:        { x: 188, y: 517, w: 480, h: 28, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', inner: true, fs: 12 },
+  f_gcp:        { x: 188, y: 517, w: 480, h: 28, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_norm:       { x: 188, y: 548, w: 480, h: 28, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
   f_meter_pre:  { x: 188, y: 579, w: 480, h: 28, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#f0883e', inner: true, fs: 12 },
   f_cred:       { x: 188, y: 610, w: 480, h: 28, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
@@ -398,11 +398,14 @@ function drawBox(key) {
     ctx.globalAlpha = 0.3 + 0.7 * fadeA;
   }
 
+  const nodeColor = n.color || '#58a6ff';
+  const etStroke = nodeColor + (isDark ? 'aa' : '99');
+  const etFill = isDark ? nodeColor + '16' : nodeColor + '0d';
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, ts(8));
-  ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+  ctx.fillStyle = (isA || hasBadge) ? c.boxA : (n.et ? etFill : c.box);
   ctx.fill();
-  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
+  ctx.strokeStyle = (isA || hasBadge) ? nodeColor : (n.et ? etStroke : c.bdr);
   ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
   ctx.stroke();
 
