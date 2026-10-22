@@ -258,11 +258,11 @@ const N = {
 
   // External backends — right, outside the cluster. Cards list the
   // model families EnMaaS currently exposes, not exact model ids.
-  openai: { x: 1010, y: 195, w: 220, h: 175, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
+  openai: { x: 1010, y: 150, w: 220, h: 145, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
             models: ['GPT-6', 'GPT-5.x', 'Codex models'] },
-  vertex: { x: 1010, y: 380, w: 220, h: 245, label: 'Google Vertex AI', sublabel: 'aiplatform.googleapis.com', color: '#3fb950', fs: 14,
+  vertex: { x: 1010, y: 315, w: 220, h: 200, label: 'Google Vertex AI', sublabel: 'aiplatform.googleapis.com', color: '#3fb950', fs: 14,
             models: ['Claude Opus', 'Claude Sonnet', 'Claude Haiku', 'Claude Fable', 'Gemini'] },
-  glm:    { x: 1010, y: 640, w: 220, h: 175, label: 'IBM Curvebender', sublabel: 'LiteLLM · Anthropic dialect', color: '#3fb950', fs: 14,
+  glm:    { x: 1010, y: 535, w: 220, h: 145, label: 'IBM Curvebender', sublabel: 'LiteLLM · Anthropic dialect', color: '#3fb950', fs: 14,
             models: [ { name: 'GLM 5.3', badge: 'G', color: '#5b8def' },
                       { name: 'DeepSeek V4.1 Flash', badge: 'D', color: '#4d6bfe' } ] },
 };
@@ -388,7 +388,8 @@ function resize() {
   // cards, which are drawn in the same transformed canvas coordinate system.
   const legend = document.querySelector('.legend');
   if (legend) {
-    legend.style.right = `${innerWidth - (ox + 1230 * sc)}px`;
+    legend.style.left = `${ox + 1010 * sc}px`;
+    legend.style.right = 'auto';
     // The legend is wider than a provider card so its labels stay single-line,
     // while its right edge remains aligned with the provider column.
     legend.style.width = `${300 * sc}px`;
