@@ -389,7 +389,9 @@ function resize() {
   const legend = document.querySelector('.legend');
   if (legend) {
     legend.style.right = `${innerWidth - (ox + 1230 * sc)}px`;
-    legend.style.width = `${220 * sc}px`;
+    // The legend is wider than a provider card so its labels stay single-line,
+    // while its right edge remains aligned with the provider column.
+    legend.style.width = `${300 * sc}px`;
   }
   draw();
 }
