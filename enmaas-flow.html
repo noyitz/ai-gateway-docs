@@ -216,8 +216,8 @@ const N = {
   clients: { x: -42.5, y: 228, w: 145, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
              clients: ['Claude Code', 'Codex CLI', 'OpenCode', 'Pi', 'Goose', 'Crush', 'curl / HTTP'] },
 
-  cluster: { x: 120, y: 70, w: 870, h: 900, type: 'boundary' },
-  praxis: { x: 150, y: 102, w: 555, h: 865, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
+  cluster: { x: 120, y: 70, w: 870, h: 920, type: 'boundary' },
+  praxis: { x: 150, y: 102, w: 555, h: 875, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
 
   lsn: { x: 174, y: 132, w: 507, h: 52, label: 'Praxis Listener', sublabel: ':8084 Unified (Anthropic msgs) · :8081 OpenAI', color: '#58a6ff', fs: 16 },
 
@@ -238,7 +238,7 @@ const N = {
   f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
   f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
-  respF: { x: 174, y: 810, w: 507, h: 150, type: 'container', label: '← Response Filters', color: '#3fb950' },
+  respF: { x: 174, y: 810, w: 507, h: 155, type: 'container', label: '← Response Filters', color: '#3fb950' },
   f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
   f_tusage:     { x: 188, y: 880, w: 480, h: 34, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
   f_meter_post: { x: 188, y: 922, w: 480, h: 34, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#d2a8ff', inner: true, fs: 12 },
@@ -460,11 +460,11 @@ function drawBox(key) {
   if (n.models) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.font = `bold ${ts(fs + 2)}px system-ui`;
     ctx.fillStyle = c.txt;
     ctx.fillText(n.label, x + ts(10), y + ts(19));
     if (n.sublabel) {
-      ctx.font = `${ts(10.5)}px system-ui`;
+      ctx.font = `${ts(11)}px system-ui`;
       ctx.fillStyle = c.dim;
       ctx.fillText(n.sublabel, x + ts(10), y + ts(32));
     }
@@ -488,10 +488,10 @@ function drawBox(key) {
         ctx.textBaseline = 'alphabetic';
         textX = x + ts(10) + bw + ts(6);
       }
-      ctx.font = `${ts(13)}px system-ui`;
+      ctx.font = `${ts(14)}px system-ui`;
       ctx.fillStyle = c.txt;
       ctx.fillText(name, textX, rowY);
-      rowY += ts(16);
+      rowY += ts(18);
     });
   } else if (n.sublabel) {
     const labelFs = n.inner ? fs + 4 : fs + 2;
