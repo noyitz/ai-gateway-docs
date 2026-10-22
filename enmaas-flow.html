@@ -487,9 +487,11 @@ function drawBox(key) {
       rowY += ts(16);
     });
   } else if (n.sublabel) {
-    ctx.font = `bold ${ts(fs + 1)}px system-ui`;
+    const labelFs = n.inner ? fs + 4 : fs + 2;
+    const subFs = n.inner ? Math.max(fs + 1, 13) : Math.max(fs - 1, 11);
+    ctx.font = `bold ${ts(labelFs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
-    ctx.font = `${ts(Math.max(fs - 1, 11))}px system-ui`;
+    ctx.font = `${ts(subFs)}px system-ui`;
     ctx.fillStyle = c.dim;
     ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
   } else {
@@ -627,16 +629,7 @@ function drawLines() {
     if (l.waypoints) {
       const fp = resolveEdge(fn, l, true);
       const tp = resolveEdge(tn, l, false);
-      // Turn every waypoint route into Manhattan geometry. This keeps
-      // provider and control-plane arrows horizontal/vertical instead of
-      // allowing tiny coordinate differences to create diagonal joins.
-      const rawPts = [fp, ...l.waypoints, tp];
-      const pts = [rawPts[0]];
-      for (let i = 1; i < rawPts.length; i++) {
-        const prev = pts[pts.length - 1], next = rawPts[i];
-        if (prev.x !== next.x && prev.y !== next.y) pts.push({ x: next.x, y: prev.y });
-        pts.push(next);
-      }
+      const pts = [fp, ...l.waypoints, tp];
       ctx.save();
       ctx.globalAlpha = 0.8;
       ctx.beginPath();
@@ -1302,7 +1295,7 @@ const flowLuna = [
   { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 12, fromLeft: true, toRight: true, yOff: 10 },
   { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
   { t: '14. headers + load_balancer: Host api.openai.com', mode: 'lightup', target: 'f_lb', badge: 14 },
-  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 655 }, { x: 1008, y: 272 }] },
+  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, fromRight: true, toLeft: true },
   { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 272 }, { x: 1008, y: 725 }] },
   { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
   { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
@@ -1329,7 +1322,7 @@ const flowOpus = [
   { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 14, fromLeft: true, toRight: true, yOff: 10 },
   { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
   { t: '16. headers + load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
-  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 655 }, { x: 1008, y: 426 }] },
+  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, fromRight: true, toLeft: true },
   { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 426 }, { x: 1008, y: 725 }] },
   { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
   { t: '20. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 20 },
@@ -1355,7 +1348,7 @@ const flowGlm = [
   { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 13, fromLeft: true, toRight: true, yOff: 10 },
   { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
   { t: '15. headers + load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
-  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 655 }, { x: 1008, y: 580 }] },
+  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, fromRight: true, toLeft: true },
   { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 580 }, { x: 1008, y: 725 }] },
   { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
   { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
