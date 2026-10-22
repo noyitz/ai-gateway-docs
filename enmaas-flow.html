@@ -627,7 +627,16 @@ function drawLines() {
     if (l.waypoints) {
       const fp = resolveEdge(fn, l, true);
       const tp = resolveEdge(tn, l, false);
-      const pts = [fp, ...l.waypoints, tp];
+      // Turn every waypoint route into Manhattan geometry. This keeps
+      // provider and control-plane arrows horizontal/vertical instead of
+      // allowing tiny coordinate differences to create diagonal joins.
+      const rawPts = [fp, ...l.waypoints, tp];
+      const pts = [rawPts[0]];
+      for (let i = 1; i < rawPts.length; i++) {
+        const prev = pts[pts.length - 1], next = rawPts[i];
+        if (prev.x !== next.x && prev.y !== next.y) pts.push({ x: next.x, y: prev.y });
+        pts.push(next);
+      }
       ctx.save();
       ctx.globalAlpha = 0.8;
       ctx.beginPath();
