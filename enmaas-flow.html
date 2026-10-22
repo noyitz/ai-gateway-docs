@@ -413,7 +413,9 @@ function drawBox(key) {
 
   const nodeColor = n.color || '#58a6ff';
   const etStroke = nodeColor + (isDark ? 'aa' : '99');
-  const etFill = isDark ? nodeColor + '16' : nodeColor + '0d';
+  // Keep ET cards opaque so routed arrows remain visibly underneath them.
+  // The purple frame still identifies the added component.
+  const etFill = c.box;
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, ts(8));
   ctx.fillStyle = (isA || hasBadge) ? c.boxA : (n.et ? etFill : c.box);
@@ -846,9 +848,10 @@ function draw() {
   ctx.clearRect(0, 0, W, H);
   drawBounds();
   drawLines();
-  Object.keys(N).forEach(k => drawBox(k));
+  // Animated traces belong to the routes, not on top of the components.
   dots.forEach(d => { d.update(); d.draw(); });
   dots = dots.filter(d => d.alive);
+  Object.keys(N).forEach(k => drawBox(k));
   if (highlightKey && N[highlightKey]) {
     const n = N[highlightKey];
     const pad = 0;
