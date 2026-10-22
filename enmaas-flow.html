@@ -258,11 +258,11 @@ const N = {
 
   // External backends — right, outside the cluster. Cards list the
   // model families EnMaaS currently exposes, not exact model ids.
-  openai: { x: 1030, y: 195, w: 198, h: 175, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
+  openai: { x: 1010, y: 195, w: 220, h: 175, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
             models: ['GPT-6', 'GPT-5.x', 'Codex models'] },
-  vertex: { x: 1030, y: 380, w: 198, h: 245, label: 'Google Vertex AI', sublabel: 'aiplatform.googleapis.com', color: '#3fb950', fs: 14,
+  vertex: { x: 1010, y: 380, w: 220, h: 245, label: 'Google Vertex AI', sublabel: 'aiplatform.googleapis.com', color: '#3fb950', fs: 14,
             models: ['Claude Opus', 'Claude Sonnet', 'Claude Haiku', 'Claude Fable', 'Gemini'] },
-  glm:    { x: 1030, y: 640, w: 198, h: 175, label: 'IBM Curvebender', sublabel: 'LiteLLM · Anthropic dialect', color: '#3fb950', fs: 14,
+  glm:    { x: 1010, y: 640, w: 220, h: 175, label: 'IBM Curvebender', sublabel: 'LiteLLM · Anthropic dialect', color: '#3fb950', fs: 14,
             models: [ { name: 'GLM 5.3', badge: 'G', color: '#5b8def' },
                       { name: 'DeepSeek V4.1 Flash', badge: 'D', color: '#4d6bfe' } ] },
 };
@@ -469,30 +469,30 @@ function drawBox(key) {
     // the infrastructure cards. Keep the endpoint slot empty for scanability.
     ctx.font = `bold ${ts(fs + 8)}px system-ui`;
     ctx.fillStyle = c.txt;
-    ctx.fillText(n.label, x + ts(10), y + ts(19));
+    ctx.fillText(n.label, x + ts(16), y + ts(31));
     // The provider endpoint subtitle is deliberately omitted; preserve the
     // vertical gap before the model list below.
-    let rowY = y + ts(51);
+    let rowY = y + ts(70);
     n.models.forEach(m => {
       const isObj = typeof m === 'object';
       const name = isObj ? m.name : m;
-      let textX = x + ts(10);
+      let textX = x + ts(16);
       if (isObj && m.badge) {
         const bw = ts(16), by = rowY - ts(12);
         ctx.beginPath();
-        ctx.roundRect(x + ts(10), by, bw, bw, ts(3));
+        ctx.roundRect(x + ts(16), by, bw, bw, ts(3));
         ctx.fillStyle = m.color || nodeColor;
         ctx.fill();
         ctx.font = `bold ${ts(11)}px system-ui`;
         ctx.fillStyle = '#0d1117';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(m.badge, x + ts(10) + bw / 2, by + bw / 2);
+        ctx.fillText(m.badge, x + ts(16) + bw / 2, by + bw / 2);
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
-        textX = x + ts(10) + bw + ts(6);
+        textX = x + ts(16) + bw + ts(7);
       }
-      ctx.font = `${ts(19.5)}px system-ui`;
+      ctx.font = `${ts(18)}px system-ui`;
       ctx.fillStyle = c.txt;
       ctx.fillText(name, textX, rowY);
       rowY += ts(25);
