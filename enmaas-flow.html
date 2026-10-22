@@ -216,32 +216,32 @@ const N = {
   clients: { x: -27, y: 228, w: 114, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
              clients: ['Claude Code', 'Codex CLI', 'OpenCode', 'Pi', 'Goose', 'Crush', 'curl / HTTP'] },
 
-  cluster: { x: 120, y: 70, w: 870, h: 880, type: 'boundary' },
-  praxis: { x: 150, y: 102, w: 555, h: 840, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
+  cluster: { x: 120, y: 70, w: 870, h: 900, type: 'boundary' },
+  praxis: { x: 150, y: 102, w: 555, h: 865, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
 
   lsn: { x: 174, y: 132, w: 507, h: 52, label: 'Praxis Listener', sublabel: ':8084 Unified (Anthropic msgs) · :8081 OpenAI', color: '#58a6ff', fs: 16 },
 
-  reqF: { x: 174, y: 210, w: 507, h: 540, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
+  reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
   // In-process request filters, executed top-to-bottom per request
-  f_auth:       { x: 188, y: 238, w: 480, h: 34, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_catalog:    { x: 188, y: 274, w: 480, h: 34, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_reject:     { x: 188, y: 310, w: 480, h: 34, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_access:     { x: 188, y: 346, w: 480, h: 34, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
-  f_guard:      { x: 188, y: 382, w: 480, h: 34, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
-  f_mth:        { x: 188, y: 418, w: 480, h: 34, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
-  f_mtp:        { x: 188, y: 454, w: 480, h: 34, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_vertex:     { x: 188, y: 490, w: 480, h: 34, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_router:     { x: 188, y: 526, w: 480, h: 34, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
-  f_gcp:        { x: 188, y: 562, w: 480, h: 34, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_norm:       { x: 188, y: 598, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
-  f_meter_pre:  { x: 188, y: 634, w: 480, h: 34, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
-  f_cred:       { x: 188, y: 670, w: 480, h: 34, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
-  f_lb:         { x: 188, y: 706, w: 480, h: 34, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
+  f_auth:       { x: 188, y: 238, w: 480, h: 38, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_catalog:    { x: 188, y: 278, w: 480, h: 38, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_reject:     { x: 188, y: 318, w: 480, h: 38, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_access:     { x: 188, y: 358, w: 480, h: 38, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
+  f_guard:      { x: 188, y: 398, w: 480, h: 38, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
+  f_mth:        { x: 188, y: 438, w: 480, h: 38, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
+  f_mtp:        { x: 188, y: 478, w: 480, h: 38, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_vertex:     { x: 188, y: 518, w: 480, h: 38, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_router:     { x: 188, y: 558, w: 480, h: 38, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
+  f_gcp:        { x: 188, y: 598, w: 480, h: 38, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_norm:       { x: 188, y: 638, w: 480, h: 38, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 678, w: 480, h: 38, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
+  f_cred:       { x: 188, y: 718, w: 480, h: 38, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
+  f_lb:         { x: 188, y: 758, w: 480, h: 38, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
-  respF: { x: 174, y: 770, w: 507, h: 170, type: 'container', label: '← Response Filters', color: '#3fb950' },
-  f_tcount:     { x: 188, y: 800, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
-  f_tusage:     { x: 188, y: 846, w: 480, h: 34, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
-  f_meter_post: { x: 188, y: 892, w: 480, h: 34, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#d2a8ff', inner: true, fs: 12 },
+  respF: { x: 174, y: 810, w: 507, h: 150, type: 'container', label: '← Response Filters', color: '#3fb950' },
+  f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
+  f_tusage:     { x: 188, y: 880, w: 480, h: 34, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
+  f_meter_post: { x: 188, y: 922, w: 480, h: 34, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#d2a8ff', inner: true, fs: 12 },
 
   // Control plane — right column inside the cluster.
   // PriceTag metering, its database and its dashboard are ET-added
@@ -496,11 +496,12 @@ function drawBox(key) {
   } else if (n.sublabel) {
     const labelFs = n.inner ? fs + 4 : fs + 2;
     const subFs = n.inner ? Math.max(fs + 1, 13) : Math.max(fs - 1, 11);
+    const textOffset = n.inner ? 10 : 8;
     ctx.font = `bold ${ts(labelFs)}px system-ui`;
-    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(textOffset));
     ctx.font = `${ts(subFs)}px system-ui`;
     ctx.fillStyle = c.dim;
-    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(textOffset));
   } else {
     ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2);
@@ -1304,8 +1305,8 @@ const flowLuna = [
   { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 12, fromLeft: true, toRight: true, yOff: 10 },
   { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
   { t: '14. headers + load_balancer: Host api.openai.com', mode: 'lightup', target: 'f_lb', badge: 14 },
-  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, numT: 0.9, fromRight: true, toLeft: true },
-  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, numT: 0.1, fromLeft: true, toRight: true },
+  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, numT: 0.1, fromRight: true, toLeft: true },
+  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, numT: 0.9, fromLeft: true, toRight: true },
   { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
   { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
   { t: '19. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
@@ -1331,8 +1332,8 @@ const flowOpus = [
   { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 14, fromLeft: true, toRight: true, yOff: 10 },
   { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
   { t: '16. headers + load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
-  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, numT: 0.9, fromRight: true, toLeft: true },
-  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, numT: 0.1, fromLeft: true, toRight: true },
+  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, numT: 0.1, fromRight: true, toLeft: true },
+  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, numT: 0.9, fromLeft: true, toRight: true },
   { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
   { t: '20. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 20 },
   { t: '21. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
@@ -1357,8 +1358,8 @@ const flowGlm = [
   { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 13, fromLeft: true, toRight: true, yOff: 10 },
   { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
   { t: '15. headers + load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
-  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, numT: 0.9, fromRight: true, toLeft: true },
-  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, numT: 0.1, fromLeft: true, toRight: true },
+  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, numT: 0.1, fromRight: true, toLeft: true },
+  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, numT: 0.9, fromLeft: true, toRight: true },
   { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
   { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
   { t: '20. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 20, fromRight: true, toLeft: true, yOff: 10 },
