@@ -119,7 +119,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <h1>EnMaaS AI Gateway<br><span class="grad">MaaS in Action</span></h1>
     <p class="sub">Interactive animated architecture flow<br>for the EnMaaS Praxis gateway, filters &amp; metering</p>
     <div class="stats">
-      <div class="stat blue">5 Flows</div>
+      <div class="stat blue">6 Flows</div>
       <div class="stat green">3 Backends</div>
       <div class="stat orange">OpenAI · Vertex · IBM</div>
       <div class="stat purple">Overlay-driven Praxis</div>
@@ -141,6 +141,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
       <option value="luna">Luna &rarr; OpenAI (:8081)</option>
       <option value="opus">Opus &rarr; Vertex AI (:8084)</option>
       <option value="glm">GLM &rarr; IBM Curvebender (:8084)</option>
+      <option value="deepseek">DeepSeek &rarr; IBM Curvebender (:8084)</option>
       <option value="auth">Auth Failure (401)</option>
       <option value="quota">Quota Exhausted (429)</option>
     </select>
@@ -177,8 +178,8 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Rejected (401 / 429)</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>ET / provider-specific</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Control Plane (MaaS / Metering)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>ET filters · PriceTag (new)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>MaaS API (upstream control plane)</div>
   <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#8b949e">Click any component for details</div>
   <div style="margin-top:5px;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
 </div>
@@ -211,6 +212,10 @@ function toggleTheme() {
 const N = {
   user: { x: -20, y: 150, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
+  // Supported clients — left gutter card, feeds the gateway
+  clients: { x: 2, y: 228, w: 114, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
+             clients: ['Claude Code', 'Codex CLI', 'OpenCode', 'Pi', 'Goose', 'Crush', 'curl / HTTP'] },
+
   cluster: { x: 120, y: 70, w: 870, h: 880, type: 'boundary' },
   praxis: { x: 150, y: 102, w: 555, h: 772, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
 
@@ -221,7 +226,7 @@ const N = {
   f_auth:       { x: 188, y: 238, w: 480, h: 28, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_catalog:    { x: 188, y: 269, w: 480, h: 28, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_reject:     { x: 188, y: 300, w: 480, h: 28, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_access:     { x: 188, y: 331, w: 480, h: 28, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#f0883e', inner: true, fs: 12 },
+  f_access:     { x: 188, y: 331, w: 480, h: 28, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
   f_guard:      { x: 188, y: 362, w: 480, h: 28, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
   f_mth:        { x: 188, y: 393, w: 480, h: 28, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
   f_mtp:        { x: 188, y: 424, w: 480, h: 28, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
@@ -229,25 +234,32 @@ const N = {
   f_router:     { x: 188, y: 486, w: 480, h: 28, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
   f_gcp:        { x: 188, y: 517, w: 480, h: 28, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_norm:       { x: 188, y: 548, w: 480, h: 28, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
-  f_meter_pre:  { x: 188, y: 579, w: 480, h: 28, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#f0883e', inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 579, w: 480, h: 28, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
   f_cred:       { x: 188, y: 610, w: 480, h: 28, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
   f_lb:         { x: 188, y: 641, w: 480, h: 28, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
   respF: { x: 174, y: 678, w: 507, h: 182, type: 'container', label: '← Response Filters', color: '#3fb950' },
   f_tcount:     { x: 188, y: 710, w: 480, h: 30, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
   f_tusage:     { x: 188, y: 756, w: 480, h: 30, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
-  f_meter_post: { x: 188, y: 802, w: 480, h: 30, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#f0883e', inner: true, fs: 12 },
+  f_meter_post: { x: 188, y: 802, w: 480, h: 30, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#d2a8ff', inner: true, fs: 12 },
 
-  // Control plane — right column inside the cluster
+  // Control plane — right column inside the cluster.
+  // PriceTag metering, its database and its dashboard are ET-added
+  // components on top of the product, so they share the purple accent.
   maas:  { x: 745, y: 232, w: 205, h: 54, label: 'MaaS API', sublabel: ':8080 /…/api-keys/validate', color: '#f0883e', fs: 14 },
-  meter: { x: 745, y: 420, w: 205, h: 54, label: 'Metering Service', sublabel: 'Go · entitlements + events', color: '#f0883e', fs: 14 },
-  pg:    { x: 745, y: 560, w: 205, h: 50, label: 'PostgreSQL', sublabel: 'AWS RDS · enmaas-db (PG16)', color: '#8b949e', fs: 13 },
-  dash:  { x: 745, y: 690, w: 205, h: 54, label: 'Metering Dashboard', sublabel: '/welcome · /dashboard', color: '#79c0ff', fs: 13 },
+  meter: { x: 745, y: 420, w: 205, h: 54, label: 'Metering Service', sublabel: 'PriceTag · entitlements + events', color: '#d2a8ff', fs: 13 },
+  pg:    { x: 745, y: 560, w: 205, h: 50, label: 'PostgreSQL', sublabel: 'AWS RDS · enmaas-db (PG16)', color: '#d2a8ff', fs: 13 },
+  dash:  { x: 745, y: 690, w: 205, h: 54, label: 'Metering Dashboard', sublabel: '/welcome · /dashboard', color: '#d2a8ff', fs: 13 },
 
-  // External backends — right, outside the cluster
-  openai: { x: 1030, y: 232, w: 198, h: 58, label: 'OpenAI', sublabel: 'api.openai.com · gpt-*', color: '#3fb950', fs: 14 },
-  vertex: { x: 1030, y: 350, w: 198, h: 66, label: 'Google Vertex AI', sublabel: 'Claude + Gemini · aiplatform', color: '#3fb950', fs: 14 },
-  glm:    { x: 1030, y: 478, w: 198, h: 66, label: 'IBM Curvebender', sublabel: 'LiteLLM · GLM-5.3', color: '#3fb950', fs: 14 },
+  // External backends — right, outside the cluster. Cards list the
+  // model families EnMaaS currently exposes, not exact model ids.
+  openai: { x: 1030, y: 213, w: 198, h: 118, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
+            models: ['GPT-6', 'GPT-5.x', 'Codex models'] },
+  vertex: { x: 1030, y: 351, w: 198, h: 150, label: 'Google Vertex AI', sublabel: 'aiplatform.googleapis.com', color: '#3fb950', fs: 14,
+            models: ['Claude Opus', 'Claude Sonnet', 'Claude Haiku', 'Claude Fable', 'Gemini'] },
+  glm:    { x: 1030, y: 521, w: 198, h: 118, label: 'IBM Curvebender', sublabel: 'LiteLLM · Anthropic dialect', color: '#3fb950', fs: 14,
+            models: [ { name: 'GLM 5.3', badge: 'G', color: '#5b8def' },
+                      { name: 'DeepSeek V4.1 Flash', badge: 'D', color: '#4d6bfe' } ] },
 };
 
 const tips = {
@@ -273,9 +285,10 @@ const tips = {
   meter: { t: 'Metering Service', d: 'A Go service (stdlib net/http, raw SQL over lib/pq). Answers the pre-request entitlement check (monthly token + dollar quota) and ingests post-response CloudEvents usage events, writing frozen-cost rows to PostgreSQL and maintaining hourly rollups. Powers the web dashboard.', dt: [['Entitlement','GET /…/entitlements/{key}/value'],['Ingest','POST /api/v1/events'],['Quota','monthly tokens + USD ($600 default)'],['Tables','usage_events, usage_hourly, model_pricing']], links: [['pricetag-metering','https://github.com/redhat-et/pricetag-metering']] },
   pg: { t: 'PostgreSQL — AWS RDS', d: 'EnMaaS runs PostgreSQL on AWS RDS (identifier enmaas-db, PG 16, db.m7g.xlarge, Multi-AZ, encrypted, force_ssl). Database aigateway holds usage_events (append-only, frozen cost_usd), usage_hourly rollups, model_pricing, and api_keys (owned by maas-api). A metering_reader role serves the dashboard read replica.', dt: [['Engine','PostgreSQL 16 (AWS RDS)'],['Identifier','enmaas-db · Multi-AZ'],['Database','aigateway'],['Roles','aigateway · metering_reader'],['Cost','frozen at insert from model_pricing']], links: [] },
   dash: { t: 'Metering Dashboard', d: 'A same-origin SPA served by the metering-service binary. /welcome is the public onboarding page; /dashboard is session-authenticated and shows per-user, per-group, per-model and per-tool usage, cost, and a “Saved vs Hosted” KPI. The browser polls authenticated JSON APIs that query the read replica / hourly rollups.', dt: [['/welcome','public onboarding'],['/dashboard','authenticated usage'],['/manager','org / team view'],['Reads','read replica + usage_hourly rollups']], links: [] },
-  openai: { t: 'OpenAI', d: 'Real OpenAI API, reached via the :8081 OpenAI-dialect listener. gpt-* models (e.g. gpt-5.6-luna) select the openai candidate from the routing overlay and route to the default openai cluster. The gateway injects Authorization: Bearer OPENAI_API_KEY and re-originates TLS to api.openai.com.', dt: [['Listener',':8081 (chat/completions)'],['Endpoint','api.openai.com:443'],['Models','gpt-5.6-luna, terra, sol'],['Credential','Bearer OPENAI_API_KEY']], links: [['OpenAI API','https://platform.openai.com/docs']] },
-  vertex: { t: 'Google Vertex AI', d: 'EnMaaS serves Claude (claude-opus, sonnet, haiku) and Gemini through Google Vertex AI rather than direct Anthropic. The vertex filter translates Anthropic Messages ⇄ Vertex rawPredict, and gcp_adc mints the Google OAuth token. Host is forced to aiplatform.googleapis.com.', dt: [['Endpoint','aiplatform.googleapis.com:443'],['Models','claude-opus/sonnet/haiku, gemini-*'],['Auth','Google OAuth via gcp_adc (SA key)'],['Translation','vertex filter (rawPredict)']], links: [['Vertex AI','https://cloud.google.com/vertex-ai']] },
-  glm: { t: 'IBM Curvebender — GLM', d: 'The GLM model (rits/zai-org/glm-5-3) is served by an IBM Curvebender LiteLLM gateway at litellm.cb.ete.res.ibm.com. LiteLLM presents an Anthropic-dialect endpoint, so the unified route reaches it with no dialect translation. The gateway injects a Bearer LiteLLM key and forces the Host/SNI; the EnMaaS egress IP is allowlisted upstream.', dt: [['Endpoint','litellm.cb.ete.res.ibm.com:443'],['Model id','rits/zai-org/glm-5-3'],['Dialect','Anthropic (via LiteLLM)'],['Credential','Bearer CB_LITELLM_API_KEY']], links: [['LiteLLM','https://github.com/BerriAI/litellm']] },
+  openai: { t: 'OpenAI', d: 'Real OpenAI API, reached via the :8081 OpenAI-dialect listener. gpt-* models select the openai candidate from the routing overlay and route to the default openai cluster. The catalog exposes the GPT-6 family, GPT-5.x (incl. the gpt-5.6 variants) and the Codex models; the overlay carries the exact ids. The gateway injects Authorization: Bearer OPENAI_API_KEY and re-originates TLS to api.openai.com.', dt: [['Listener',':8081 (chat/completions)'],['Endpoint','api.openai.com:443'],['Families','GPT-6 · GPT-5.x · Codex'],['Credential','Bearer OPENAI_API_KEY']], links: [['OpenAI API','https://platform.openai.com/docs']] },
+  vertex: { t: 'Google Vertex AI', d: 'EnMaaS serves the Claude families (Opus, Sonnet, Haiku and Fable, matching the Vertex catalog) and Gemini through Google Vertex AI rather than direct Anthropic. The vertex filter translates Anthropic Messages ⇄ Vertex rawPredict, and gcp_adc mints the Google OAuth token. Host is forced to aiplatform.googleapis.com.', dt: [['Endpoint','aiplatform.googleapis.com:443'],['Families','Claude Opus · Sonnet · Haiku · Fable · Gemini'],['Auth','Google OAuth via gcp_adc (SA key)'],['Translation','vertex filter (rawPredict)']], links: [['Vertex AI','https://cloud.google.com/vertex-ai']] },
+  glm: { t: 'IBM Curvebender — GLM + DeepSeek', d: 'Hosted models are served by an IBM Curvebender LiteLLM gateway at litellm.cb.ete.res.ibm.com. Two families are exposed today: GLM 5.3 (rits/zai-org/glm-5-3) and DeepSeek V4.1 Flash (rits/deepseek-ai/DeepSeek-V4.1-Flash-1017). LiteLLM presents an Anthropic-dialect endpoint, so the unified route reaches both with no dialect translation. The gateway injects a Bearer LiteLLM key and forces the Host/SNI; the EnMaaS egress IP is allowlisted upstream. Both are billed at $0 to the client and metered like any other model.', dt: [['Endpoint','litellm.cb.ete.res.ibm.com:443'],['Models','GLM 5.3 · DeepSeek V4.1 Flash'],['Model ids','rits/zai-org/glm-5-3 · rits/deepseek-ai/DeepSeek-V4.1-Flash-1017'],['Dialect','Anthropic (via LiteLLM)'],['Credential','Bearer CB_LITELLM_API_KEY']], links: [['LiteLLM','https://github.com/BerriAI/litellm']] },
+  clients: { t: 'Supported clients', d: 'Any HTTP client that speaks an OpenAI or Anthropic dialect works through EnMaaS — the gateway picks the listener and filter chain from the path, not from the client. These are the clients in active use today. Point them at https://api.enmaas.devshift.net/v1 (OpenAI) or /v1/messages (Anthropic) and paste an EnMaaS API key; no provider key is needed in the client.', dt: [['Anthropic dialect','Claude Code · Pi'],['OpenAI dialect','Codex CLI · OpenCode · Goose · Crush'],['Any HTTP','curl / raw SDK requests'],['Base URL','https://api.enmaas.devshift.net/v1'],['Auth','EnMaaS API key (x-api-key or Bearer)']], links: [] },
 };
 
 // The short tooltip above explains what a filter does; these longer notes
@@ -414,7 +427,66 @@ function drawBox(key) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  if (n.sublabel) {
+  // Client-list card (left gutter)
+  if (n.type === 'clients') {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `bold ${ts(11)}px system-ui`;
+    ctx.fillStyle = nodeColor;
+    ctx.fillText(n.label, x + ts(10), y + ts(17));
+    let rowY = y + ts(39);
+    (n.clients || []).forEach(name => {
+      ctx.beginPath();
+      ctx.arc(x + ts(13), rowY - ts(3.5), ts(2.2), 0, Math.PI * 2);
+      ctx.fillStyle = nodeColor + 'aa';
+      ctx.fill();
+      ctx.font = `${ts(10.5)}px system-ui`;
+      ctx.fillStyle = c.txt;
+      ctx.fillText(name, x + ts(21), rowY);
+      rowY += ts(26);
+    });
+    ctx.restore();
+    return;
+  }
+
+  // Provider card: name + endpoint + hosted model families
+  if (n.models) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + ts(10), y + ts(19));
+    if (n.sublabel) {
+      ctx.font = `${ts(9)}px system-ui`;
+      ctx.fillStyle = c.dim;
+      ctx.fillText(n.sublabel, x + ts(10), y + ts(32));
+    }
+    let rowY = y + ts(51);
+    n.models.forEach(m => {
+      const isObj = typeof m === 'object';
+      const name = isObj ? m.name : m;
+      let textX = x + ts(10);
+      if (isObj && m.badge) {
+        const bw = ts(12), by = rowY - ts(9.5);
+        ctx.beginPath();
+        ctx.roundRect(x + ts(10), by, bw, bw, ts(3));
+        ctx.fillStyle = m.color || nodeColor;
+        ctx.fill();
+        ctx.font = `bold ${ts(8)}px system-ui`;
+        ctx.fillStyle = '#0d1117';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(m.badge, x + ts(10) + bw / 2, by + bw / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        textX = x + ts(10) + bw + ts(6);
+      }
+      ctx.font = `${ts(10.5)}px system-ui`;
+      ctx.fillStyle = c.txt;
+      ctx.fillText(name, textX, rowY);
+      rowY += ts(16);
+    });
+  } else if (n.sublabel) {
     ctx.font = `bold ${ts(fs)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
     ctx.font = `${ts(Math.max(fs - 3, 10))}px system-ui`;
@@ -1048,25 +1120,32 @@ function inspStepOpus(stepNum) {
 }
 
 // --- GLM → IBM Curvebender (:8084) ------------------------------
+function hostedModel() {
+  return activeFlow === 'deepseek'
+    ? { label: 'DeepSeek', id: 'rits/deepseek-ai/DeepSeek-V4.1-Flash-1017' }
+    : { label: 'GLM', id: 'rits/zai-org/glm-5-3' };
+}
+
 function inspStepGlm(stepNum) {
+  const hm = hostedModel();
   switch (stepNum) {
     case 1: inspStepLabel = '① Incoming Request → :8084'; break;
     case 2: inspStepLabel = '② Entering the unified filter chain'; hl('h-key'); break;
     case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
     case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
     case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
-    case 6: inspStepLabel = '⑥ model policy: GLM model allowed'; hl('b-model'); break;
+    case 6: inspStepLabel = `⑥ model policy: ${hm.label} model allowed`; hl('b-model'); break;
     case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
     case 8:
-      inspStepLabel = '⑧ model_to_header: GLM id → X-Model';
-      inspHeaders.push({ v: 'X-Model: rits/zai-org/glm-5-3', s: 'add', id: 'h-xmodel' });
+      inspStepLabel = `⑧ model_to_header: ${hm.label} id → X-Model`;
+      inspHeaders.push({ v: `X-Model: ${hm.id}`, s: 'add', id: 'h-xmodel' });
       break;
     case 9:
-      inspStepLabel = '⑨ intelligent_route: GLM unmapped (pass-through)';
+      inspStepLabel = `⑨ intelligent_route: ${hm.label} unmapped (pass-through)`;
       inspCycle = [ { v: 'provider = (none) → match by X-Model', s: 'add', id: 'c-prov' } ];
       break;
     case 10:
-      inspStepLabel = '⑩ intelligent_route: GLM candidate → cb-glm cluster';
+      inspStepLabel = `⑩ intelligent_route: ${hm.label} candidate → cb-glm cluster`;
       hl('h-xmodel');
       inspCycle.push({ v: 'cluster = "cb-glm"', s: 'add', id: 'c-cluster' });
       break;
@@ -1077,8 +1156,8 @@ function inspStepGlm(stepNum) {
       inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
       break;
     case 13:
-      inspStepLabel = '⑬ Balance OK — GLM allowed even over dollar cap';
-      inspCycle.push({ v: 'hasAccess=true · modelAllowed=[rits/zai-org/glm-5-3]', s: 'add', id: 'c-remain' });
+      inspStepLabel = `⑬ Balance OK — ${hm.label} allowed even over dollar cap`;
+      inspCycle.push({ v: `hasAccess=true · modelAllowed=[${hm.id}]`, s: 'add', id: 'c-remain' });
       break;
     case 14:
       inspStepLabel = '⑭ credential_injection: Bearer CB key + Host override';
@@ -1093,7 +1172,7 @@ function inspStepGlm(stepNum) {
       hl('h-provider');
       break;
     case 16: inspStepLabel = '⑯ → IBM Curvebender LiteLLM (TLS :443)'; hl('h-path2'); break;
-    case 17: inspStepLabel = '⑰ LiteLLM responds 200 (Anthropic dialect)'; anthropicResponse('"model": "rits/zai-org/glm-5-3"'); break;
+    case 17: inspStepLabel = '⑰ LiteLLM responds 200 (Anthropic dialect)'; anthropicResponse(`"model": "${hm.id}"`); break;
     case 18: inspStepLabel = '⑱ token_count: parse Anthropic-format usage'; hl('r-usage'); break;
     case 19:
       inspStepLabel = '⑲ token_usage_headers: quota visible to client';
@@ -1101,7 +1180,7 @@ function inspStepGlm(stepNum) {
       break;
     case 20:
       inspStepLabel = '⑳ external_metering: POST usage event';
-      inspCycle = [ { v: 'POST /api/v1/events {model: rits/zai-org/glm-5-3, total: 10}', s: 'add', id: 'c-event' } ];
+      inspCycle = [ { v: `POST /api/v1/events {model: ${hm.id}, total: 10}`, s: 'add', id: 'c-event' } ];
       break;
     case 21:
       inspStepLabel = '㉑ usage_events row appended (cost frozen at insert)';
@@ -1189,7 +1268,7 @@ function inspStep(stepNum) {
   if (activeFlow === 'auth') inspStepAuth(stepNum);
   else if (activeFlow === 'quota') inspStepQuota(stepNum);
   else if (activeFlow === 'opus') inspStepOpus(stepNum);
-  else if (activeFlow === 'glm') inspStepGlm(stepNum);
+  else if (activeFlow === 'glm' || activeFlow === 'deepseek') inspStepGlm(stepNum);
   else inspStepLuna(stepNum);
   renderInsp();
 }
@@ -1210,12 +1289,12 @@ const flowLuna = [
   { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
   { t: '9. intelligent_route: gpt-* unmapped → openai', mode: 'lightup', target: 'f_mtp', badge: 9 },
   { t: '10. intelligent_route: overlay candidate → openai cluster', mode: 'lightup', target: 'f_router', badge: 10 },
-  { t: '11. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 11, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f0883e', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '11. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#d2a8ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 12, fromLeft: true, toRight: true, yOff: 10 },
   { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
   { t: '14. headers + load_balancer: Host api.openai.com', mode: 'lightup', target: 'f_lb', badge: 14 },
-  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 261 }] },
-  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 261 }, { x: 1008, y: 725 }] },
+  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 272 }] },
+  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 272 }, { x: 1008, y: 725 }] },
   { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
   { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
   { t: '19. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
@@ -1237,12 +1316,12 @@ const flowOpus = [
   { t: '10. vertex: Anthropic → Vertex rawPredict translate', mode: 'lightup', target: 'f_vertex', badge: 10 },
   { t: '11. intelligent_route: provider=vertex → vertex cluster', mode: 'lightup', target: 'f_router', badge: 11 },
   { t: '12. gcp_adc: mint Google OAuth token (SA key)', mode: 'lightup', target: 'f_gcp', badge: 12 },
-  { t: '13. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 13, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f0883e', num: 14, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#d2a8ff', num: 13, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 14, fromLeft: true, toRight: true, yOff: 10 },
   { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
   { t: '16. headers + load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
-  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 383 }] },
-  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 383 }, { x: 1008, y: 725 }] },
+  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 426 }] },
+  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 426 }, { x: 1008, y: 725 }] },
   { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
   { t: '20. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 20 },
   { t: '21. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
@@ -1263,12 +1342,12 @@ const flowGlm = [
   { t: '9. intelligent_route: GLM unmapped (pass-through)', mode: 'lightup', target: 'f_mtp', badge: 9 },
   { t: '10. intelligent_route: GLM candidate → cb-glm cluster', mode: 'lightup', target: 'f_router', badge: 10 },
   { t: '11. stream_usage_inject: no-op (LiteLLM Anthropic dialect)', mode: 'lightup', target: 'f_norm', badge: 11 },
-  { t: '12. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 12, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f0883e', num: 13, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '12. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#d2a8ff', num: 12, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 13, fromLeft: true, toRight: true, yOff: 10 },
   { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
   { t: '15. headers + load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
-  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 511 }] },
-  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 511 }, { x: 1008, y: 725 }] },
+  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, fromRight: true, toLeft: true, waypoints: [{ x: 1008, y: 624 }, { x: 1008, y: 580 }] },
+  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, fromLeft: true, toRight: true, waypoints: [{ x: 1008, y: 580 }, { x: 1008, y: 725 }] },
   { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
   { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
   { t: '20. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 20, fromRight: true, toLeft: true, yOff: 10 },
@@ -1295,16 +1374,19 @@ const flowQuota = [
   { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
   { t: '6. model policy + identity_header_guard pass', mode: 'lightup', target: 'f_access', badge: 6 },
   { t: '7. model_to_header + intelligent_route', mode: 'lightup', target: 'f_router', badge: 7 },
-  { t: '8. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 8, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '8. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#d2a8ff', num: 8, fromRight: true, toLeft: true, yOff: -8 },
   { t: '9. Monthly usage: quota FULL', mode: 'lightup', target: 'meter', badge: 9 },
   { t: '10. Metering → Praxis: hasAccess = false', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f85149', num: 10, fromLeft: true, toRight: true, yOff: 8 },
   { t: '11. external_metering: reject (quota exceeded)', mode: 'lightup', target: 'f_meter_pre', badge: '✗', errColor: '#f85149' },
   { t: '12. 429 Too Many Requests → client', mode: 'arrow', f: 'lsn', to: 'user', c: '#f85149', num: 12, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowMap = { luna: flowLuna, opus: flowOpus, glm: flowGlm, auth: flowAuth, quota: flowQuota };
-const flowLabels = { luna: 'Luna → OpenAI (:8081)', opus: 'Opus → Vertex AI (:8084)', glm: 'GLM → IBM Curvebender (:8084)', auth: 'Auth Failure (401)', quota: 'Quota Exhausted (429)' };
-const flowOrder = ['luna', 'opus', 'glm', 'auth', 'quota'];
+// Same wire path as GLM, different hosted model.
+const flowDeepseek = flowGlm.map(s => ({ ...s, t: s.t.replace(/GLM/g, 'DeepSeek') }));
+
+const flowMap = { luna: flowLuna, opus: flowOpus, glm: flowGlm, deepseek: flowDeepseek, auth: flowAuth, quota: flowQuota };
+const flowLabels = { luna: 'Luna → OpenAI (:8081)', opus: 'Opus → Vertex AI (:8084)', glm: 'GLM → IBM Curvebender (:8084)', deepseek: 'DeepSeek → IBM Curvebender (:8084)', auth: 'Auth Failure (401)', quota: 'Quota Exhausted (429)' };
+const flowOrder = ['luna', 'opus', 'glm', 'deepseek', 'auth', 'quota'];
 let flow = flowLuna;
 
 function updateTitle() {
