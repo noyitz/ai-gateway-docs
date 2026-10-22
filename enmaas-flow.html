@@ -213,7 +213,7 @@ const N = {
   user: { x: -20, y: 150, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
 
   // Supported clients — left gutter card, feeds the gateway
-  clients: { x: -27, y: 228, w: 114, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
+  clients: { x: -42.5, y: 228, w: 145, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
              clients: ['Claude Code', 'Codex CLI', 'OpenCode', 'Pi', 'Goose', 'Crush', 'curl / HTTP'] },
 
   cluster: { x: 120, y: 70, w: 870, h: 900, type: 'boundary' },
@@ -223,20 +223,20 @@ const N = {
 
   reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
   // In-process request filters, executed top-to-bottom per request
-  f_auth:       { x: 188, y: 238, w: 480, h: 38, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_catalog:    { x: 188, y: 278, w: 480, h: 38, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_reject:     { x: 188, y: 318, w: 480, h: 38, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_access:     { x: 188, y: 358, w: 480, h: 38, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
-  f_guard:      { x: 188, y: 398, w: 480, h: 38, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
-  f_mth:        { x: 188, y: 438, w: 480, h: 38, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
-  f_mtp:        { x: 188, y: 478, w: 480, h: 38, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_vertex:     { x: 188, y: 518, w: 480, h: 38, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_router:     { x: 188, y: 558, w: 480, h: 38, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
-  f_gcp:        { x: 188, y: 598, w: 480, h: 38, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_norm:       { x: 188, y: 638, w: 480, h: 38, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
-  f_meter_pre:  { x: 188, y: 678, w: 480, h: 38, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
-  f_cred:       { x: 188, y: 718, w: 480, h: 38, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
-  f_lb:         { x: 188, y: 758, w: 480, h: 38, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
+  f_auth:       { x: 188, y: 238, w: 480, h: 34, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_catalog:    { x: 188, y: 278, w: 480, h: 34, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_reject:     { x: 188, y: 318, w: 480, h: 34, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_access:     { x: 188, y: 358, w: 480, h: 34, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
+  f_guard:      { x: 188, y: 398, w: 480, h: 34, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
+  f_mth:        { x: 188, y: 438, w: 480, h: 34, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
+  f_mtp:        { x: 188, y: 478, w: 480, h: 34, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_vertex:     { x: 188, y: 518, w: 480, h: 34, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_router:     { x: 188, y: 558, w: 480, h: 34, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
+  f_gcp:        { x: 188, y: 598, w: 480, h: 34, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_norm:       { x: 188, y: 638, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 678, w: 480, h: 34, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
+  f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
+  f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
   respF: { x: 174, y: 810, w: 507, h: 150, type: 'container', label: '← Response Filters', color: '#3fb950' },
   f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
