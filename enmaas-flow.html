@@ -431,7 +431,7 @@ function drawBox(key) {
   if (n.type === 'clients') {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.font = `bold ${ts(12)}px system-ui`;
+    ctx.font = `bold ${ts(14)}px system-ui`;
     ctx.fillStyle = nodeColor;
     ctx.fillText(n.label, x + ts(10), y + ts(17));
     let rowY = y + ts(39);
@@ -440,7 +440,7 @@ function drawBox(key) {
       ctx.arc(x + ts(13), rowY - ts(3.5), ts(2.2), 0, Math.PI * 2);
       ctx.fillStyle = nodeColor + 'aa';
       ctx.fill();
-      ctx.font = `${ts(11.5)}px system-ui`;
+      ctx.font = `${ts(13)}px system-ui`;
       ctx.fillStyle = c.txt;
       ctx.fillText(name, x + ts(21), rowY);
       rowY += ts(26);
@@ -457,7 +457,7 @@ function drawBox(key) {
     ctx.fillStyle = c.txt;
     ctx.fillText(n.label, x + ts(10), y + ts(19));
     if (n.sublabel) {
-      ctx.font = `${ts(10)}px system-ui`;
+      ctx.font = `${ts(10.5)}px system-ui`;
       ctx.fillStyle = c.dim;
       ctx.fillText(n.sublabel, x + ts(10), y + ts(32));
     }
@@ -481,15 +481,15 @@ function drawBox(key) {
         ctx.textBaseline = 'alphabetic';
         textX = x + ts(10) + bw + ts(6);
       }
-      ctx.font = `${ts(11.5)}px system-ui`;
+      ctx.font = `${ts(13)}px system-ui`;
       ctx.fillStyle = c.txt;
       ctx.fillText(name, textX, rowY);
       rowY += ts(16);
     });
   } else if (n.sublabel) {
-    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.font = `bold ${ts(fs + 1)}px system-ui`;
     ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
-    ctx.font = `${ts(Math.max(fs - 3, 10))}px system-ui`;
+    ctx.font = `${ts(Math.max(fs - 1, 11))}px system-ui`;
     ctx.fillStyle = c.dim;
     ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
   } else {
