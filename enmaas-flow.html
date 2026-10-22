@@ -439,7 +439,9 @@ function drawBox(key) {
   // direction of the request/response path. Keep the step badge purple so the
   // added-filter distinction remains visible without making the whole path
   // look like a separate purple lane.
-  const activePathColor = key === 'f_meter_post' ? '#3fb950' : '#58a6ff';
+  // Active infrastructure/provider cards retain their own green accent;
+  // active request filters use blue and active response hooks use green.
+  const activePathColor = key === 'f_meter_post' || n.color === '#3fb950' ? '#3fb950' : '#58a6ff';
   const etStroke = nodeColor + (isDark ? 'aa' : '99');
   // Keep ET cards opaque so routed arrows remain visibly underneath them.
   // The purple frame still identifies the added component.
@@ -448,7 +450,7 @@ function drawBox(key) {
   ctx.roundRect(x, y, w, h, ts(8));
   ctx.fillStyle = (isA || hasBadge) ? c.boxA : (n.et ? etFill : c.box);
   ctx.fill();
-  ctx.strokeStyle = (isA || hasBadge) ? (n.et ? activePathColor : nodeColor) : (n.et ? etStroke : c.bdr);
+  ctx.strokeStyle = (isA || hasBadge) ? activePathColor : (n.et ? etStroke : c.bdr);
   ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
   ctx.stroke();
 
