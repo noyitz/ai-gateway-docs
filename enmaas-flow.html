@@ -229,19 +229,19 @@ const N = {
   reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
   // In-process request filters, executed top-to-bottom per request
   f_auth:       { x: 188, y: 238, w: 480, h: 34, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_catalog:    { x: 188, y: 278, w: 480, h: 34, label: 'model_catalog', sublabel: 'overlay → OpenAI / Anthropic / both', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_reject:     { x: 188, y: 318, w: 480, h: 34, label: 'reject_upgrade', sublabel: 'block WebSocket tunnel metering bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_access:     { x: 188, y: 358, w: 480, h: 34, label: 'external_metering', sublabel: 'model policy preflight · fail-closed', color: '#d2a8ff', inner: true, fs: 12 },
-  f_guard:      { x: 188, y: 398, w: 480, h: 34, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
-  f_mth:        { x: 188, y: 438, w: 480, h: 34, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
-  f_mtp:        { x: 188, y: 478, w: 480, h: 34, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_vertex:     { x: 188, y: 518, w: 480, h: 34, label: 'vertex', sublabel: 'ET · Anthropic ⇄ Vertex rawPredict', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_router:     { x: 188, y: 558, w: 480, h: 34, label: 'path_rewrite', sublabel: 'Gemini Chat → Vertex endpoint', color: '#58a6ff', inner: true, fs: 12 },
-  f_gcp:        { x: 188, y: 598, w: 480, h: 34, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_norm:       { x: 188, y: 638, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
-  f_meter_pre:  { x: 188, y: 678, w: 480, h: 34, label: 'external_metering', sublabel: 'quota + model policy (fail-closed)', color: '#d2a8ff', inner: true, fs: 12 },
-  f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 12 },
-  f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 12 },
+  f_reject:     { x: 188, y: 278, w: 480, h: 34, label: 'reject_upgrade', sublabel: 'OpenAI chain · block WebSocket bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_catalog:    { x: 188, y: 318, w: 480, h: 34, label: 'model_catalog', sublabel: 'GET /v1/models · overlay envelopes', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_guard:      { x: 188, y: 358, w: 480, h: 34, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
+  f_mth:        { x: 188, y: 398, w: 480, h: 34, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
+  f_mtp:        { x: 188, y: 438, w: 480, h: 34, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_vertex:     { x: 188, y: 478, w: 480, h: 34, label: 'vertex', sublabel: 'unified only · Anthropic ⇄ Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_router:     { x: 188, y: 518, w: 480, h: 34, label: 'path_rewrite', sublabel: 'OpenAI Vertex Chat path · conditional', color: '#58a6ff', inner: true, fs: 12 },
+  f_gcp:        { x: 188, y: 558, w: 480, h: 34, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 598, w: 480, h: 34, label: 'external_metering', sublabel: 'one preflight: model policy + quota', color: '#d2a8ff', inner: true, fs: 12 },
+  f_norm:       { x: 188, y: 638, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI Chat streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
+  f_ttfb:       { x: 188, y: 678, w: 480, h: 34, label: 'time_to_first_token', sublabel: 'record provider first-token latency', color: '#58a6ff', inner: true, fs: 12 },
+  f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'headers + credential_injection', sublabel: 'provider auth + Host/SNI headers', color: '#58a6ff', inner: true, fs: 12 },
+  f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'load_balancer', sublabel: 'TLS SNI + idle connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
   respF: { x: 174, y: 810, w: 507, h: 155, type: 'container', label: '← Response Filters', color: '#3fb950' },
   f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
@@ -272,22 +272,22 @@ const tips = {
   f_auth: { t: 'api_key_auth', d: 'Extracts the client EnMaaS key (x-api-key for Anthropic clients, Authorization: Bearer for OpenAI clients) and validates it against the MaaS API. Results are cached (TTL 300s) so hot paths skip the callback. On success, identity headers are injected for downstream filters and metering.', dt: [['Phase','Request, first'],['Validation','http://maas-api:8080/internal/v1/api-keys/validate'],['Cache','300s TTL'],['Failure','401 Unauthorized']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
   f_catalog: { t: 'model_catalog', d: 'Answers GET /v1/models from the same routing overlay that drives intelligent_route. Candidates declare catalog membership, so OpenAI/Anthropic discovery cannot drift from routing; hosted GLM can appear in both envelopes.', dt: [['Phase','Request'],['Scope','GET /v1/models'],['Catalog','Vertex Claude + Gemini + GLM'],['Format','anthropic + openai']], links: [] },
   f_reject: { t: 'reject_upgrade', d: 'Rejects HTTP connection upgrades such as WebSockets before they can bypass body processing, token accounting, quota checks, and usage events.', dt: [['Phase','Request'],['Rejects','101 / WebSocket upgrades'],['Reason','protect metering path'],['Response','HTTP rejection']], links: [] },
-  f_access: { t: 'external_metering — model policy', d: 'The metering preflight is now the model-authorization gate. PriceTag returns model_allowed; a denied model produces 403, and model-policy availability is fail-closed while ordinary billing behavior remains separately configurable.', dt: [['Phase','Request preflight'],['Decision','PriceTag model_policy'],['Violation','403 Forbidden'],['Outage','fail-closed policy decision']], links: [['Metering service','https://github.com/redhat-et/pricetag-metering']] },
   f_guard: { t: 'identity_header_guard', d: 'Strips any x-tenant-* identity headers a client forged before auth runs. Identity only ever exists as set by the gateway itself — metering and model policy can trust it.', dt: [['Phase','Request'],['Prefix','x-tenant-*'],['Purpose','anti-spoofing']], links: [] },
   f_mth: { t: 'model_to_header', d: 'Promotes the "model" field from the JSON body into the X-Model request header so intelligent_route can use a trusted body-derived signal without trusting client-supplied X-Model.', dt: [['Phase','Request'],['Output','X-Model header']], links: [] },
   f_mtp: { t: 'intelligent_route', d: 'ET intelligent_route selects a model candidate from a hot-reloaded routing overlay. The candidate supplies the cluster, provider marker, target_model rewrite, paths, and catalog metadata. There is no static per-model router table.', dt: [['Source','routing-overlay.json'],['Reload','no Praxis restart'],['Vertex','target_model + provider marker'],['Catalog','same overlay drives /v1/models']], links: [] },
   f_vertex: { t: 'vertex (EnMaaS filter)', d: 'EnMaaS-specific dialect filter. For vertex-routed traffic it translates Anthropic Messages (and OpenAI) requests into Vertex rawPredict calls and translates the responses back — beta-header allowlist, chunk-boundary-safe SSE model restoration, and Google→Anthropic error translation. No-op for OpenAI and GLM traffic.', dt: [['Scope','vertex cluster only'],['project','${VERTEX_PROJECT}'],['location','global'],['beta_allowlist','interleaved-thinking-2025-05-14']], links: [['Vertex AI','https://cloud.google.com/vertex-ai']] },
   f_router: { t: 'path_rewrite', d: 'The generic path rewrite sends OpenAI Chat Completions Gemini requests to the Vertex OpenAI-compatible endpoint. intelligent_route supplies the provider marker used by this conditional rewrite.', dt: [['Input','/v1/chat/completions'],['Output','Vertex OpenAPI endpoint'],['Condition','provider marker = vertex']], links: [] },
   f_gcp: { t: 'gcp_adc (EnMaaS filter)', d: 'EnMaaS-specific credential filter. For the vertex cluster it mints a short-lived Google OAuth access token from a service-account key mounted into the pod, so Vertex calls carry a Bearer token instead of a provider API key. Scoped to the vertex cluster only.', dt: [['Scope','clusters: [vertex]'],['source','key_file'],['credentials_file','/etc/vertex-sa/sa-key.json'],['secret','vertex-sa-key']], links: [] },
-  f_norm: { t: 'stream_usage_inject', d: 'Ensures streaming OpenAI Chat Completions requests request usage in the final SSE event, so token_count can meter the stream.', dt: [['Phase','Request'],['Scope','OpenAI streaming']], links: [] },
-  f_meter_pre: { t: 'external_metering — quota check', d: 'Before forwarding, makes a blocking sub-request to the metering service for the user’s entitlement and model policy. If HasAccess is false the request is rejected with 429; if model_allowed is false it is rejected with 403. The model-policy decision is fail-closed, while ordinary billing availability remains separately configurable. EnMaaS authenticates this call with an M2M token file.', dt: [['Pre-request','GET /api/v1/customers/{user}/entitlements/{key}/value'],['Enforcement','429 quota / 403 model policy'],['Policy outage','fail-closed'],['M2M auth','/etc/praxis-secrets/metering-token']], links: [] },
+  f_norm: { t: 'stream_usage_inject', d: 'OpenAI Chat Completions only. Requests usage in the final streaming event so token_count can meter the stream. The unified Anthropic/GLM chain does not use this filter.', dt: [['Phase','Request'],['Scope','OpenAI Chat streaming'],['Position','After metering']], links: [] },
+  f_ttfb: { t: 'time_to_first_token', d: 'Records the latency from request acceptance until the provider emits its first token. This is an observability metric and does not authorize, meter, or alter the provider request.', dt: [['Phase','Request/response timing'],['Scope','All inference chains'],['Output','TTFT metric']], links: [] },
+  f_meter_pre: { t: 'external_metering — single preflight', d: 'Makes one blocking GET to PriceTag before forwarding. The response carries both entitlement/quota state and the model-policy decision. hasAccess=false rejects with 429; model_allowed=false rejects with 403. The live EnMaaS config sets model_policy_fail_open=false, so policy authorization fails closed if the policy-capable call is unavailable.', dt: [['Pre-request','GET /api/v1/customers/{user}/entitlements/{feature}/value?model={model}'],['Decision','hasAccess + model_allowed'],['Enforcement','429 quota / 403 model policy'],['M2M auth','/etc/praxis-secrets/metering-token']], links: [['Metering service','https://github.com/redhat-et/pricetag-metering']] },
   f_cred: { t: 'credential_injection', d: 'Per-cluster credential swap: strips the client key and injects the real provider credential from the pod environment. openai → Authorization: Bearer OPENAI_API_KEY; cb-glm → Authorization: Bearer CB_LITELLM_API_KEY; vertex uses the Google OAuth token from gcp_adc (no static key). A second pass sets per-cluster Host overrides.', dt: [['openai','Authorization: Bearer OPENAI_API_KEY'],['cb-glm','Authorization: Bearer CB_LITELLM_API_KEY'],['vertex','Google OAuth (from gcp_adc)'],['Secrets','provider-credentials Secret']], links: [] },
-  f_lb: { t: 'headers + load_balancer', d: 'Sets the per-cluster Host/SNI (api.openai.com, aiplatform.googleapis.com, litellm.cb.ete.res.ibm.com), then terminates and re-originates the connection with the right TLS SNI, using an idle connection pool that evicts stale sockets before the upstream keepalive timeout.', dt: [['openai','TLS SNI api.openai.com:443'],['vertex','TLS SNI aiplatform.googleapis.com:443'],['cb-glm','TLS SNI litellm.cb.ete.res.ibm.com:443'],['idle_timeout_ms','45000']], links: [] },
+  f_lb: { t: 'load_balancer', d: 'Selects the already-routed upstream cluster and opens the TLS connection with the required SNI. The preceding credential_injection pass sets the provider Host header; this filter handles endpoint selection, TLS, and connection pooling.', dt: [['openai','TLS SNI api.openai.com:443'],['vertex','TLS SNI aiplatform.googleapis.com:443'],['cb-glm','TLS SNI litellm.cb.ete.res.ibm.com:443'],['idle_timeout_ms','45000']], links: [] },
   f_tcount: { t: 'token_count', d: 'Parses token usage off the response — including streaming, where usage arrives in the final SSE event. Each dialect has its own parser; the unified route reads Anthropic-format usage from Vertex Claude and GLM.', dt: [['Phase','Response'],['Streaming','reads final usage event'],['Providers','openai / anthropic / vertex']], links: [] },
   f_tusage: { t: 'token_usage_headers', d: 'Adds rate-limit-style headers (x-ratelimit-limit-*, x-ratelimit-remaining-*, x-ratelimit-reset) to the response so clients can see their remaining quota without a second API call.', dt: [['Phase','Response'],['Headers','x-ratelimit-* family']], links: [] },
   f_meter_post: { t: 'external_metering — usage event', d: 'After the response completes, POSTs a CloudEvents v1.0 usage event (user, model, prompt/completion/total tokens, cache split, status) to the metering service, which appends it to usage_events. Cost is frozen at insert time from model_pricing. At-least-once, idempotent per event_id.', dt: [['Post-response','POST /api/v1/events (CloudEvents 1.0)'],['type','inference.tokens.used'],['Idempotent','per event_id'],['Failure','logged; response unaffected']], links: [] },
   maas: { t: 'MaaS API', d: 'Owns API keys, groups, and subscriptions. Called by api_key_auth on cache miss to validate a key and return identity + subscription metadata. Shares the aigateway database with the metering service.', dt: [['Called by','Praxis api_key_auth (HTTP)'],['Endpoint','POST :8080/internal/v1/api-keys/validate'],['Returns','username, groups, subscription'],['Cached by Praxis','300s']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
-  meter: { t: 'Metering Service', d: 'A Go service (stdlib net/http, raw SQL over lib/pq). Answers the pre-request entitlement check (monthly token + dollar quota) and ingests post-response CloudEvents usage events, writing frozen-cost rows to PostgreSQL and maintaining hourly rollups. Powers the web dashboard.', dt: [['Entitlement','GET /…/entitlements/{key}/value'],['Ingest','POST /api/v1/events'],['Quota','monthly tokens + USD ($600 default)'],['Tables','usage_events, usage_hourly, model_pricing']], links: [['pricetag-metering','https://github.com/redhat-et/pricetag-metering']] },
+  meter: { t: 'Metering Service', d: 'A Go service (stdlib net/http, raw SQL over lib/pq). It answers one pre-request PriceTag call for both entitlement/quota and per-user model policy, then ingests post-response CloudEvents usage events. It writes frozen-cost rows to PostgreSQL and maintains hourly rollups for the dashboard.', dt: [['Preflight','GET /…/entitlements/{feature}/value?model=…'],['Decision','hasAccess + model_allowed'],['Ingest','POST /api/v1/events'],['Enforcement','429 quota · 403 model policy']], links: [['pricetag-metering','https://github.com/redhat-et/pricetag-metering']] },
   pg: { t: 'PostgreSQL — AWS RDS', d: 'EnMaaS runs PostgreSQL on AWS RDS (identifier enmaas-db, PG 16, db.m7g.xlarge, Multi-AZ, encrypted, force_ssl). Database aigateway holds usage_events (append-only, frozen cost_usd), usage_hourly rollups, model_pricing, and api_keys (owned by maas-api). A metering_reader role serves the dashboard read replica.', dt: [['Engine','PostgreSQL 16 (AWS RDS)'],['Identifier','enmaas-db · Multi-AZ'],['Database','aigateway'],['Roles','aigateway · metering_reader'],['Cost','frozen at insert from model_pricing']], links: [] },
   dash: { t: 'Metering Dashboard', d: 'A same-origin SPA served by the metering-service binary. /welcome is the public onboarding page; /dashboard is session-authenticated and shows per-user, per-group, per-model and per-tool usage, cost, and a “Saved vs Hosted” KPI. The browser polls authenticated JSON APIs that query the read replica / hourly rollups.', dt: [['/welcome','public onboarding'],['/dashboard','authenticated usage'],['/manager','org / team view'],['Reads','read replica + usage_hourly rollups']], links: [] },
   openai: { t: 'OpenAI', d: 'Real OpenAI API, reached via the :8081 OpenAI-dialect listener. gpt-* models select the openai candidate from the routing overlay and route to the default openai cluster. The catalog exposes the GPT-6 family, GPT-5.x (incl. the gpt-5.6 variants) and the Codex models; the overlay carries the exact ids. The gateway injects Authorization: Bearer OPENAI_API_KEY and re-originates TLS to api.openai.com.', dt: [['Listener',':8081 (chat/completions)'],['Endpoint','api.openai.com:443'],['Families','GPT-6 · GPT-5.x · Codex'],['Credential','Bearer OPENAI_API_KEY']], links: [['OpenAI API','https://platform.openai.com/docs']] },
@@ -302,15 +302,15 @@ const filterWhy = {
   f_auth: 'Authentication must happen before policy, routing, metering, or provider access. It establishes the trusted user identity used by every later stage.',
   f_catalog: 'Clients need one stable model list even though the models live behind different providers. Keeping discovery in Praxis prevents provider-specific catalogs from leaking through.',
   f_reject: 'A connection upgrade can turn the request into a raw tunnel, bypassing body-aware metering and quota enforcement. Rejecting it keeps every inference on the auditable HTTP path.',
-  f_access: 'Authentication answers who is calling; the metering model-policy preflight answers whether that caller may use this model. Keeping the decision in metering lets PriceTag own future per-user policy.',
   f_guard: 'Identity headers are trusted internally, so client versions must be removed before the gateway adds its own identity. This prevents impersonation and quota attribution errors.',
   f_mth: 'Routing should not need to parse every request body. Promoting the model once creates a simple, consistent routing signal for the rest of the chain.',
   f_mtp: 'The overlay is the model/provider source of truth. A single candidate change updates routing, target-model translation, weights, and model discovery together.',
   f_vertex: 'Vertex is not wire-compatible with the public Anthropic Messages API. This filter keeps clients on the Anthropic API while hiding Vertex rawPredict translation and response reconstruction.',
   f_router: 'A generic rewrite keeps provider URL mechanics separate from model selection. The overlay decides whether a request is Vertex; this filter only rewrites the provider path.',
   f_gcp: 'Vertex requires Google OAuth, while callers use EnMaaS API keys. This stage bridges those credential systems and keeps Google service-account material out of client traffic.',
-  f_norm: 'Streaming usage must be requested before the OpenAI provider responds; this makes the final usage event available for accurate metering.',
-  f_meter_pre: 'Quota and model policy are checked before the request reaches a provider. Quota/billing availability remains separately configurable; the model-policy decision is fail-closed so an unavailable policy service cannot silently authorize a model.',
+  f_norm: 'Only the OpenAI Chat chain needs this request mutation. It asks the provider to include usage in the final SSE event; it is not a second metering call.',
+  f_ttfb: 'This measures time-to-first-token for observability. It is not an access-control or billing decision.',
+  f_meter_pre: 'This is the only pre-request call to PriceTag. It combines model authorization and quota/entitlement enforcement in one response, rather than using separate policy and quota calls.',
   f_cred: 'The client credential authenticates to EnMaaS, not to the upstream provider. This stage performs the credential exchange and prevents OpenAI, Vertex, or Curvebender secrets from reaching clients.',
   f_lb: 'Each upstream has different DNS, Host, TLS-SNI, and connection requirements. Keeping those details here means routing rules do not need to contain transport mechanics.',
   f_tcount: 'Providers report usage in different response formats and streaming positions. A common token count is required for both quota decisions and accurate billing.',
@@ -1015,7 +1015,7 @@ function inspStepLuna(stepNum) {
     case 3: inspStepLabel = '③ api_key_auth: extract Bearer key'; hl('h-key'); break;
     case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
     case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
-    case 6: inspStepLabel = '⑥ model policy: gpt-5.6-luna allowed'; hl('b-model'); break;
+    case 6: inspStepLabel = '⑥ reject_upgrade: no HTTP upgrade'; break;
     case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
     case 8:
       inspStepLabel = '⑧ model_to_header: body.model → X-Model';
@@ -1031,12 +1031,12 @@ function inspStepLuna(stepNum) {
       inspCycle.push({ v: 'cluster = "openai"', s: 'add', id: 'c-cluster' });
       break;
     case 11:
-      inspStepLabel = '⑪ → metering-service: entitlement check';
+       inspStepLabel = '⑪ → metering-service: model policy + quota preflight';
       hl('h-tenant-user');
       inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
       break;
     case 12:
-      inspStepLabel = '⑫ Balance OK — proceed';
+       inspStepLabel = '⑫ Model allowed + quota available — proceed';
       inspCycle.push({ v: 'hasAccess=true (used < quota)', s: 'add', id: 'c-remain' });
       break;
     case 13:
@@ -1045,7 +1045,7 @@ function inspStepLuna(stepNum) {
       inspHeaders.push({ v: 'Authorization: Bearer sk-openai-…', s: 'add', id: 'h-provider' });
       break;
     case 14:
-      inspStepLabel = '⑭ headers + load_balancer: Host api.openai.com';
+       inspStepLabel = '⑭ headers + credential_injection: provider auth + Host';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST https://api.openai.com/v1/chat/completions', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'Host: api.openai.com', s: 'add', id: 'h-host' });
@@ -1079,7 +1079,7 @@ function inspStepOpus(stepNum) {
     case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
     case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
     case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
-    case 6: inspStepLabel = '⑥ model policy: Vertex Claude allowlist pass'; hl('b-model'); break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
     case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
     case 8:
       inspStepLabel = '⑧ model_to_header: body.model → X-Model';
@@ -1096,7 +1096,7 @@ function inspStepOpus(stepNum) {
       inspCycle.push({ v: 'rawPredict body built (beta allowlist applied)', s: 'add', id: 'c-vx' });
       break;
     case 11:
-      inspStepLabel = '⑪ intelligent_route: provider=vertex → vertex cluster';
+       inspStepLabel = '⑪ intelligent_route: provider=vertex → vertex cluster';
       hl('h-prov');
       inspCycle.push({ v: 'cluster = "vertex"', s: 'add', id: 'c-cluster' });
       break;
@@ -1105,12 +1105,12 @@ function inspStepOpus(stepNum) {
       inspCycle.push({ v: 'token minted from /etc/vertex-sa/sa-key.json', s: 'add', id: 'c-gcp' });
       break;
     case 13:
-      inspStepLabel = '⑬ → metering-service: entitlement check';
+       inspStepLabel = '⑬ → metering-service: model policy + quota preflight';
       hl('h-tenant-user');
       inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
       break;
     case 14:
-      inspStepLabel = '⑭ Balance OK — proceed';
+       inspStepLabel = '⑭ Model allowed + quota available — proceed';
       inspCycle.push({ v: 'hasAccess=true (used < quota)', s: 'add', id: 'c-remain' });
       break;
     case 15:
@@ -1119,7 +1119,7 @@ function inspStepOpus(stepNum) {
       inspHeaders.push({ v: 'Authorization: Bearer ya29.… (Google OAuth)', s: 'add', id: 'h-provider' });
       break;
     case 16:
-      inspStepLabel = '⑯ headers + load_balancer: TLS SNI (Vertex)';
+       inspStepLabel = '⑯ load_balancer: TLS SNI (Vertex)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST https://aiplatform.googleapis.com/…:rawPredict', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'Host: aiplatform.googleapis.com', s: 'add', id: 'h-host' });
@@ -1160,7 +1160,7 @@ function inspStepGlm(stepNum) {
     case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
     case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
     case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
-    case 6: inspStepLabel = `⑥ model policy: ${hm.label} model allowed`; hl('b-model'); break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
     case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
     case 8:
       inspStepLabel = `⑧ model_to_header: ${hm.label} id → X-Model`;
@@ -1175,23 +1175,25 @@ function inspStepGlm(stepNum) {
       hl('h-xmodel');
       inspCycle.push({ v: 'cluster = "cb-glm"', s: 'add', id: 'c-cluster' });
       break;
-    case 11: inspStepLabel = '⑪ stream_usage_inject: no-op (LiteLLM Anthropic dialect)'; break;
+    case 11:
+       inspStepLabel = '⑪ → metering-service: model policy + quota preflight';
+       hl('h-tenant-user');
+       inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
+       break;
     case 12:
-      inspStepLabel = '⑫ → metering-service: entitlement check';
-      hl('h-tenant-user');
-      inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
-      break;
+       inspStepLabel = `⑫ ${hm.label} allowed + quota available — proceed`;
+       inspCycle.push({ v: `hasAccess=true · modelAllowed=[${hm.id}]`, s: 'add', id: 'c-remain' });
+       break;
     case 13:
-      inspStepLabel = `⑬ Balance OK — ${hm.label} allowed even over dollar cap`;
-      inspCycle.push({ v: `hasAccess=true · modelAllowed=[${hm.id}]`, s: 'add', id: 'c-remain' });
-      break;
+       inspStepLabel = '⑬ time_to_first_token: start timing';
+       break;
     case 14:
       inspStepLabel = '⑭ credential_injection: Bearer CB key + Host override';
       inspHeaders.find(l => l.id === 'h-key').s = 'del';
       inspHeaders.push({ v: 'Authorization: Bearer <CB_LITELLM_API_KEY>', s: 'add', id: 'h-provider' });
       break;
     case 15:
-      inspStepLabel = '⑮ headers + load_balancer: TLS SNI (IBM)';
+       inspStepLabel = '⑮ load_balancer: TLS SNI (IBM)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST https://litellm.cb.ete.res.ibm.com/v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'Host: litellm.cb.ete.res.ibm.com', s: 'add', id: 'h-host' });
@@ -1254,13 +1256,13 @@ function inspStepQuota(stepNum) {
     case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
     case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
     case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
-    case 6: inspStepLabel = '⑥ model policy + identity_header_guard pass'; break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
     case 7:
       inspStepLabel = '⑦ model_to_header + intelligent_route';
       inspHeaders.push({ v: 'X-Model: claude-opus-5-5', s: 'add', id: 'h-xmodel' });
       break;
     case 8:
-      inspStepLabel = '⑧ → metering-service: entitlement check';
+       inspStepLabel = '⑧ → metering-service: model policy + quota preflight';
       hl('h-tenant-user');
       inspCycle = [ { v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' } ];
       break;
@@ -1310,15 +1312,15 @@ const flowLuna = [
   { t: '3. api_key_auth: extract Bearer key', mode: 'lightup', target: 'f_auth', badge: 3 },
   { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
   { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
-  { t: '6. model policy: gpt-5.6-luna allowed', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '6. reject_upgrade: HTTP upgrade not present', mode: 'lightup', target: 'f_reject', badge: 6 },
   { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
   { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
   { t: '9. intelligent_route: gpt-* unmapped → openai', mode: 'lightup', target: 'f_mtp', badge: 9 },
   { t: '10. intelligent_route: overlay candidate → openai cluster', mode: 'lightup', target: 'f_router', badge: 10 },
-  { t: '11. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '11. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
   { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
   { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
-  { t: '14. headers + load_balancer: Host api.openai.com', mode: 'lightup', target: 'f_lb', badge: 14 },
+  { t: '14. headers + credential_injection: provider auth + Host', mode: 'lightup', target: 'f_cred', badge: 14 },
   { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, numT: 0.03, fromRight: true, toLeft: true },
   { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, numT: 0.97, fromLeft: true, toRight: true },
   { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
@@ -1335,17 +1337,17 @@ const flowOpus = [
   { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
   { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
   { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
-  { t: '6. model policy: Vertex Claude allowlist pass', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
   { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
   { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
   { t: '9. intelligent_route: claude-opus → vertex/claude-opus', mode: 'lightup', target: 'f_mtp', badge: 9 },
   { t: '10. vertex: Anthropic → Vertex rawPredict translate', mode: 'lightup', target: 'f_vertex', badge: 10 },
-  { t: '11. intelligent_route: provider=vertex → vertex cluster', mode: 'lightup', target: 'f_router', badge: 11 },
+  { t: '11. intelligent_route: provider=vertex → vertex cluster', mode: 'lightup', target: 'f_mtp', badge: 11 },
   { t: '12. gcp_adc: mint Google OAuth token (SA key)', mode: 'lightup', target: 'f_gcp', badge: 12 },
-  { t: '13. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 13, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '13. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 13, fromRight: true, toLeft: true, yOff: -10 },
   { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 14, fromLeft: true, toRight: true, yOff: 10 },
   { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
-  { t: '16. headers + load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
+  { t: '16. load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
   { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, numT: 0.03, fromRight: true, toLeft: true },
   { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, numT: 0.97, fromLeft: true, toRight: true },
   { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
@@ -1362,16 +1364,16 @@ const flowGlm = [
   { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
   { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
   { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
-  { t: '6. model policy: GLM model allowed', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
   { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
   { t: '8. model_to_header: GLM id → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
   { t: '9. intelligent_route: GLM unmapped (pass-through)', mode: 'lightup', target: 'f_mtp', badge: 9 },
   { t: '10. intelligent_route: GLM candidate → cb-glm cluster', mode: 'lightup', target: 'f_router', badge: 10 },
-  { t: '11. stream_usage_inject: no-op (LiteLLM Anthropic dialect)', mode: 'lightup', target: 'f_norm', badge: 11 },
-  { t: '12. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 12, fromRight: true, toLeft: true, yOff: -10 },
-  { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 13, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '11. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Model allowed + quota available', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. time_to_first_token: start timing', mode: 'lightup', target: 'f_ttfb', badge: 13 },
   { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
-  { t: '15. headers + load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
+  { t: '15. load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
   { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, numT: 0.03, fromRight: true, toLeft: true },
   { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, numT: 0.97, fromLeft: true, toRight: true },
   { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
@@ -1398,9 +1400,9 @@ const flowQuota = [
   { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
   { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
   { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
-  { t: '6. model policy + identity_header_guard pass', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
   { t: '7. model_to_header + intelligent_route', mode: 'lightup', target: 'f_router', badge: 7 },
-  { t: '8. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 8, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '8. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 8, fromRight: true, toLeft: true, yOff: -8 },
   { t: '9. Monthly usage: quota FULL', mode: 'lightup', target: 'meter', badge: 9 },
   { t: '10. Metering → Praxis: hasAccess = false', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f85149', num: 10, fromLeft: true, toRight: true, yOff: 8 },
   { t: '11. external_metering: reject (quota exceeded)', mode: 'lightup', target: 'f_meter_pre', badge: '✗', errColor: '#f85149' },
