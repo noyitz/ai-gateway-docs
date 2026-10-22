@@ -367,8 +367,13 @@ function C() {
 // ================================================================
 function resize() {
   const panelW = 380;
-  W = canvas.width = innerWidth - panelW;
-  H = canvas.height = innerHeight;
+  W = innerWidth - panelW;
+  H = innerHeight;
+  // Render the canvas at device resolution so scaled canvas text stays sharp.
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   sc = Math.min(W / LW, H / LH) * 0.98;
   ox = (W - LW * sc) / 2;
   oy = (H - LH * sc) * 0.04;
@@ -405,11 +410,9 @@ function drawBox(key) {
     if (el > 500) delete fading[key];
   }
 
-  if (isA || hasBadge) {
-    ctx.shadowColor = n.color;
-    ctx.shadowBlur = ts(18) * fadeA;
-    ctx.globalAlpha = 0.3 + 0.7 * fadeA;
-  }
+  // Keep component and filter text crisp: selection uses color/frame only,
+  // without glow or opacity effects over the labels.
+  if (isA || hasBadge) ctx.globalAlpha = 1;
 
   const nodeColor = n.color || '#58a6ff';
   const etStroke = nodeColor + (isDark ? 'aa' : '99');
@@ -526,7 +529,7 @@ function drawContainer(key, isGlow) {
   const n = N[key], c = C();
   if (!n || n.type !== 'container') return;
   ctx.save();
-  if (isGlow) { ctx.shadowColor = n.color; ctx.shadowBlur = ts(22); }
+  // Frames remain crisp while selected; do not blur their labels.
   ctx.beginPath();
   ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
   const a = isGlow ? 'cc' : '55';
@@ -857,7 +860,7 @@ function draw() {
     const pad = 0;
     ctx.save();
     ctx.shadowColor = n.color || '#58a6ff';
-    ctx.shadowBlur = ts(30);
+    ctx.shadowBlur = 0;
     ctx.strokeStyle = n.color || '#58a6ff';
     ctx.lineWidth = ts(3);
     ctx.beginPath();
