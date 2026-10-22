@@ -226,7 +226,7 @@ const N = {
 
   lsn: { x: 174, y: 132, w: 507, h: 52, label: 'Praxis Listener', sublabel: ':8084 Unified (Anthropic msgs) · :8081 OpenAI', color: '#58a6ff', fs: 16 },
 
-  reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
+  reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request path ↓', color: '#58a6ff' },
   // In-process request filters, executed top-to-bottom per request
   f_auth:       { x: 188, y: 238, w: 480, h: 34, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_reject:     { x: 188, y: 278, w: 480, h: 34, label: 'reject_upgrade', sublabel: 'OpenAI chain · block WebSocket bypass', color: '#d2a8ff', et: true, inner: true, fs: 12 },
@@ -237,16 +237,16 @@ const N = {
   f_vertex:     { x: 188, y: 478, w: 480, h: 34, label: 'vertex', sublabel: 'unified only · Anthropic ⇄ Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
   f_router:     { x: 188, y: 518, w: 480, h: 34, label: 'path_rewrite', sublabel: 'OpenAI Vertex Chat path · conditional', color: '#58a6ff', inner: true, fs: 12 },
   f_gcp:        { x: 188, y: 558, w: 480, h: 34, label: 'gcp_adc', sublabel: 'ET · mint Google OAuth for Vertex', color: '#d2a8ff', et: true, inner: true, fs: 12 },
-  f_meter_pre:  { x: 188, y: 598, w: 480, h: 34, label: 'external_metering', sublabel: 'one preflight: model policy + quota', color: '#d2a8ff', inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 598, w: 480, h: 34, label: 'external_metering (preflight)', sublabel: 'one call: model policy + quota', color: '#d2a8ff', inner: true, fs: 12 },
   f_norm:       { x: 188, y: 638, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI Chat streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
   f_ttfb:       { x: 188, y: 678, w: 480, h: 34, label: 'time_to_first_token', sublabel: 'record provider first-token latency', color: '#58a6ff', inner: true, fs: 12 },
   f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'headers + credential_injection', sublabel: 'provider auth + Host/SNI headers', color: '#58a6ff', inner: true, fs: 12 },
   f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'load_balancer', sublabel: 'TLS SNI + idle connection pool', color: '#58a6ff', inner: true, fs: 12 },
 
-  respF: { x: 174, y: 810, w: 507, h: 155, type: 'container', label: '← Response Filters', color: '#3fb950' },
+  respF: { x: 174, y: 810, w: 507, h: 155, type: 'container', label: '← Response hooks (return path)', color: '#3fb950' },
   f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
   f_tusage:     { x: 188, y: 880, w: 480, h: 34, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
-  f_meter_post: { x: 188, y: 922, w: 480, h: 34, label: 'external_metering', sublabel: 'POST CloudEvents usage event', color: '#d2a8ff', inner: true, fs: 12 },
+  f_meter_post: { x: 188, y: 922, w: 480, h: 34, label: 'external_metering (response hook)', sublabel: 'same filter · POST usage event', color: '#d2a8ff', inner: true, fs: 12 },
 
   // Control plane — right column inside the cluster.
   // PriceTag metering, its database and its dashboard are ET-added
