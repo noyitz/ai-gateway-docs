@@ -595,7 +595,7 @@ function edgePt(n, targetX, targetY, yOff) {
   return { x: ex, y: ey + (yOff || 0) };
 }
 
-function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
+function drawArrowLine(x1, y1, x2, y2, color, num, alpha, numT) {
   ctx.save();
   ctx.globalAlpha = alpha || 1;
   ctx.beginPath();
@@ -613,7 +613,8 @@ function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
   ctx.fillStyle = color;
   ctx.fill();
   if (num != null) {
-    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    const nt = numT == null ? 0.5 : numT;
+    const mx = x1 + (x2 - x1) * nt, my = y1 + (y2 - y1) * nt, r = ts(12);
     ctx.beginPath();
     ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -677,7 +678,7 @@ function drawLines() {
         const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
         tp = edgePt(tn, fc, fy, l.yOff || 0);
       }
-      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8, l.numT);
     }
   });
 }
@@ -1301,8 +1302,8 @@ const flowLuna = [
   { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 12, fromLeft: true, toRight: true, yOff: 10 },
   { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
   { t: '14. headers + load_balancer: Host api.openai.com', mode: 'lightup', target: 'f_lb', badge: 14 },
-  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, fromRight: true, toLeft: true },
-  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, fromLeft: true, toRight: true },
+  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, numT: 0.9, fromRight: true, toLeft: true },
+  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, numT: 0.1, fromLeft: true, toRight: true },
   { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
   { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
   { t: '19. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
@@ -1328,8 +1329,8 @@ const flowOpus = [
   { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 14, fromLeft: true, toRight: true, yOff: 10 },
   { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
   { t: '16. headers + load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
-  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, fromRight: true, toLeft: true },
-  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, fromLeft: true, toRight: true },
+  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vertex', c: '#58a6ff', num: 17, numT: 0.9, fromRight: true, toLeft: true },
+  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'vertex', to: 'f_tcount', c: '#3fb950', num: 18, numT: 0.1, fromLeft: true, toRight: true },
   { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
   { t: '20. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 20 },
   { t: '21. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
@@ -1354,8 +1355,8 @@ const flowGlm = [
   { t: '13. Balance OK — GLM allowed over dollar cap', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#d2a8ff', num: 13, fromLeft: true, toRight: true, yOff: 10 },
   { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
   { t: '15. headers + load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
-  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, fromRight: true, toLeft: true },
-  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, fromLeft: true, toRight: true },
+  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'glm', c: '#58a6ff', num: 16, numT: 0.9, fromRight: true, toLeft: true },
+  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'glm', to: 'f_tcount', c: '#3fb950', num: 17, numT: 0.1, fromLeft: true, toRight: true },
   { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
   { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
   { t: '20. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 20, fromRight: true, toLeft: true, yOff: 10 },
