@@ -14,6 +14,18 @@ body.light{background:#fff;color:#24292f}
 body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
 
 .flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Version toggle */
+.version-toggle{display:flex;border:1px solid #30363d;border-radius:6px;overflow:hidden;flex-shrink:0}
+.version-toggle .vbtn{padding:7px 12px;border:none;background:#0d1117;color:#8b949e;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}
+.version-toggle .vbtn:hover{color:#c9d1d9}
+.version-toggle .vbtn.active{background:#1f6feb33;color:#58a6ff;font-weight:600}
+.version-toggle .vbtn.tp.active{background:#f0883e33;color:#f0883e}
+.version-badge{display:inline-block;padding:2px 10px;border:1px solid #3fb950;border-radius:12px;font-size:11px;font-weight:600;color:#3fb950;cursor:pointer;vertical-align:middle;margin-left:8px}
+.version-badge.tp{border-color:#f0883e;color:#f0883e}
+body.light .version-toggle .vbtn{background:#f6f8fa}
+body.light .version-badge{color:#1a7f37;border-color:#1a7f37}
+body.light .version-badge.tp{color:#bc4c00;border-color:#bc4c00}
 body.light .flow-bar{border-color:#d0d7de}
 .flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:13px;font-family:inherit;cursor:pointer}
 body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
@@ -119,9 +131,9 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
     <h1>AI Inference Gateway<br><span class="grad">MaaS in Action</span></h1>
     <p class="sub">Interactive animated architecture flow<br>for the AI Inference Gateway</p>
     <div class="stats">
-      <div class="stat blue">4 Flows</div>
-      <div class="stat green">5 Providers</div>
-      <div class="stat orange">35 Steps</div>
+      <div class="stat blue">12 Flows</div>
+      <div class="stat green">3 Versions</div>
+      <div class="stat orange">5 Providers</div>
       <div class="stat purple">30+ Components</div>
     </div>
     <div class="laptop-msg">
@@ -133,10 +145,15 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span> <span id="version-badge" class="version-badge" title="Click for version changes"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
+    <div class="version-toggle" id="version-toggle">
+      <button data-v="3.4" class="vbtn active">3.4</button>
+      <button data-v="3.5" class="vbtn">3.5</button>
+      <button data-v="3.6" class="vbtn">3.6</button>
+    </div>
     <select id="flow-select">
       <option value="ext">External Model (Anthropic)</option>
       <option value="inc">Internal Model (llm-d)</option>
@@ -175,8 +192,9 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <div class="legend-title">Legend</div>
   <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
   <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Auth / Rate Limit</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>IPP Container</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Kuadrant Auth / Rate Limit</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Payload Processing</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e;border-radius:4px"></div>praxis-extproc (3.6)</div>
   <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#58a6ff,#3fb950);border-radius:50%"></div>Req / Resp Plugins</div>
   <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
 </div>
@@ -218,18 +236,42 @@ const N = {
   auth: { x: 215, y: 360, w: 250, h: 60, label: 'Auth', sublabel: '(Authorino)', color: '#f0883e', fs: 16, inner: true },
   rlimit: { x: 215, y: 445, w: 250, h: 60, label: 'Rate Limit', sublabel: '(Limitador)', color: '#f0883e', fs: 16, inner: true },
 
-  ipp: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'Payload Processor / IPP (ext_proc)', color: '#d2a8ff' },
-  // Request plugins
-  p_rguard:  { x: 770, y: 318, w: 320, h: 40, label: 'request-guard (nemo)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, soon: true },
-  p_ims:     { x: 770, y: 360, w: 320, h: 40, label: 'intelligent-model-selection', color: '#58a6ff', type: 'plugin', inner: true, fs: 12, soon: true },
-  p_mpr:     { x: 770, y: 402, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bfth:    { x: 770, y: 440, w: 320, h: 36, label: 'body-field-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_bmth:    { x: 770, y: 478, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_at_req:  { x: 770, y: 516, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
-  p_aki:     { x: 770, y: 554, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  ipp: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'Payload Processing', sublabel: '(ext_proc, post-auth)', color: '#d2a8ff' },
+  // Pre-auth stage (3.5+): runs before Kuadrant wasm so auth sees X-Gateway-Model-Name
+  pp_pre: { x: 510, y: 300, w: 210, h: 175, type: 'container', label: 'Payload Pre-Processing', sublabel: '(ext_proc, pre-auth)', color: '#d2a8ff', fs: 13 },
+  p_ext:     { x: 530, y: 358, w: 170, h: 36, label: 'model-extractor', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
+  p_mpr_pre: { x: 530, y: 400, w: 170, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 10 },
+  // Post-auth request plugins (deployed chain order, v0.2.1)
+  p_bfth:    { x: 770, y: 322, w: 320, h: 36, label: 'model-extractor', sublabel: '(body-field-to-header)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, v34: true },
+  p_hguard:  { x: 770, y: 322, w: 320, h: 36, label: 'maas-headers-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, v35: true },
+  p_sue:     { x: 770, y: 360, w: 320, h: 36, label: 'stream-usage-enforcer', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, v35: true },
+  p_mpr:     { x: 770, y: 398, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_at_req:  { x: 770, y: 436, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_aki:     { x: 770, y: 474, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   // Response plugins
-  p_at_resp: { x: 770, y: 631, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
-  p_resp_guard: { x: 770, y: 669, w: 320, h: 40, label: 'response-guard (nemo)', color: '#3fb950', type: 'plugin', inner: true, fs: 14, soon: true },
+  p_at_resp: { x: 770, y: 545, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
+  // Opt-in plugins: compiled into the binary, NOT in the default profile
+  p_rguard:  { x: 770, y: 615, w: 320, h: 36, label: 'nemo-request-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, optin: true },
+  p_resp_guard: { x: 770, y: 653, w: 320, h: 36, label: 'nemo-response-guard', color: '#3fb950', type: 'plugin', inner: true, fs: 13, optin: true },
+  p_bmth:    { x: 770, y: 691, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, optin: true },
+
+
+  // ===== 3.6: praxis-extproc dataplane (S1 slot, amber) =====
+  praxis: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'praxis-extproc', sublabel: '(ext_proc, post-auth)', color: '#f0883e', tp: true },
+  praxis_pre: { x: 510, y: 300, w: 210, h: 175, type: 'container', label: 'praxis-extproc', sublabel: '(ext_proc, pre-auth)', color: '#f0883e', fs: 13 },
+  pr_mth:     { x: 530, y: 358, w: 170, h: 36, label: 'json_body', sublabel: '(extract /model)', color: '#f0883e', type: 'plugin', inner: true, fs: 11 },
+  pr_llmisvc: { x: 530, y: 400, w: 170, h: 36, label: 'llmisvc_model_provider_resolver', color: '#f0883e', type: 'plugin', inner: true, fs: 9 },
+  // Post-auth chain (ExternalModel processor) — deployed order per AGC extprocPostAuthConfig
+  pr_hdr: { x: 770, y: 330, w: 320, h: 36, label: 'headers', sublabel: '(strip x-maas-* + caller creds)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_ir:  { x: 770, y: 368, w: 320, h: 36, label: 'intelligent_route', sublabel: '(routing overlay, hot reload)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_sui: { x: 770, y: 406, w: 320, h: 36, label: 'stream_usage_inject', sublabel: '(include_usage)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_at:  { x: 770, y: 444, w: 320, h: 36, label: 'api-translation', sublabel: '(OpenAI → Anthropic, if enabled)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_ci:  { x: 770, y: 482, w: 320, h: 36, label: 'credential_inject', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
+  pr_rid: { x: 770, y: 520, w: 320, h: 36, label: 'request_id', sublabel: '(shared chain)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_gr:  { x: 770, y: 558, w: 320, h: 36, label: 'ai_guardrails', sublabel: '(NeMo — shared chain)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+
+  // ===== 3.6: control plane =====
+
 
   // External models — far left, outside cluster
   openai:    { x: -40, y: 300, w: 140, h: 55, label: 'OpenAI',       sublabel: 'gpt-4o-mini',      color: '#3fb950', fs: 15 },
@@ -239,7 +281,8 @@ const N = {
   vertex:    { x: -40, y: 560, w: 140, h: 55, label: 'Vertex AI',    sublabel: 'gemini-2.5-flash', color: '#3fb950', fs: 15 },
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
-  maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key validation', color: '#79c0ff', fs: 15 },
+  maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key + subscription validation', color: '#79c0ff', fs: 15 },
+  ulogs: { x: 230, y: 715, w: 220, h: 55, label: 'OTel Usage Logs', sublabel: 'access log → OTLP collector', color: '#79c0ff', fs: 14, v35: true },
 
   // llm-d Scheduler / EPP — centered under all components
   epp: { x: 460, y: 770, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
@@ -253,20 +296,35 @@ const N = {
 };
 
 const tips = {
-  gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filters for payload processing and scheduling.', dt:[['Filters','Kuadrant Wasm Shim, IPP (ext_proc), EPP (ext_proc)'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Routing','External model providers or on-cluster InferencePool'],['Port','8080 (HTTP), 8443 (HTTPS)']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['Kuadrant Operator','https://github.com/Kuadrant/kuadrant-operator']] },
-  p_rguard: { t:'request-guard (nemo)', d:'NVIDIA NeMo Guardrails — evaluates safety policies on the incoming request before any processing. Can block requests that violate content policies.', dt:[['Status','Coming Soon'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_ims: { t:'intelligent-model-selection', d:'Automatically selects the optimal model or provider based on request characteristics, cost, latency, and availability.', dt:[['Status','Coming Soon'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  praxis_pre: { t:'praxis-extproc (pre-auth)', d:'The pre-auth praxis instance (Deployment payload-pre-processing, config pre-extproc.yaml) — same Envoy filter name and position as the legacy pre-processing stage (envoy.filters.http.ext_proc.ipp-pre, INSERT_BEFORE the Kuadrant wasm filter), so Authorino sees the model headers. Chain: headers (remove X-Gateway-Model-Name) → json_body (extract /model) → llmisvc_model_provider_resolver.', dt:[['Deployment','payload-pre-processing-{tenantID}'],['Config','pre-extproc.yaml'],['Envoy filter','envoy.filters.http.ext_proc.ipp-pre'],['Since','RHOAI 3.6']], links:[['praxis-extproc','https://github.com/opendatahub-io/praxis-extproc'],['ai-gateway-controller','https://github.com/opendatahub-io/ai-gateway-controller']] },
+  praxis: { t:'praxis-extproc', d:'The post-auth praxis instance for 3.6 tenants (GA) — Deployment payload-processing, config extproc.yaml. Envoy ExtProc gRPC server running praxis filter pipelines, a thin adapter over praxis-ai (pinned upstream v0.6.0, FIPS build). Like 3.5, the pre-auth and shared post-auth instances are deployed — plus a THIRD dedicated Deployment, payload-processing-external-model-{tenant}, running the ExternalModel chain animated in the ext flow. All rendered per tenant by ai-gateway-controller, reusing the legacy resource names.', dt:[['Deployed by','ai-gateway-controller (SSA, per tenant)'],['Image','odh-praxis-extproc (FIPS: responses, aws-sigv4, store-postgres-cert-auth)'],['Phases','request/response headers + body (10 MiB cap)'],['Status','GA (RHOAI 3.6)']], links:[['praxis-extproc','https://github.com/opendatahub-io/praxis-extproc'],['praxis-ai','https://github.com/praxis-proxy/ai'],['Migration doc','https://github.com/opendatahub-io/praxis-extproc/blob/main/docs/migration-ipp-to-praxis.md']] },
+  pr_mth: { t:'json_body (request_extract)', d:'Extracts the body "model" field (JSON pointer /model) into the X-Gateway-Model-Name header — the praxis equivalent of model-extractor. Preceded by a headers filter that REMOVES any client-supplied X-Gateway-Model-Name (anti-spoofing), then re-extracts from the body. Runs pre-auth so Authorino sees the model identity.', dt:[['Chain','pre-auth (ipp-pre)'],['Header','X-Gateway-Model-Name'],['Anti-spoofing','headers filter removes client-supplied value first'],['Replaces','model_to_header (refactor #134)']], links:[['praxis-ai','https://github.com/praxis-proxy/ai']] },
+  pr_llmisvc: { t:'llmisvc_model_provider_resolver', d:'Rewrites model IDs for LLMInferenceService/KServe publisher-ID routing. Deployed by AGC in the pre-auth chain.', dt:[['Chain','pre-auth (ipp-pre)'],['Deployed by AGC','Yes']], links:[['praxis-ai','https://github.com/praxis-proxy/ai']] },
+  pr_hdr: { t:'headers (identity guard)', d:'First filter in the post-auth chain: strips caller credentials (authorization, x-api-key) and all x-maas-* identity headers before routing/credential injection, so injected provider credentials are never clobbered and caller credentials never reach the upstream. Parity with the legacy maas-headers-guard (stronger: also strips caller creds).', dt:[['Chain','post-auth — first'],['Strips','authorization, x-api-key, x-origin-cluster, x-maas-*'],['Shared chain','conditional (skips /maas-api, /v1/models, /v1/subscriptions, /v1/api-keys, /v1/me)']], links:[['ai-gateway-controller','https://github.com/opendatahub-io/ai-gateway-controller']] },
+  pr_ir: { t:'intelligent_route', d:'Edge routing filter consuming a controller-rendered routing overlay (hot reload) — model-header routing to provider hop clusters. Selection supports equal-weight random and proportional weightedRandom (CRD weight 0-100 → 1-1000). No live CRD watching; no health-check/upstream failover (session-affinity failover to another admitted candidate exists in praxis-ai).', dt:[['Chain','post-auth (ipp)'],['Config','controller-rendered overlay, hot reload'],['Weights','random (equal) or weightedRandom (proportional)'],['Providers','openai, anthropic, azure, bedrock-openai (Mantle); sigv4/oauth2 unsupported']], links:[['praxis-ai','https://github.com/praxis-proxy/ai']] },
+  pr_ci: { t:'credential_inject', d:'Injects provider credentials (bearer/API-key) from routing metadata into the upstream request. Security-critical filter.', dt:[['Chain','post-auth (ipp)'],['Deployed by AGC','Yes (when credentials exist)']], links:[['praxis-ai','https://github.com/praxis-proxy/ai']] },
+  pr_at: { t:'api-translation', d:'OpenAI Chat Completions → Anthropic Messages translation, deployed by AGC when the tenant has apiTranslation enabled (MaasTenantConfig.spec.apiTranslation). ExternalModel chain: openai_chat_completions_to_anthropic (+ _stream). Shared chain additionally serves Anthropic-native clients: /v1/messages → chat completions translation + path rewrite. Anthropic rejects unmappable CC fields with 400 (3.5 dropped them silently).', dt:[['Chain','post-auth (conditional on apiTranslation)'],['ExternalModel','openai_chat_completions_to_anthropic(_stream)'],['Shared chain','anthropic_messages_to_chat_completions(_stream) + path_rewrite /v1/messages→/v1/chat/completions'],['Providers','anthropic; azure/bedrock use OpenAI-compatible passthrough (bedrock via Mantle)']], links:[['praxis-ai','https://github.com/praxis-proxy/ai'],['upgrade-to-3.6','https://github.com/opendatahub-io/models-as-a-service/blob/main/docs/content/migration/upgrade-to-3.6.md']] },
+  pr_gr: { t:'ai_guardrails', d:'NeMo Guardrails content checks, compiled by AGC from accepted AIGuardrail CRs into the shared post-auth chain — one filter per check per phase (Input and/or Output); authenticated against NeMo via kube-rbac-proxy. Runs on the shared processor — internal-model traffic — not on the ExternalModel chain.', dt:[['Chain','post-auth (shared processor)'],['Provider','NeMo (via TrustyAI AIGuardrail CRs)'],['Deployed','Yes — compiled from accepted AIGuardrails (#191)']], links:[['praxis-ai guardrails','https://github.com/praxis-proxy/ai/tree/main/filters/src/guardrails'],['ai-gateway-controller','https://github.com/opendatahub-io/ai-gateway-controller']] },
+  pr_sui: { t:'stream_usage_inject', d:'Forces stream_options.include_usage on streamed Chat Completions requests so the final chunk reports token usage and token rate limits count streams — parity with the legacy stream-usage-enforcer. Present and ungated at the deployed praxis-ai pin; rendered by AGC on both post-auth chains.', dt:[['Chain','post-auth (both processors)'],['Legacy equivalent','stream-usage-enforcer'],['Body bound','max_body_bytes (ODH 10 MiB default)']], links:[['praxis-ai','https://github.com/praxis-proxy/ai']] },
+  gw: { t:'Istio Gateway (Envoy)', d:'Envoy-based reverse proxy that receives all inference requests. Runs Kuadrant Wasm filter for auth/rate-limiting and ext_proc filters for payload processing and scheduling.', dt:[['Filter chain (3.5+)','ext_proc.ipp-pre → wasm auth → ext_proc.ipp → EPP ext_proc → router'],['Filter chain (3.4)','wasm auth → ext_proc.bbr → EPP ext_proc → router'],['Protocol','HTTP/1.1, HTTP/2, gRPC'],['Routing','External model providers or on-cluster InferencePool'],['Listener','port 80 (Gateway API)']], links:[['Kuadrant Docs','https://docs.kuadrant.io'],['Kuadrant Operator','https://github.com/Kuadrant/kuadrant-operator']] },
+  p_rguard: { t:'nemo-request-guard', d:'NVIDIA NeMo Guardrails — evaluates content policies on the incoming request. Compiled into the payload-processing binary but NOT in the default profile: enable by editing the per-tenant plugins ConfigMap.', dt:[['Status','Opt-in (not in default profile)'],['Phase','Request'],['Type','ext_proc plugin']], links:[['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_hguard: { t:'maas-headers-guard', d:'Captures all x-maas-* headers into CycleState and removes them from the forwarded request, so client-supplied identity headers never reach the provider. Added in 3.5 for body-based routing.', dt:[['Headers','x-maas-* (case-insensitive)'],['Side effect','CycleState["maas-headers"]'],['Since','RHOAI 3.5 (v0.2.1)'],['Phase','Request'],['Type','ext_proc plugin']], links:[['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_sue: { t:'stream-usage-enforcer', d:'Forces stream_options: {"include_usage": true} on streaming chat requests so token metering works regardless of client behavior.', dt:[['Body change','stream_options.include_usage = true'],['Since','RHOAI 3.5 (RHOAIENG-70536)'],['Phase','Request'],['Type','ext_proc plugin']], links:[['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  pp_pre: { t:'Payload Pre-Processing (ext_proc)', d:'Pre-auth ext_proc stage (envoy.filters.http.ext_proc.ipp-pre, INSERT_BEFORE the Kuadrant wasm filter). Runs model extraction BEFORE auth so Authorino sees X-Gateway-Model-Name for model identity. Introduced in RHOAI 3.5; absent in 3.4 (single post-auth stage).', dt:[['Envoy filter','envoy.filters.http.ext_proc.ipp-pre'],['Anchor','INSERT_BEFORE wasm auth'],['Plugins','model-extractor, model-provider-resolver'],['Since','RHOAI 3.5'],['Deployment','payload-pre-processing-{tenantID} (gateway namespace)']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
+  p_ext: { t:'model-extractor', d:'body-field-to-header plugin instance: extracts the "model" field from the JSON request body and sets X-Gateway-Model-Name for body-based routing (BBR).', dt:[['Header Set','X-Gateway-Model-Name'],['Config','fieldName: model'],['Phase','Request (pre-auth)'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_mpr_pre: { t:'model-provider-resolver (pre-auth)', d:'Runs in the pre-auth stage (3.5+): watches ExternalModel/ExternalProvider CRDs, resolves model → provider, target model ID and endpoint into CycleState.', dt:[['CRDs','ExternalModel, ExternalProvider (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint, path'],['Phase','Request (pre-auth)'],['Type','ext_proc plugin']], links:[['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  ulogs: { t:'OTel Usage Logs', d:'Per-tenant EnvoyFilter (maas-model-access-logs) emits OpenTelemetry access logs for every POST to inference paths: response code, model, token counts, subscription, groups, key name, cost center. Async to an OTLP collector; identity captured from Kuadrant filter state.', dt:[['Envoy hooks','json_to_metadata (JSON), lua sse_tokens (SSE), OTel access logger'],['Paths','/v1/chat/completions, /v1/completions'],['Identity','3.5: FILTER_STATE(wasm.kuadrant.auth.identity.*) · 3.6: header_to_metadata'],['Attributes','tokens_total/prompt/completion, model, subscription, key_name'],['Since','RHOAI 3.5'],['Gated by','Config.spec.usageLogging (cluster-scoped)']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service']] },
   p_mpr: { t:'model-provider-resolver', d:'Uses a Kubernetes reconciler to watch ExternalModel CRDs. Resolves the model name to a provider, target model ID, and endpoint URL.', dt:[['CRD','ExternalModel (inference.opendatahub.io)'],['Output','CycleState: provider, targetModel, endpoint'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_bfth: { t:'body-field-to-header', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing.', dt:[['Header Set','X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_bfth: { t:'model-extractor (body-field-to-header)', d:'Extracts the "model" field from the JSON request body and sets it as the X-Gateway-Model-Name HTTP header for model-based routing. Runs pre-auth in 3.5+ (pre-processing stage).', dt:[['Header Set','X-Gateway-Model-Name'],['Config','fieldName: model, headerName: X-Gateway-Model-Name'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_bmth: { t:'base-model-to-header', d:'Resolves LoRA adapter names to their base model using Kubernetes ConfigMaps. Sets X-Gateway-Base-Model-Name header so EPP can select pods running the correct base model.', dt:[['Header Set','X-Gateway-Base-Model-Name'],['Data Source','Kubernetes ConfigMaps (adapter→base model mappings)'],['Use Case','LoRA adapter routing to correct InferencePool'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_at_req: { t:'api-translation (request)', d:'Translates OpenAI Chat Completions format to provider-native API. Handles path rewriting, header mutations, and body transformation.', dt:[['Example','OpenAI → Anthropic Messages API'],['Path Rewrite','/v1/chat/completions → /v1/messages'],['Headers Added','anthropic-version: 2023-06-01'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_aki: { t:'apikey-injection', d:'Reads the provider API key from a Kubernetes Secret and injects the appropriate auth header for the target provider.', dt:[['Secret Label','inference.networking.k8s.io/bbr-managed'],['OpenAI','Authorization: Bearer ...'],['Anthropic','x-api-key: ...'],['Azure','api-key: ...'],['Phase','Request'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   p_at_resp: { t:'api-translation (response)', d:'Translates provider-native response back to OpenAI Chat Completions format. Normalizes content, stop reasons, and usage tokens.', dt:[['Example','Anthropic → OpenAI format'],['Transforms','content→choices, stop_reason→finish_reason, usage normalization'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
-  p_resp_guard: { t:'response-guard (nemo)', d:'NVIDIA NeMo Guardrails — evaluates content policies on the provider response after api-translation converts it to OpenAI format.', dt:[['Status','Coming Soon'],['Phase','Response'],['Type','ext_proc plugin']], links:[['IPP Upstream','https://github.com/llm-d/llm-d-inference-payload-processor'],['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
+  p_resp_guard: { t:'nemo-response-guard', d:'NVIDIA NeMo Guardrails — evaluates content policies on the provider response after api-translation. Compiled into the binary but NOT in the default profile.', dt:[['Status','Opt-in (not in default profile)'],['Phase','Response'],['Type','ext_proc plugin']], links:[['Plugins (downstream)','https://github.com/opendatahub-io/ai-gateway-payload-processing']] },
   auth: { t:'Auth (Authorino)', logo:'redhat-logo.svg', d:'Authorino auth server called via gRPC from the Wasm shim. Validates the MaaS API key and resolves subscription info.', dt:[['Protocol','gRPC (dispatch_grpc_call)'],['Validation','Calls MaaS API /internal/v1/api-keys/validate'],['Headers Injected','X-MaaS-Username, X-MaaS-Subscription'],['Error','401 Unauthorized']], links:[['Authorino Repo','https://github.com/Kuadrant/authorino']] },
   rlimit: { t:'Rate Limit (Limitador)', logo:'redhat-logo.svg', d:'Limitador rate-limit server called via gRPC from the Wasm shim. Implements token-based rate limiting via TokenRateLimitPolicy.', dt:[['Protocol','gRPC'],['Request Phase','Check if token quota allows'],['Response Phase','Read usage.total_tokens, report consumed'],['Policy','TokenRateLimitPolicy'],['Error','429 Too Many Requests']], links:[['Limitador Repo','https://github.com/Kuadrant/limitador']] },
-  maas: { t:'MaaS API', logo:'redhat-logo.svg', d:'MaaS API server that manages API keys, subscriptions, and model listings. Called by Authorino during auth validation. Requires 3 CRDs to be created for each model offering.', dt:[['Database','PostgreSQL'],['Endpoints','/v1/models, /v1/api-keys, /internal/v1/api-keys/validate'],['Called By','Authorino (HTTP callback)'],['CRD: MaaSModelRef','Maps user-facing model name to provider endpoint and target model ID'],['CRD: MaaSAuth','Configures API key authentication via K8s Secret'],['CRD: MaaSSubscription','Defines quota — associates user/team with allowed models and rate limits']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service'],['MaaSModelRef CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-model-ref/'],['MaaSAuth CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-auth/'],['MaaSSubscription CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-subscription/']] },
-  epp: { t:'llm-d Scheduler / EPP', d:'An ext_proc filter like IPP. Runs the Endpoint Picker Proxy (EPP) to select the optimal pod for on-cluster inference.', dt:[['Type','ext_proc filter'],['Function','Pod selection for InferencePool'],['Supports','P/D disaggregated serving, prefix caching']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
+  maas: { t:'MaaS API', logo:'redhat-logo.svg', d:'MaaS API server managing API keys, subscriptions, and model listings. Authorino calls TWO cached HTTP callbacks during auth: key validation and subscription selection. The gateway AuthPolicy is a single gateway-level policy (maas-gateway-auth) since 3.5.', dt:[['Database','PostgreSQL'],['Callback 1','POST /internal/v1/api-keys/validate'],['Callback 2','POST /internal/v1/subscriptions/select (model access, subscription phase; 3.6 adds rate-limit id, objective, org)'],['Called By','Authorino (metadata rules, cached)'],['CRD: MaaSModelRef','Maps user-facing model name to ExternalModel or LLMInferenceService'],['CRD: MaaSAuthPolicy','Per-model subjects (groups) for group-membership authorization'],['CRD: MaaSSubscription','Associates users/groups with allowed models and rate limits'],['CRD: AITenant / MaasTenantConfig','Multi-tenant root and per-namespace runtime config']], links:[['MaaS Repo','https://github.com/opendatahub-io/models-as-a-service'],['MaaSModelRef CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-model-ref/'],['MaaSSubscription CRD','https://opendatahub-io.github.io/models-as-a-service/dev/reference/crds/maas-subscription/']] },
+  epp: { t:'llm-d Scheduler / EPP', d:'The Endpoint Picker Proxy (EPP), deployed per InferencePool as an Envoy ext_proc filter (envoy.filters.http.ext_proc). MaaS removes Istio\'s InferencePool filter and re-inserts it before the router (3.6-dev) so it runs after payload processing with RHCL wasm.', dt:[['Type','ext_proc filter (envoy.filters.http.ext_proc)'],['Function','Pod selection for InferencePool'],['Selection metadata','envoy.lb carries the EPP-picked endpoint'],['Supports','P/D disaggregated serving, prefix caching']], links:[['llm-d','https://github.com/llm-d'],['Gateway API IE','https://gateway-api-inference-extension.sigs.k8s.io/']] },
   sched: { t:'Endpoint Picker', d:'Selects the optimal pod for disaggregated serving. Routes to Prefill or Decode variants based on KV cache utilization and model affinity.', dt:[['Metrics','KV cache utilization, queue depth, model affinity'],['Output','Selected pod IP (Prefill + Decode)'],['Mode','P/D disaggregation or unified']], links:[['llm-d Scheduler','https://github.com/llm-d/llm-d-inference-scheduler']] },
   sidecar: { t:'Sidecar', d:'Coordinates the P/D disaggregation transaction. Communicates with the prefill worker IP and orchestrates the KV cache transfer to the decode worker.', dt:[['Role','Transaction coordinator'],['Coordinates','Prefill worker IP ↔ Decode worker'],['Triggers','KVXfer metadata exchange']] },
   prefill: { t:'Prefill Pod B (vLLM)', d:'Processes the input prompt and generates the initial KV cache. Returns KVXfer metadata to enable the decode pod to pull KV cache via NIXL.', dt:[['Engine','vLLM'],['Function','Prompt processing, KV cache generation'],['Output','KVXfer metadata'],['Transfer','Via NIXL to Decode Pod']], links:[['vLLM','https://github.com/vllm-project/vllm'],['vLLM Docs','https://docs.vllm.ai/']] },
@@ -382,7 +440,7 @@ function drawBox(key) {
   }
 
   if (isA || hasBadge) {
-    ctx.shadowColor = n.color;
+    ctx.shadowColor = n._pathColor || n.color;
     ctx.shadowBlur = ts(18) * fadeA;
     ctx.globalAlpha = 0.3 + 0.7 * fadeA;
   }
@@ -391,7 +449,7 @@ function drawBox(key) {
   ctx.roundRect(x, y, w, h, ts(8));
   ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
   ctx.fill();
-  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
+  ctx.strokeStyle = (isA || hasBadge) ? (n._pathColor || n.color) : c.bdr;
   ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
   if (n.type === 'plugin') { ctx.setLineDash([ts(5), ts(4)]); }
   ctx.stroke();
@@ -483,21 +541,29 @@ function drawBounds() {
   ctx.textAlign = 'right';
   ctx.fillText('OCP cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
 
+  const sceneVis = sceneNodes();
+  const inScene = k => !sceneVis || sceneVis.has(k);
+
   // AI Gateway boundary
   drawContainer('aigw', false);
   // Wasm container
   drawContainer('wasm', glowing.has('wasm'));
-  // IPP container
-  drawContainer('ipp', glowing.has('ipp'));
+  // Payload Processing container (post-auth stage, legacy)
+  if (inScene('ipp')) drawContainer('ipp', glowing.has('ipp'));
+  // Pre-auth stage container (3.5+)
+  if (inScene('pp_pre')) drawContainer('pp_pre', glowing.has('pp_pre'));
+  // praxis-extproc containers (3.6 praxis tenants) — two deployments, same topology as 3.5
+  if (inScene('praxis')) drawContainer('praxis', glowing.has('praxis'));
+  if (inScene('praxis_pre')) drawContainer('praxis_pre', glowing.has('praxis_pre'));
   // EPP container (llm-d Scheduler)
-  drawContainer('epp', glowing.has('epp'));
+  if (inScene('epp')) drawContainer('epp', glowing.has('epp'));
 
-  // IPP request/response plugin sections
-  if (N.ipp) {
+  // Legacy Payload Processing request/response/opt-in plugin sections
+  if (N.ipp && inScene('ipp')) {
     ctx.save();
     // Request plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(758), ty(300), ts(345), ts(260), ts(8));
+    ctx.roundRect(tx(758), ty(304), ts(345), ts(212), ts(8));
     ctx.fillStyle = isDark ? '#58a6ff0a' : '#58a6ff08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#58a6ff30' : '#58a6ff25';
@@ -508,11 +574,11 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#58a6ff88' : '#58a6ff99';
     ctx.textAlign = 'left';
-    ctx.fillText('Request Plugins →', tx(770), ty(312));
+    ctx.fillText('Request Plugins →', tx(770), ty(316));
 
     // Response plugins section
     ctx.beginPath();
-    ctx.roundRect(tx(758), ty(575), ts(345), ts(105), ts(8));
+    ctx.roundRect(tx(758), ty(527), ts(345), ts(68), ts(8));
     ctx.fillStyle = isDark ? '#3fb9500a' : '#3fb95008';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#3fb95030' : '#3fb95025';
@@ -523,12 +589,49 @@ function drawBounds() {
     ctx.font = `bold ${ts(10)}px system-ui`;
     ctx.fillStyle = isDark ? '#3fb95088' : '#3fb95099';
     ctx.textAlign = 'left';
-    ctx.fillText('← Response Plugins', tx(770), ty(623));
+    ctx.fillText('← Response Plugins', tx(770), ty(539));
+
+    // Opt-in plugins section (compiled in, not in the default profile)
+    ctx.beginPath();
+    ctx.roundRect(tx(758), ty(597), ts(345), ts(146), ts(8));
+    ctx.fillStyle = isDark ? '#8b949e08' : '#8b949e08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#8b949e40' : '#8b949e40';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(9)}px system-ui`;
+    ctx.fillStyle = isDark ? '#8b949e99' : '#8b949e99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Opt-in (compiled in, not in default profile)', tx(770), ty(609));
+    ctx.restore();
+  }
+
+  // praxis-extproc post-auth chain section (3.6 praxis scene)
+  if (N.praxis && inScene('praxis')) {
+    ctx.save();
+    // Post-auth chain section
+    ctx.beginPath();
+    ctx.roundRect(tx(758), ty(312), ts(345), ts(250), ts(8));
+    ctx.fillStyle = isDark ? '#f0883e0a' : '#f0883e08';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#f0883e40' : '#f0883e35';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#f0883e99' : '#f0883e99';
+    ctx.textAlign = 'left';
+    ctx.fillText('Post-auth chain — ExternalModel processor →', tx(770), ty(324));
+
     ctx.restore();
   }
 
   // InferencePool boundary
   const ip = N.pool;
+  if (inScene('pool')) {
   ctx.beginPath();
   ctx.roundRect(tx(ip.x), ty(ip.y), ts(ip.w), ts(ip.h), ts(10));
   ctx.strokeStyle = c.bdr;
@@ -540,6 +643,7 @@ function drawBounds() {
   ctx.fillStyle = c.dim;
   ctx.textAlign = 'left';
   ctx.fillText(ip.label, tx(ip.x + 12), ty(ip.y + 18));
+  } // end pool boundary
 
   // Decode Pod A sub-boundary (left, under sidecar)
   ctx.save();
@@ -860,11 +964,28 @@ class Dot {
 // ================================================================
 // MAIN DRAW LOOP
 // ================================================================
+// Scene node visibility: flow-driven (3.6 hosts both stacks — one per selected flow).
+// Scene node visibility per version (3.6 = praxis dataplane scene: praxis stack +
+// AGC + pool/EPP furniture for the internal flow; legacy stack hidden).
+const hiddenByScene = {
+  '3.4': ['pp_pre', 'p_ext', 'p_mpr_pre', 'p_hguard', 'p_sue', 'ulogs', 'praxis', 'praxis_pre', 'pr_mth', 'pr_llmisvc', 'pr_ir', 'pr_ci', 'pr_at', 'pr_gr', 'pr_sui', 'pr_hdr', 'pr_rid'],
+  '3.5': ['p_bfth', 'praxis', 'praxis_pre', 'pr_mth', 'pr_llmisvc', 'pr_ir', 'pr_ci', 'pr_at', 'pr_gr', 'pr_sui', 'pr_hdr', 'pr_rid'],
+  '3.6': ['ipp', 'pp_pre', 'p_bfth', 'p_hguard', 'p_sue', 'p_mpr', 'p_at_req', 'p_aki', 'p_at_resp', 'p_rguard', 'p_resp_guard', 'p_bmth', 'p_ext', 'p_mpr_pre', 'vertex'],
+};
+function sceneNodes() {
+  const hidden = hiddenByScene[version] || [];
+  if (!hidden || hidden.length === 0) return null;
+  const vis = new Set(Object.keys(N));
+  hidden.forEach(k => vis.delete(k));
+  return vis;
+}
+
 function draw() {
   ctx.clearRect(0, 0, W, H);
+  const vis = sceneNodes();
   drawBounds();
   drawLines();
-  Object.keys(N).forEach(k => drawBox(k));
+  Object.keys(N).forEach(k => { if (!vis || vis.has(k)) drawBox(k); });
   dots.forEach(d => { d.update(); d.draw(); });
   dots = dots.filter(d => d.alive);
   // Highlight clicked component when overlay is showing
@@ -1014,134 +1135,7 @@ function inspStepRL(stepNum) {
   }
 }
 
-function inspStepInc(stepNum) {
-  switch (stepNum) {
-    case 10:
-      inspStepLabel = '⑩ intelligent-model-selection (coming soon)';
-      break;
-    case 11:
-      inspStepLabel = '⑪ model-provider-resolver (InferencePool)';
-      inspCycle = [
-        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
-        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
-      ];
-      break;
-    case 12:
-      inspStepLabel = '⑫ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
-      break;
-    case 13:
-      inspStepLabel = '⑬ base-model-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Base-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xbase' });
-      break;
-    case 14: {
-      inspStepLabel = '⑭ IPP → Gateway (request ready)';
-      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
-      if (xm) xm.s = 'highlight';
-      const xb = inspHeaders.find(l => l.id === 'h-xbase');
-      if (xb) xb.s = 'highlight';
-      break; }
-    case 15:
-      inspStepLabel = '⑮ Gateway → EPP (ext_proc)';
-      break;
-    case 16:
-      inspStepLabel = '⑯ EPP selects P/D workers';
-      break;
-    case 17:
-      inspStepLabel = '⑰ EPP → Gateway (pods selected)';
-      break;
-    case 18:
-      inspStepLabel = '⑱ Gateway → Sidecar';
-      break;
-    case 19:
-      inspStepLabel = '⑲ Sidecar coordinates P/D';
-      break;
-    case 20:
-      inspStepLabel = '⑳ Sidecar → Prefill Pod B';
-      break;
-    case 21:
-      inspStepLabel = '㉑ Prefill processing';
-      break;
-    case 22:
-      inspStepLabel = '㉒ Prefill → Sidecar (KV metadata ready)';
-      break;
-    case 23:
-      inspStepLabel = '㉓ Sidecar → Decode Pod A';
-      break;
-    case 24:
-      inspStepLabel = '㉔ Decode requests KVs via NIXL';
-      break;
-    case 25:
-      inspStepLabel = '㉕ NIXL returns KV cache (RDMA)';
-      break;
-    case 26:
-      inspStepLabel = '㉖ Decode → Gateway (response)';
-      setInspPhase('response');
-      inspHeaders = [
-        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
-        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
-      ];
-      inspBody = [
-        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
-        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
-        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
-        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
-      ];
-      inspCycle = [];
-      break;
-    case 27:
-      inspStepLabel = '㉗ Gateway → EPP (response)';
-      break;
-    case 28:
-      inspStepLabel = '㉘ EPP response plugins';
-      break;
-    case 29:
-      inspStepLabel = '㉙ EPP → Gateway (response)';
-      break;
-    case 30:
-      inspStepLabel = '㉚ Gateway → IPP (response)';
-      break;
-    case 31:
-      inspStepLabel = '㉛ response-guard (coming soon)';
-      break;
-    case 32: {
-      inspStepLabel = '㉜ IPP → Gateway (response)';
-      const ro = inspBody.find(l => l.id === 'r-obj');
-      if (ro) ro.s = 'highlight';
-      break; }
-    case 33: {
-      inspStepLabel = '㉝ Wasm reads usage.total_tokens';
-      const u = inspBody.find(l => l.id === 'r-usage2');
-      if (u) u.s = 'highlight';
-      break; }
-    case 34:
-      inspStepLabel = '㉞ Limitador: report token count';
-      break;
-    case 35: {
-      inspStepLabel = '㉟ Response to Client (OpenAI format)';
-      const rc = inspBody.find(l => l.id === 'r-choices');
-      if (rc) rc.s = 'highlight';
-      break; }
-  }
-}
-
-function inspStep(stepNum) {
-  resetStyles();
-  if (stepNum >= 5 && activeFlow === 'auth') {
-    inspStepAuth(stepNum);
-    renderInsp();
-    return;
-  }
-  if (stepNum >= 7 && activeFlow === 'rl') {
-    inspStepRL(stepNum);
-    renderInsp();
-    return;
-  }
-  if (stepNum >= 10 && activeFlow === 'inc') {
-    inspStepInc(stepNum);
-    renderInsp();
-    return;
-  }
+function inspStepExt34(stepNum) {
   switch (stepNum) {
     case 1:
       inspStepLabel = '① Incoming Request';
@@ -1171,48 +1165,42 @@ function inspStep(stepNum) {
       inspStepLabel = '⑦ Kuadrant → Gateway (auth complete)';
       break;
     case 8:
-      inspStepLabel = '⑧ Gateway → ext_proc (IPP)';
+      inspStepLabel = '⑧ Gateway → Payload Processing (ext_proc)';
       break;
     case 9:
-      inspStepLabel = '⑨ request-guard (coming soon)';
+      inspStepLabel = '⑨ model-extractor (body-field-to-header)';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
       break;
     case 10:
-      inspStepLabel = '⑩ intelligent-model-selection (coming soon)';
-      break;
-    case 11:
-      inspStepLabel = '⑪ model-provider-resolver';
+      inspStepLabel = '⑩ model-provider-resolver';
       inspCycle = [
         { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
         { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
       ];
       break;
-    case 12:
-      inspStepLabel = '⑫ body-field-to-header';
-      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
-      break;
-    case 13:
-      inspStepLabel = '⑬ api-translation (request)';
+    case 11:
+      inspStepLabel = '⑪ api-translation (request)';
       inspHeaders.find(l => l.id === 'h-path').s = 'del';
       inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
       inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
       inspHeaders.find(l => l.id === 'h-auth').s = 'del';
       break;
-    case 14:
-      inspStepLabel = '⑭ apikey-injection';
+    case 12:
+      inspStepLabel = '⑫ apikey-injection';
       inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
       break;
-    case 15: {
-      inspStepLabel = '⑮ IPP → Gateway (mutated request)';
+    case 13: {
+      inspStepLabel = '⑬ Payload Processing → Gateway (mutated request)';
       const ph2 = inspHeaders.find(l => l.id === 'h-path2');
       if (ph2) ph2.s = 'highlight';
       const xapi = inspHeaders.find(l => l.id === 'h-xapi');
       if (xapi) xapi.s = 'highlight';
       break; }
-    case 16:
-      inspStepLabel = '⑯ Gateway routes to Anthropic';
+    case 14:
+      inspStepLabel = '⑭ Gateway routes to Anthropic';
       break;
-    case 17:
-      inspStepLabel = '⑰ Anthropic responds';
+    case 15:
+      inspStepLabel = '⑮ Anthropic responds';
       setInspPhase('response');
       inspHeaders = [
         { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
@@ -1226,11 +1214,11 @@ function inspStep(stepNum) {
       ];
       inspCycle = [];
       break;
-    case 18:
-      inspStepLabel = '⑱ Gateway → IPP (response)';
+    case 16:
+      inspStepLabel = '⑯ Gateway → Payload Processing (response)';
       break;
-    case 19:
-      inspStepLabel = '⑲ api-translation (response)';
+    case 17:
+      inspStepLabel = '⑰ api-translation (response)';
       inspBody.find(l => l.id === 'r-type').s = 'del';
       inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
       inspBody.find(l => l.id === 'r-content').s = 'del';
@@ -1240,32 +1228,571 @@ function inspStep(stepNum) {
       inspBody.find(l => l.id === 'r-usage').s = 'del';
       inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
       break;
-    case 20:
-      inspStepLabel = '⑳ response-guard (coming soon)';
-      break;
-    case 21: {
-      inspStepLabel = '㉑ IPP → Gateway (translated response)';
+    case 18: {
+      inspStepLabel = '⑱ Payload Processing → Gateway (translated response)';
       const robj = inspBody.find(l => l.id === 'r-obj');
       if (robj) robj.s = 'highlight';
       const rch = inspBody.find(l => l.id === 'r-choices');
       if (rch) rch.s = 'highlight';
       break; }
-    case 22: {
-      inspStepLabel = '㉒ Wasm reads usage.total_tokens';
+    case 19: {
+      inspStepLabel = '⑲ Wasm reads usage.total_tokens';
       const u2 = inspBody.find(l => l.id === 'r-usage2');
       if (u2) u2.s = 'highlight';
       break; }
-    case 23:
-      inspStepLabel = '㉓ Limitador: report token count';
+    case 20:
+      inspStepLabel = '⑳ Limitador: report token count';
       break;
-    case 24: {
-      inspStepLabel = '㉔ Response to Client (OpenAI format)';
+    case 21: {
+      inspStepLabel = '㉑ Response to Client (OpenAI format)';
       const robj2 = inspBody.find(l => l.id === 'r-obj');
       if (robj2) robj2.s = 'highlight';
       const rch2 = inspBody.find(l => l.id === 'r-choices');
       if (rch2) rch2.s = 'highlight';
       break; }
   }
+}
+
+function inspStepExt35(stepNum) {
+  switch (stepNum) {
+    case 1:
+      inspStepLabel = '① Incoming Request (body-routed model)';
+      break;
+    case 2:
+      inspStepLabel = '② Gateway → Payload Pre-Processing (pre-auth)';
+      break;
+    case 3:
+      inspStepLabel = '③ model-extractor: body model → header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      break;
+    case 4:
+      inspStepLabel = '④ model-provider-resolver (pre-auth)';
+      inspCycle = [
+        { v: 'provider = "anthropic"', s: 'add', id: 'c-prov' },
+        { v: 'targetModel = "claude-haiku-4-5-20251001"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 5:
+      inspStepLabel = '⑤ Pre-Processing → Gateway (model headers set)';
+      break;
+    case 6:
+      inspStepLabel = '⑥ Gateway → Kuadrant (auth sees X-Gateway-Model-Name)';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      const hx = inspHeaders.find(l => l.id === 'h-xmodel');
+      if (hx) hx.s = 'highlight';
+      break;
+    case 7:
+      inspStepLabel = '⑦ Authorino validates API key';
+      inspHeaders.find(l => l.id === 'h-auth').s = 'highlight';
+      break;
+    case 8:
+      inspStepLabel = '⑧ POST /internal/v1/api-keys/validate';
+      break;
+    case 9:
+      inspStepLabel = '⑨ POST /internal/v1/subscriptions/select';
+      break;
+    case 10:
+      inspStepLabel = '⑩ Identity: username, groups, subscription';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
+      inspHeaders.push({ v: 'x-llm-d-inference-objective: ', s: 'add', id: 'h-obj' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ Limitador checks token quota';
+      break;
+    case 12:
+      inspStepLabel = '⑫ Kuadrant → Gateway (auth complete)';
+      break;
+    case 13:
+      inspStepLabel = '⑬ Gateway → Payload Processing (post-auth)';
+      break;
+    case 14:
+      inspStepLabel = '⑭ maas-headers-guard: strip x-maas-*';
+      inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      break;
+    case 15:
+      inspStepLabel = '⑮ stream-usage-enforcer: include_usage';
+      inspBody.push({ v: '"stream_options": {"include_usage": true}', s: 'add', id: 'b-so' });
+      break;
+    case 16:
+      inspStepLabel = '⑯ model-provider-resolver (post-auth)';
+      break;
+    case 17:
+      inspStepLabel = '⑰ api-translation (request)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
+      break;
+    case 18:
+      inspStepLabel = '⑱ apikey-injection';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 19: {
+      inspStepLabel = '⑲ Payload Processing → Gateway (mutated request)';
+      const ph2 = inspHeaders.find(l => l.id === 'h-path2');
+      if (ph2) ph2.s = 'highlight';
+      const xapi = inspHeaders.find(l => l.id === 'h-xapi');
+      if (xapi) xapi.s = 'highlight';
+      break; }
+    case 20:
+      inspStepLabel = '⑳ Gateway routes to Anthropic';
+      break;
+    case 21:
+      inspStepLabel = '㉑ Anthropic responds';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 22:
+      inspStepLabel = '㉒ Gateway → Payload Processing (response)';
+      break;
+    case 23:
+      inspStepLabel = '㉓ api-translation (response)';
+      inspBody.find(l => l.id === 'r-type').s = 'del';
+      inspBody.push({ v: '"object": "chat.completion"', s: 'add', id: 'r-obj' });
+      inspBody.find(l => l.id === 'r-content').s = 'del';
+      inspBody.push({ v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'add', id: 'r-choices' });
+      inspBody.find(l => l.id === 'r-stop').s = 'del';
+      inspBody.push({ v: '"finish_reason": "stop"', s: 'add', id: 'r-finish' });
+      inspBody.find(l => l.id === 'r-usage').s = 'del';
+      inspBody.push({ v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'add', id: 'r-usage2' });
+      break;
+    case 24: {
+      inspStepLabel = '㉔ Payload Processing → Gateway (translated response)';
+      const robj = inspBody.find(l => l.id === 'r-obj');
+      if (robj) robj.s = 'highlight';
+      const rch = inspBody.find(l => l.id === 'r-choices');
+      if (rch) rch.s = 'highlight';
+      break; }
+    case 25: {
+      inspStepLabel = '㉕ Wasm reads usage.total_tokens';
+      const u2 = inspBody.find(l => l.id === 'r-usage2');
+      if (u2) u2.s = 'highlight';
+      break; }
+    case 26:
+      inspStepLabel = '㉖ Usage log: tokens_total=10, model, subscription → OTLP';
+      break;
+    case 27: {
+      inspStepLabel = '㉗ Response to Client (OpenAI format)';
+      const robj2 = inspBody.find(l => l.id === 'r-obj');
+      if (robj2) robj2.s = 'highlight';
+      const rch2 = inspBody.find(l => l.id === 'r-choices');
+      if (rch2) rch2.s = 'highlight';
+      break; }
+  }
+}
+
+// 3.6 praxis tenant (ext) flow: 24 steps
+function inspStepPraxis(stepNum) {
+  switch (stepNum) {
+    case 3:
+      inspStepLabel = '③ json_body: extract body model → header (anti-spoof: client value removed first)';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: claude-haiku-4-5-20251001', s: 'add', id: 'h-xmodel' });
+      break;
+    case 4:
+      inspStepLabel = '④ llmisvc_model_provider_resolver';
+      inspCycle = [
+        { v: 'publisher-id rewrite for LLMInferenceService', s: 'add', id: 'c-prov' },
+      ];
+      break;
+    case 8:
+      inspStepLabel = '⑧ POST /internal/v1/api-keys/validate';
+      break;
+    case 9:
+      inspStepLabel = '⑨ POST /internal/v1/subscriptions/select';
+      break;
+    case 10:
+      inspStepLabel = '⑩ Identity: subscription + rate-limit id';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
+      break;
+    case 14:
+      inspStepLabel = '⑭ headers: strip x-maas-* + caller credentials';
+      inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      break;
+    case 15:
+      inspStepLabel = '⑮ intelligent_route (routing overlay, hot reload)';
+      inspCycle = [
+        { v: 'provider = "anthropic" (overlay)', s: 'add', id: 'c-prov' },
+        { v: 'cluster: provider-hop (Envoy)', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 16:
+      inspStepLabel = '⑯ stream_usage_inject: include_usage on streams';
+      break;
+    case 17:
+      inspStepLabel = '⑰ api-translation: OpenAI → Anthropic (if enabled)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST /v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      inspHeaders.find(l => l.id === 'h-auth').s = 'del';
+      break;
+    case 18:
+      inspStepLabel = '⑱ credential_inject';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxxx...', s: 'add', id: 'h-xapi' });
+      break;
+    case 21:
+      inspStepLabel = '㉑ Anthropic responds (translated back if enabled)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 22: {
+      inspStepLabel = '㉒ Wasm reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 23:
+      inspStepLabel = '㉓ Usage log: tokens_total=10, model, subscription → OTLP';
+      break;
+    case 24: {
+      inspStepLabel = '㉔ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
+// 3.6 internal praxis flow: 33 steps
+function inspStepIncPraxis(stepNum) {
+  switch (stepNum) {
+    case 3:
+      inspStepLabel = '③ json_body: extract body model → header (anti-spoof: client value removed first)';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
+      break;
+    case 4:
+      inspStepLabel = '④ llmisvc_model_provider_resolver (LLMInferenceService)';
+      inspCycle = [
+        { v: 'publisher-id rewrite for LLMInferenceService', s: 'add', id: 'c-prov' },
+        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 8:
+      inspStepLabel = '⑧ POST /internal/v1/api-keys/validate';
+      break;
+    case 9:
+      inspStepLabel = '⑨ POST /internal/v1/subscriptions/select';
+      break;
+    case 10:
+      inspStepLabel = '⑩ Identity: username, groups, subscription';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: int-models-sub', s: 'add', id: 'h-maas-sub' });
+      break;
+    case 14:
+      inspStepLabel = '⑭ headers: strip x-maas-* + caller credentials';
+      inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      break;
+    case 15:
+      inspStepLabel = '⑮ request_id: correlation id';
+      break;
+    case 16:
+      inspStepLabel = '⑯ ai_guardrails: NeMo checks (request + response phases)';
+      break;
+    case 17:
+      inspStepLabel = '⑰ stream_usage_inject: include_usage on streams';
+      inspBody.push({ v: '"stream_options": {"include_usage": true}', s: 'add', id: 'b-so' });
+      break;
+    case 20:
+      inspStepLabel = '⑳ Gateway → EPP (ext_proc)';
+      break;
+    case 21:
+      inspStepLabel = '㉑ EPP selects P/D workers';
+      break;
+    case 30:
+      inspStepLabel = '㉚ Decode → Gateway (response)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 31: {
+      inspStepLabel = '㉛ Wasm reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 32:
+      inspStepLabel = '㉜ Usage log: tokens_total=10, model, subscription → OTLP';
+      break;
+    case 33: {
+      inspStepLabel = '㉝ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
+function inspStepInc34(stepNum) {
+  switch (stepNum) {
+    case 10:
+      inspStepLabel = '⑩ model-extractor: extract model name';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ model-provider-resolver (InferencePool)';
+      inspCycle = [
+        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
+        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 12:
+      inspStepLabel = '⑫ base-model-to-header (opt-in)';
+      inspHeaders.push({ v: 'X-Gateway-Base-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xbase' });
+      break;
+    case 13: {
+      inspStepLabel = '⑬ Payload Processing → Gateway (request ready)';
+      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
+      if (xm) xm.s = 'highlight';
+      break; }
+    case 14:
+      inspStepLabel = '⑭ Gateway → EPP (ext_proc)';
+      break;
+    case 15:
+      inspStepLabel = '⑮ EPP selects P/D workers';
+      break;
+    case 16:
+      inspStepLabel = '⑯ EPP → Gateway (pods selected)';
+      break;
+    case 17:
+      inspStepLabel = '⑰ Gateway → Sidecar';
+      break;
+    case 18:
+      inspStepLabel = '⑱ Sidecar coordinates P/D';
+      break;
+    case 19:
+      inspStepLabel = '⑲ Sidecar → Prefill Pod B';
+      break;
+    case 20:
+      inspStepLabel = '⑳ Prefill processing';
+      break;
+    case 21:
+      inspStepLabel = '㉑ Prefill → Sidecar (KV metadata ready)';
+      break;
+    case 22:
+      inspStepLabel = '㉒ Sidecar → Decode Pod A';
+      break;
+    case 23:
+      inspStepLabel = '㉓ Decode requests KVs via NIXL';
+      break;
+    case 24:
+      inspStepLabel = '㉔ NIXL returns KV cache (RDMA)';
+      break;
+    case 25:
+      inspStepLabel = '㉕ Decode → Gateway (response)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 26:
+      inspStepLabel = '㉖ Gateway → EPP (response)';
+      break;
+    case 27:
+      inspStepLabel = '㉗ EPP response plugins';
+      break;
+    case 28:
+      inspStepLabel = '㉘ EPP → Gateway (response)';
+      break;
+    case 29:
+      inspStepLabel = '㉙ Gateway → Payload Processing (response)';
+      break;
+    case 30:
+      inspStepLabel = '㉚ nemo-response-guard (opt-in, not in default profile)';
+      break;
+    case 31: {
+      inspStepLabel = '㉛ Payload Processing → Gateway (response)';
+      const ro = inspBody.find(l => l.id === 'r-obj');
+      if (ro) ro.s = 'highlight';
+      break; }
+    case 32: {
+      inspStepLabel = '㉜ Wasm reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 33:
+      inspStepLabel = '㉝ Limitador: report token count';
+      break;
+    case 34: {
+      inspStepLabel = '㉞ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
+// 3.5 internal flow: 37 steps — pre-auth, dual callbacks, headers-guard/stream-usage, usage-logs
+function inspStepInc35(stepNum) {
+  switch (stepNum) {
+    case 3:
+      inspStepLabel = '③ model-extractor: body model → header';
+      inspHeaders.push({ v: 'X-Gateway-Model-Name: llama-3.1-8b', s: 'add', id: 'h-xmodel' });
+      break;
+    case 4:
+      inspStepLabel = '④ model-provider-resolver (pre-auth)';
+      break;
+    case 8:
+      inspStepLabel = '⑧ POST /internal/v1/api-keys/validate';
+      break;
+    case 9:
+      inspStepLabel = '⑨ POST /internal/v1/subscriptions/select';
+      break;
+    case 10:
+      inspStepLabel = '⑩ Identity: username, groups, subscription';
+      inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
+      inspHeaders.push({ v: 'X-MaaS-Subscription: int-models-sub', s: 'add', id: 'h-maas-sub' });
+      inspHeaders.push({ v: 'x-llm-d-inference-objective: maas-objective-1', s: 'add', id: 'h-obj' });
+      break;
+    case 14:
+      inspStepLabel = '⑭ maas-headers-guard: strip x-maas-*';
+      inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
+      break;
+    case 15:
+      inspStepLabel = '⑮ stream-usage-enforcer: include_usage';
+      inspBody.push({ v: '"stream_options": {"include_usage": true}', s: 'add', id: 'b-so' });
+      break;
+    case 16:
+      inspStepLabel = '⑯ model-provider-resolver (InferencePool)';
+      inspCycle = [
+        { v: 'type = "inferencepool"', s: 'add', id: 'c-prov' },
+        { v: 'pool = "vllm-llama3-pool"', s: 'add', id: 'c-model' },
+      ];
+      break;
+    case 17: {
+      inspStepLabel = '⑰ Payload Processing → Gateway (request ready)';
+      const xm = inspHeaders.find(l => l.id === 'h-xmodel');
+      if (xm) xm.s = 'highlight';
+      break; }
+    case 18:
+      inspStepLabel = '⑱ Gateway → EPP (ext_proc)';
+      break;
+    case 19:
+      inspStepLabel = '⑲ EPP selects P/D workers';
+      break;
+    case 20:
+      inspStepLabel = '⑳ EPP → Gateway (pods selected)';
+      break;
+    case 21:
+      inspStepLabel = '㉑ Gateway → Sidecar';
+      break;
+    case 22:
+      inspStepLabel = '㉒ Sidecar coordinates P/D';
+      break;
+    case 23:
+      inspStepLabel = '㉓ Sidecar → Prefill Pod B';
+      break;
+    case 24:
+      inspStepLabel = '㉔ Prefill processing';
+      break;
+    case 25:
+      inspStepLabel = '㉕ Prefill → Sidecar (KV metadata ready)';
+      break;
+    case 26:
+      inspStepLabel = '㉖ Sidecar → Decode Pod A';
+      break;
+    case 27:
+      inspStepLabel = '㉗ Decode requests KVs via NIXL';
+      break;
+    case 28:
+      inspStepLabel = '㉘ NIXL returns KV cache (RDMA)';
+      break;
+    case 29:
+      inspStepLabel = '㉙ Decode → Gateway (response)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"object": "chat.completion"', s: 'keep', id: 'r-obj' },
+        { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-choices' },
+        { v: '"finish_reason": "stop"', s: 'keep', id: 'r-finish' },
+        { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage2' },
+      ];
+      inspCycle = [];
+      break;
+    case 30:
+      inspStepLabel = '㉚ Gateway → EPP (response)';
+      break;
+    case 31:
+      inspStepLabel = '㉛ EPP response plugins';
+      break;
+    case 32:
+      inspStepLabel = '㉜ EPP → Gateway (response)';
+      break;
+    case 33:
+      inspStepLabel = '㉝ Gateway → Payload Processing (response)';
+      break;
+    case 34: {
+      inspStepLabel = '㉞ Payload Processing → Gateway (response)';
+      const ro = inspBody.find(l => l.id === 'r-obj');
+      if (ro) ro.s = 'highlight';
+      break; }
+    case 35: {
+      inspStepLabel = '㉟ Wasm reads usage.total_tokens';
+      const u = inspBody.find(l => l.id === 'r-usage2');
+      if (u) u.s = 'highlight';
+      break; }
+    case 36:
+      inspStepLabel = '㊱ Usage log: tokens_total=10, model, subscription → OTLP';
+      break;
+    case 37: {
+      inspStepLabel = '㊲ Response to Client (OpenAI format)';
+      const rc = inspBody.find(l => l.id === 'r-choices');
+      if (rc) rc.s = 'highlight';
+      break; }
+  }
+}
+
+// Version-aware inspector dispatch: composite version:flow key
+// C2: ext flows are version-specific; inc/auth/rl follow in C2b
+const inspFns = {
+  '3.4': { ext: inspStepExt34, inc: inspStepInc34, auth: inspStepAuth, rl: inspStepRL },
+  '3.5': { ext: inspStepExt35, inc: inspStepInc35, auth: inspStepAuth, rl: inspStepRL },
+  '3.6': { ext: inspStepPraxis, inc: inspStepIncPraxis, auth: inspStepAuth, rl: inspStepRL },
+};
+
+function inspStep(stepNum) {
+  resetStyles();
+  const fn = (inspFns[version] || {})[activeFlow];
+  if (fn) { fn(stepNum); }
   renderInsp();
 }
 
@@ -1273,7 +1800,73 @@ function inspStep(stepNum) {
 // FLOW DEFINITIONS
 // ================================================================
 let activeFlow = 'ext';
-const flowExt = [
+// 3.4: single post-auth ext_proc stage, 4 plugins (v0.1.1)
+// 3.6 praxis tenant (default): thin AGC-deployed chain (ai-gateway-controller renders)
+const flowPraxis = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → praxis pre-ext_proc (before auth)', mode: 'arrow', f: 'gw', to: 'praxis_pre', c: '#f0883e', num: 2, glow: 'praxis_pre', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -60 },
+  { t: '3. json_body: extract body model → X-Gateway-Model-Name', mode: 'lightup', target: 'pr_mth', badge: 3 },
+  { t: '4. llmisvc_model_provider_resolver: LLMInferenceService routing', mode: 'lightup', target: 'pr_llmisvc', badge: 4 },
+  { t: '5. praxis pre → Gateway (model headers set)', mode: 'arrow', f: 'praxis_pre', to: 'gw', c: '#f0883e', num: 5, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 80 },
+  { t: '6. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 6, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '7. Authorino validates API key', mode: 'lightup', target: 'auth', badge: 7 },
+  { t: '8. Authorino → MaaS API: validate key', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -50 },
+  { t: '9. Authorino → MaaS API: select subscription', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 9, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 50 },
+  { t: '10. MaaS API responds: identity + subscription', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 10, fromTop: true, fromXOff: 0, toBottom: true, toXOff: 0 },
+  { t: '11. Rate Limit checks token quota (short rate-limit ids for new subscriptions)', mode: 'lightup', target: 'rlimit', badge: 11 },
+  { t: '12. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '13. Gateway → praxis post-auth ext_proc (ExternalModel processor)', mode: 'arrow', f: 'gw', to: 'praxis', c: '#f0883e', num: 13, glow: 'praxis', fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '14. headers: strip x-maas-* identity + caller credentials', mode: 'lightup', target: 'pr_hdr', badge: 14 },
+  { t: '15. intelligent_route: routing overlay → provider hop', mode: 'lightup', target: 'pr_ir', badge: 15 },
+  { t: '16. stream_usage_inject: force include_usage on streams', mode: 'lightup', target: 'pr_sui', badge: 16 },
+  { t: '17. api-translation: OpenAI → Anthropic (when enabled)', mode: 'lightup', target: 'pr_at', badge: 17 },
+  { t: '18. credential_inject: provider credential from routing metadata', mode: 'lightup', target: 'pr_ci', badge: 18 },
+  { t: '19. praxis → Gateway (routed request)', mode: 'arrow', f: 'praxis', to: 'gw', c: '#f0883e', num: 19, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '20. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 20, fromLeft: true, toRight: true, yOff: -10 },
+  { t: '21. Anthropic responds (translated back when api-translation on)', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '22. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 22 },
+  { t: '23. Usage log emitted: model, tokens, identity → OTLP', mode: 'lightup', target: 'ulogs', badge: 23 },
+  { t: '24. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 24, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowIncPraxis = [
+  { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → praxis pre-ext_proc (before auth)', mode: 'arrow', f: 'gw', to: 'praxis_pre', c: '#f0883e', num: 2, glow: 'praxis_pre', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -60 },
+  { t: '3. json_body: extract body model → X-Gateway-Model-Name', mode: 'lightup', target: 'pr_mth', badge: 3 },
+  { t: '4. llmisvc_model_provider_resolver: LLMInferenceService routing', mode: 'lightup', target: 'pr_llmisvc', badge: 4 },
+  { t: '5. praxis pre → Gateway (model headers set)', mode: 'arrow', f: 'praxis_pre', to: 'gw', c: '#f0883e', num: 5, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 80 },
+  { t: '6. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 6, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '7. Authorino validates API key', mode: 'lightup', target: 'auth', badge: 7 },
+  { t: '8. Authorino → MaaS API: validate key', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -50 },
+  { t: '9. Authorino → MaaS API: select subscription', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 9, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 50 },
+  { t: '10. MaaS API responds: identity + subscription', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 10, fromTop: true, fromXOff: 0, toBottom: true, toXOff: 0 },
+  { t: '11. Rate Limit checks token quota (short rate-limit ids for new subscriptions)', mode: 'lightup', target: 'rlimit', badge: 11 },
+  { t: '12. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '13. Gateway → praxis post-auth ext_proc (shared processor)', mode: 'arrow', f: 'gw', to: 'praxis', c: '#f0883e', num: 13, glow: 'praxis', fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '14. headers: strip x-maas-* identity + caller credentials', mode: 'lightup', target: 'pr_hdr', badge: 14 },
+  { t: '15. request_id: correlation id for the request', mode: 'lightup', target: 'pr_rid', badge: 15 },
+  { t: '16. ai_guardrails: NeMo checks (request + response phases)', mode: 'lightup', target: 'pr_gr', badge: 16 },
+  { t: '17. stream_usage_inject: force include_usage on streams', mode: 'lightup', target: 'pr_sui', badge: 17 },
+  { t: '18. praxis → Gateway (request ready)', mode: 'arrow', f: 'praxis', to: 'gw', c: '#f0883e', num: 18, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '19. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 19, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '20. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 20 },
+  { t: '21. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 21, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '22. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 22, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '23. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 23 },
+  { t: '24. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 24, fromRight: true, toLeft: true },
+  { t: '25. Prefill processing', mode: 'lightup', target: 'prefill', badge: 25 },
+  { t: '26. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 26, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '27. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 27, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '28. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 28, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '29. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 29, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '30. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 30, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '31. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 31 },
+  { t: '32. Usage log emitted: model, tokens, identity → OTLP', mode: 'lightup', target: 'ulogs', badge: 32 },
+  { t: '33. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 33, fromLeft: true, toRight: true, yOff: 10 },
+
+];
+
+const flowExt34 = [
   // REQUEST PATH
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
@@ -1282,31 +1875,63 @@ const flowExt = [
   { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
-  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  // IPP request plugins
-  { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
-  { t: '10. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 10 },
-  { t: '11. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 11 },
-  { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
-  { t: '13. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 13 },
-  { t: '14. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 14 },
-  { t: '15. IPP → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 15, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  { t: '16. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 16, fromLeft: true, toRight: true, yOff: -10 },
+  { t: '8. Gateway → Payload Processing (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  // Payload Processing plugins (single stage, chain order per v0.1.1)
+  { t: '9. model-extractor: extract model name', mode: 'lightup', target: 'p_bfth', badge: 9 },
+  { t: '10. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 10 },
+  { t: '11. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 11 },
+  { t: '12. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 12 },
+  { t: '13. Payload Processing → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '14. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 14, fromLeft: true, toRight: true, yOff: -10 },
   // RESPONSE PATH
-  { t: '17. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 17, fromRight: true, toLeft: true, yOff: 10 },
-  { t: '18. Gateway → IPP (response processing)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 18, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  // IPP response plugins
-  { t: '19. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 19 },
-  { t: '20. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 20 },
-  { t: '21. IPP → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 21, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '15. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 15, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '16. Gateway → Payload Processing (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 16, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '17. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 17 },
+  { t: '18. Payload Processing → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 18, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
   // TOKEN USAGE REPORTING
-  { t: '22. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 22 },
-  { t: '23. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 23 },
-  { t: '24. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 24, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '19. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 19 },
+  { t: '20. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 20 },
+  { t: '21. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 21, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowInc = [
-  // REQUEST PATH (same auth flow)
+// 3.5: two ext_proc stages — pre-auth (so auth sees X-Gateway-Model-Name) + post-auth full chain (v0.2.1)
+const flowExt35 = [
+  // REQUEST PATH — pre-auth stage
+  { t: '1. Client sends POST /v1/chat/completions (body-routed model)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Payload Pre-Processing (before auth)', mode: 'arrow', f: 'gw', to: 'pp_pre', c: '#58a6ff', num: 2, glow: 'pp_pre', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -60 },
+  { t: '3. model-extractor: model → X-Gateway-Model-Name', mode: 'lightup', target: 'p_ext', badge: 3 },
+  { t: '4. model-provider-resolver: resolve ExternalModel', mode: 'lightup', target: 'p_mpr_pre', badge: 4 },
+  { t: '5. Pre-Processing → Gateway (model headers set)', mode: 'arrow', f: 'pp_pre', to: 'gw', c: '#58a6ff', num: 5, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 80 },
+  // AUTH
+  { t: '6. Gateway → Kuadrant Wasm Shim (auth sees model header)', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 6, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '7. Authorino validates API key', mode: 'lightup', target: 'auth', badge: 7 },
+  { t: '8. Authorino → MaaS API: validate key', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -50 },
+  { t: '9. Authorino → MaaS API: select subscription', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 9, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 50 },
+  { t: '10. MaaS API responds: identity + subscription', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 10, fromTop: true, fromXOff: 0, toBottom: true, toXOff: 0 },
+  { t: '11. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 11 },
+  { t: '12. Kuadrant → Gateway (auth complete, identity headers)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  // POST-AUTH STAGE
+  { t: '13. Gateway → Payload Processing (post-auth)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 13, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '14. maas-headers-guard: strip x-maas-* headers', mode: 'lightup', target: 'p_hguard', badge: 14 },
+  { t: '15. stream-usage-enforcer: force stream_options.include_usage', mode: 'lightup', target: 'p_sue', badge: 15 },
+  { t: '16. model-provider-resolver: lookup ExternalModel', mode: 'lightup', target: 'p_mpr', badge: 16 },
+  { t: '17. api-translation: OpenAI → Anthropic format', mode: 'lightup', target: 'p_at_req', badge: 17 },
+  { t: '18. apikey-injection: inject provider credential', mode: 'lightup', target: 'p_aki', badge: 18 },
+  { t: '19. Payload Processing → Gateway (mutated request)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 19, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '20. Gateway routes to Anthropic', mode: 'arrow', f: 'gw', to: 'anthropic', c: '#58a6ff', num: 20, fromLeft: true, toRight: true, yOff: -10 },
+  // RESPONSE PATH
+  { t: '21. Anthropic responds', mode: 'arrow', f: 'anthropic', to: 'gw', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '22. Gateway → Payload Processing (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 22, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '23. api-translation: Anthropic → OpenAI response', mode: 'lightup', target: 'p_at_resp', badge: 23 },
+  { t: '24. Payload Processing → Gateway (translated response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 24, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  // TOKEN USAGE + USAGE LOGS
+  { t: '25. Wasm reads usage.total_tokens from response', mode: 'lightup', target: 'rlimit', badge: 25 },
+  { t: '26. Usage log emitted: model, tokens, identity → OTLP', mode: 'lightup', target: 'ulogs', badge: 26 },
+  { t: '27. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 27, fromLeft: true, toRight: true, yOff: 10 },
+];
+const flowExt = flowExt34;
+
+const flowInc34 = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
   { t: '3. Auth (Authorino) validates API key', mode: 'lightup', target: 'auth', badge: 3 },
@@ -1314,37 +1939,73 @@ const flowInc = [
   { t: '5. MaaS API responds: key valid', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 5, fromTop: true, fromXOff: 30, toBottom: true, toXOff: 30 },
   { t: '6. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 6 },
   { t: '7. Kuadrant → Gateway (auth complete)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 7, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
-  { t: '8. Gateway → ext_proc (IPP)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
-  // IPP request plugins (no api-translation, no apikey-injection for on-cluster)
-  { t: '9. request-guard: safety check (coming soon)', mode: 'lightup', target: 'p_rguard', badge: 9 },
-  { t: '10. intelligent-model-selection (coming soon)', mode: 'lightup', target: 'p_ims', badge: 10 },
+  { t: '8. Gateway → Payload Processing (ext_proc)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 8, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '9. nemo-request-guard (opt-in, not in default profile)', mode: 'lightup', target: 'p_rguard', badge: 9 },
+  { t: '10. model-extractor: extract model name', mode: 'lightup', target: 'p_bfth', badge: 10 },
   { t: '11. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 11 },
-  { t: '12. body-field-to-header: extract model name', mode: 'lightup', target: 'p_bfth', badge: 12 },
-  { t: '13. base-model-to-header: resolve LoRA base model', mode: 'lightup', target: 'p_bmth', badge: 13 },
-  { t: '14. IPP → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 14, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
-  // On-cluster routing
-  { t: '15. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 15, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
-  { t: '16. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 16 },
-  { t: '17. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
-  { t: '18. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 18, fromBottom: true, fromXOff: -35, toTop: true },
-  { t: '19. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 19 },
-  { t: '20. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 20, fromRight: true, toLeft: true },
-  { t: '21. Prefill processing', mode: 'lightup', target: 'prefill', badge: 21 },
-  { t: '22. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 22, fromTop: true, fromXOff: 30, toRight: true },
-  { t: '23. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 23, fromLeft: true, toTop: true, toXOff: -60 },
-  { t: '24. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 24, fromRight: true, toLeft: true, yOff: -8 },
-  { t: '25. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 25, fromLeft: true, toRight: true, yOff: 8 },
-  // RESPONSE PATH
-  { t: '26. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 26, fromTop: true, toBottom: true, toXOff: -50 },
-  { t: '27. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 27, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
-  { t: '28. EPP response plugins', mode: 'lightup', target: 'sched', badge: 28 },
-  { t: '29. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 29, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
-  { t: '30. Gateway → IPP (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 30, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
-  { t: '31. response-guard: safety check (coming soon)', mode: 'lightup', target: 'p_resp_guard', badge: 31 },
-  { t: '32. IPP → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 32, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
-  { t: '33. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 33 },
-  { t: '34. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 34 },
-  { t: '35. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 35, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '12. base-model-to-header: resolve LoRA base model (opt-in)', mode: 'lightup', target: 'p_bmth', badge: 12 },
+  { t: '13. Payload Processing → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 13, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '14. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 14, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '15. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 15 },
+  { t: '16. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 16, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '17. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 17, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '18. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 18 },
+  { t: '19. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 19, fromRight: true, toLeft: true },
+  { t: '20. Prefill processing', mode: 'lightup', target: 'prefill', badge: 20 },
+  { t: '21. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 21, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '22. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 22, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '23. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 23, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '24. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 24, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '25. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 25, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '26. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 26, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '27. EPP response plugins', mode: 'lightup', target: 'sched', badge: 27 },
+  { t: '28. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 28, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  { t: '29. Gateway → Payload Processing (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 29, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '30. nemo-response-guard (opt-in, not in default profile)', mode: 'lightup', target: 'p_resp_guard', badge: 30 },
+  { t: '31. Payload Processing → Gateway (response)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 31, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '32. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 32 },
+  { t: '33. Wasm reports token count to Limitador', mode: 'lightup', target: 'rlimit', badge: 33 },
+  { t: '34. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 34, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowInc35 = [
+  { t: '1. Client sends POST /v1/chat/completions (body-routed model)', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '2. Gateway → Payload Pre-Processing (before auth)', mode: 'arrow', f: 'gw', to: 'pp_pre', c: '#58a6ff', num: 2, glow: 'pp_pre', fromBottom: true, fromXOff: 15, toTop: true, toXOff: -60 },
+  { t: '3. model-extractor: model → X-Gateway-Model-Name', mode: 'lightup', target: 'p_ext', badge: 3 },
+  { t: '4. model-provider-resolver: resolve model', mode: 'lightup', target: 'p_mpr_pre', badge: 4 },
+  { t: '5. Pre-Processing → Gateway (model headers set)', mode: 'arrow', f: 'pp_pre', to: 'gw', c: '#58a6ff', num: 5, fromTop: true, fromXOff: -40, toBottom: true, toXOff: 80 },
+  { t: '6. Gateway → Kuadrant Wasm Shim (auth sees model header)', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 6, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
+  { t: '7. Authorino validates API key', mode: 'lightup', target: 'auth', badge: 7 },
+  { t: '8. Authorino → MaaS API: validate key', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 8, fromBottom: true, fromXOff: -30, toTop: true, toXOff: -50 },
+  { t: '9. Authorino → MaaS API: select subscription', mode: 'arrow', f: 'wasm', to: 'maas', c: '#58a6ff', num: 9, fromBottom: true, fromXOff: 30, toTop: true, toXOff: 50 },
+  { t: '10. MaaS API responds: identity + subscription', mode: 'arrow', f: 'maas', to: 'wasm', c: '#58a6ff', num: 10, fromTop: true, fromXOff: 0, toBottom: true, toXOff: 0 },
+  { t: '11. Rate Limit checks token quota', mode: 'lightup', target: 'rlimit', badge: 11 },
+  { t: '12. Kuadrant → Gateway (auth complete, identity headers)', mode: 'arrow', f: 'wasm', to: 'gw', c: '#58a6ff', num: 12, fromTop: true, fromXOff: 20, toBottom: true, toXOff: -50 },
+  { t: '13. Gateway → Payload Processing (post-auth)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#58a6ff', num: 13, glow: 'ipp', fromBottom: true, fromXOff: 85, toTop: true, toXOff: -170 },
+  { t: '14. maas-headers-guard: strip x-maas-* headers', mode: 'lightup', target: 'p_hguard', badge: 14 },
+  { t: '15. stream-usage-enforcer: force stream_options.include_usage', mode: 'lightup', target: 'p_sue', badge: 15 },
+  { t: '16. model-provider-resolver: resolve InferencePool', mode: 'lightup', target: 'p_mpr', badge: 16 },
+  { t: '17. Payload Processing → Gateway (request ready)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#58a6ff', num: 17, fromTop: true, fromXOff: -120, toBottom: true, toXOff: 135 },
+  { t: '18. Gateway → EPP (ext_proc)', mode: 'arrow', f: 'gw', to: 'sched', c: '#58a6ff', num: 18, glow: 'epp', fromBottom: true, fromXOff: -20, toTop: true, toXOff: -50 },
+  { t: '19. EPP selects P/D workers', mode: 'lightup', target: 'sched', badge: 19 },
+  { t: '20. EPP → Gateway (pods selected)', mode: 'arrow', f: 'sched', to: 'gw', c: '#58a6ff', num: 20, fromTop: true, fromXOff: -20, toBottom: true, toXOff: 15 },
+  { t: '21. Gateway → Sidecar', mode: 'arrow', f: 'gw', to: 'sidecar', c: '#58a6ff', num: 21, fromBottom: true, fromXOff: -35, toTop: true },
+  { t: '22. Sidecar coordinates P/D transaction', mode: 'lightup', target: 'sidecar', badge: 22 },
+  { t: '23. Sidecar → Prefill Pod B', mode: 'arrow', f: 'sidecar', to: 'prefill', c: '#58a6ff', num: 23, fromRight: true, toLeft: true },
+  { t: '24. Prefill processing', mode: 'lightup', target: 'prefill', badge: 24 },
+  { t: '25. Prefill → Sidecar (KV metadata ready)', mode: 'arrow', f: 'prefill', to: 'sidecar', c: '#3fb950', num: 25, fromTop: true, fromXOff: 30, toRight: true },
+  { t: '26. Sidecar → Decode Pod A', mode: 'arrow', f: 'sidecar', to: 'decode', c: '#58a6ff', num: 26, fromLeft: true, toTop: true, toXOff: -60 },
+  { t: '27. Decode requests KVs via NIXL', mode: 'arrow', f: 'decode', to: 'nixl', c: '#8b949e', num: 27, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '28. NIXL returns KV cache (RDMA)', mode: 'arrow', f: 'nixl', to: 'decode', c: '#8b949e', num: 28, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '29. Decode → Gateway (response)', mode: 'arrow', f: 'decode', to: 'gw', c: '#3fb950', num: 29, fromTop: true, toBottom: true, toXOff: -50 },
+  { t: '30. Gateway → EPP (response processing)', mode: 'arrow', f: 'gw', to: 'sched', c: '#3fb950', num: 30, glow: 'epp', fromBottom: true, fromXOff: 50, toTop: true, toXOff: 20 },
+  { t: '31. EPP response plugins', mode: 'lightup', target: 'sched', badge: 31 },
+  { t: '32. EPP → Gateway (response)', mode: 'arrow', f: 'sched', to: 'gw', c: '#3fb950', num: 32, fromTop: true, fromXOff: 50, toBottom: true, toXOff: 85 },
+  { t: '33. Gateway → Payload Processing (response)', mode: 'arrow', f: 'gw', to: 'ipp', c: '#3fb950', num: 33, fromBottom: true, fromXOff: 205, toTop: true, toXOff: -50 },
+  { t: '34. Payload Processing → Gateway (response, no translation for on-cluster)', mode: 'arrow', f: 'ipp', to: 'gw', c: '#3fb950', num: 34, fromTop: true, fromXOff: 20, toBottom: true, toXOff: 275 },
+  { t: '35. Wasm reads usage.total_tokens', mode: 'lightup', target: 'rlimit', badge: 35 },
+  { t: '36. Usage log emitted: model, tokens, identity → OTLP', mode: 'lightup', target: 'ulogs', badge: 36 },
+  { t: '37. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 37, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
 const flowAuth = [
@@ -1370,13 +2031,72 @@ const flowRL = [
   { t: '9. Gateway → Client: 429 Too Many Requests', mode: 'arrow', f: 'gw', to: 'user', c: '#f85149', num: 9, fromLeft: true, toRight: true, yOff: 10 },
 ];
 
-const flowMap = { ext: flowExt, inc: flowInc, auth: flowAuth, rl: flowRL };
-const flowLabels = { ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' };
-const flowOrder = ['ext', 'inc', 'auth', 'rl'];
-let flow = flowExt;
+// ================================================================
+// VERSION + FLOW REGISTRY
+// C1: per-version flow maps; 3.5/3.6 alias current flows until C2/C3
+// ================================================================
+let version = '3.4';
+const versionMeta = {
+  '3.4': { label: 'RHOAI 3.4', status: 'GA', tp: false },
+  '3.5': { label: 'RHOAI 3.5', status: 'GA', tp: false },
+  '3.6': { label: 'RHOAI 3.6', status: 'GA', tp: false },
+};
+const flowSets = {
+  '3.4': { ext: flowExt34, inc: flowInc34, auth: flowAuth, rl: flowRL },
+  '3.5': { ext: flowExt35, inc: flowInc35, auth: flowAuth, rl: flowRL },
+  '3.6': { ext: flowPraxis, inc: flowIncPraxis, auth: flowAuth, rl: flowRL },
+};
+const flowLabelSets = {
+  '3.4': { ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' },
+  '3.5': { ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' },
+  '3.6': { ext: 'External Model (Anthropic)', inc: 'Internal Model (llm-d)', auth: 'Auth Failure (401)', rl: 'Rate Limit (429)' },
+};function flowMapFor(v) { return flowSets[v] || flowSets['3.4']; }
+function flowLabelsFor(v) { return flowLabelSets[v] || flowLabelSets['3.4']; }
+function flowOrderFor(v) { return Object.keys(flowMapFor(v)); }
+let flow = flowMapFor(version)['ext'];
 
 function updateTitle() {
-  document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
+  document.getElementById('flow-label').textContent = '· ' + flowLabelsFor(version)[activeFlow];
+  const vb = document.getElementById('version-badge');
+  const m = versionMeta[version];
+  vb.textContent = m.label + ' ' + m.status;
+  vb.className = 'version-badge' + (m.tp ? ' tp' : '');
+}
+
+function populateFlowSelect() {
+  const sel = document.getElementById('flow-select');
+  const labels = flowLabelsFor(version);
+  sel.innerHTML = '';
+  for (const [k, v] of Object.entries(labels)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = v;
+    sel.appendChild(o);
+  }
+}
+
+function setVersion(v) {
+  if (!flowSets[v] || v === version) return;
+  version = v;
+  document.querySelectorAll('#version-toggle .vbtn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  const fm = flowMapFor(v);
+  if (!fm[activeFlow]) activeFlow = Object.keys(fm)[0];
+  flow = fm[activeFlow];
+  populateFlowSelect();
+  updateTitle();
+  doReset();
+}
+
+document.getElementById('version-toggle').addEventListener('click', function(e) {
+  const b = e.target.closest('.vbtn');
+  if (b) setVersion(b.dataset.v);
+});
+document.getElementById('version-badge').addEventListener('click', function() {
+  alert(versionChangeSummary(version));
+});
+function versionChangeSummary(v) {
+  if (v === '3.4') return 'RHOAI 3.4 (GA)\n\nSingle post-auth ext_proc stage (4 plugins), per-HTTPRoute AuthPolicies, no usage-logs pipeline.\n\nCluster resources (owner: maas-controller):\n• payload-processing (single shared set — Deployment + Service + EnvoyFilter + plugins ConfigMap; per-tenant stacks only from 3.5)';
+  if (v === '3.5') return 'RHOAI 3.5 (GA)\n\nTwo ext_proc stages (pre/post auth), full plugin chain incl. maas-headers-guard and stream-usage-enforcer, response api-translation ON, single gateway AuthPolicy, OTel usage-logs.\n\nNote: initial 3.5.0 shipped without maas-headers-guard/pre-stage model-provider-resolver; this view shows the v0.2.1 (3.5.z) shape.\n\nCluster resources (owner: maas-controller):\n• payload-pre-processing-{tenant} + payload-processing-{tenant} (Deployments, same IPP binary)\n• payload-processing-plugins-{tenant} (ConfigMap, continuous SSA)';
+  return 'RHOAI 3.6 (GA)\n\nNew tenants default to the praxis-extproc dataplane, rendered per tenant by ai-gateway-controller. Pre-auth chain: headers (anti-spoofing), json_body, llmisvc_model_provider_resolver. Post-auth chain: headers (identity guard), intelligent_route, stream_usage_inject, api-translation (conditional), credential_inject; the shared processor (internal models) also runs ai_guardrails. Kuadrant auth/rate-limit unchanged; usage-logs evolved (per-tenant rendered EnvoyFilter, identity via header_to_metadata).\n\nTenants upgraded from 3.5 — or opted back via annotation \'ipp\' — keep running the legacy payload processing unchanged: see the 3.5 toggle. Migration between the two is automatic on upgrade (ConfigMap fingerprint gate → api-translation compat check → one-shot cleanup).\n\nAlso new: EPP reorder before router, InferenceObjectives, short rate-limit IDs for new subscriptions.\n\nNot in 3.6: fallback/failover routing (not implemented in code).\n\nCluster resources — SAME NAMES as 3.5 (payload-pre-processing-{tenant}, payload-processing-{tenant}, payload-processing-plugins-{tenant}) plus a new payload-processing-external-model-{tenant} — all rendered by ai-gateway-controller (SSA field manager) running the praxis-extproc image. A fourth EnvoyFilter (ext_proc.external-model-pre) fail-closes ExternalModel routes pre-auth.';
 }
 
 // ================================================================
@@ -1430,7 +2150,7 @@ function stepOnce() {
     updatePlayBtn();
     return;
   }
-  const flow = flowMap[activeFlow];
+  const flow = flowMapFor(version)[activeFlow];
   if (runStepIndex === 0) {
     initInspector();
   }
@@ -1477,9 +2197,10 @@ function execStep() {
       running = false; paused = false; updatePlayBtn();
       if (loopMode) {
         stepTimer = setTimeout(() => {
-          const idx = flowOrder.indexOf(activeFlow);
-          activeFlow = flowOrder[(idx + 1) % flowOrder.length];
-          flow = flowMap[activeFlow];
+          const order = flowOrderFor(version);
+          const idx = order.indexOf(activeFlow);
+          activeFlow = order[(idx + 1) % order.length];
+          flow = flowMapFor(version)[activeFlow];
           document.getElementById('flow-select').value = activeFlow;
           updateTitle();
           doReset(); run();
@@ -1505,6 +2226,12 @@ function execStep() {
       lines.push(stepLine(s));
       if (s.glow) glowing.add(s.glow);
       activeNodes.add(s.to);
+      // Path-direction coloring: active nodes are stroked with the arrow's
+      // color (request blue / response green) instead of their own color
+      if (s.c) {
+        if (N[s.to]) N[s.to]._pathColor = s.c;
+        if (s.f && N[s.f]) N[s.f]._pathColor = s.c;
+      }
       el.className = 'step done';
       currentStepDone = si + 1;
       saveSnapshot(si);
@@ -1516,15 +2243,19 @@ function execStep() {
       }
     }, stepOpts(s)));
   } else if (s.mode === 'lightup') {
-    fading[s.target] = Date.now();
-    activeNodes.add(s.target);
-    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
-    if (badges[s.target] != null) {
-      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
-      existing.push(s.badge);
-      badges[s.target] = existing;
-    } else {
-      badges[s.target] = s.badge;
+    // Version-scene guard: never light or badge a node hidden in the active scene
+    const vis = sceneNodes();
+    if (!vis || vis.has(s.target)) {
+      fading[s.target] = Date.now();
+      activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
     }
     el.className = 'step done';
     currentStepDone = si + 1;
@@ -1610,7 +2341,7 @@ function jumpToStep(targetStep) {
 }
 
 function doReset() {
-  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } if (N[k]._pathColor) delete N[k]._pathColor; });
   running = false;
   paused = false;
   runStepIndex = 0;
@@ -1635,15 +2366,22 @@ function doReset() {
 
 document.getElementById('flow-select').addEventListener('change', function() {
   activeFlow = this.value;
-  flow = flowMap[activeFlow];
+  flow = flowMapFor(version)[activeFlow];
   updateTitle();
   doReset();
 });
 
 resize();
 initSteps();
+populateFlowSelect();
 updateTitle();
 draw();
+
+// Sync mobile splash badge to the active version
+(function(){
+  const b = document.querySelector('#mobile-splash .badge span');
+  if (b) { const m = versionMeta[version]; b.textContent = m.label; b.parentElement.lastChild.textContent = ' ' + m.status; }
+})();
 
 // Auto-start loop mode on page load
 setTimeout(() => { toggleLoop(); }, 500);
