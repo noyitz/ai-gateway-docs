@@ -20,12 +20,9 @@ body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
 .version-toggle .vbtn{padding:7px 12px;border:none;background:#0d1117;color:#8b949e;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s}
 .version-toggle .vbtn:hover{color:#c9d1d9}
 .version-toggle .vbtn.active{background:#1f6feb33;color:#58a6ff;font-weight:600}
-.version-toggle .vbtn.tp.active{background:#f0883e33;color:#f0883e}
 .version-badge{display:inline-block;padding:2px 10px;border:1px solid #3fb950;border-radius:12px;font-size:11px;font-weight:600;color:#3fb950;cursor:pointer;vertical-align:middle;margin-left:8px}
-.version-badge.tp{border-color:#f0883e;color:#f0883e}
 body.light .version-toggle .vbtn{background:#f6f8fa}
 body.light .version-badge{color:#1a7f37;border-color:#1a7f37}
-body.light .version-badge.tp{color:#bc4c00;border-color:#bc4c00}
 body.light .flow-bar{border-color:#d0d7de}
 .flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:13px;font-family:inherit;cursor:pointer}
 body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
@@ -127,7 +124,7 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   <canvas id="mobile-canvas"></canvas>
   <div class="mobile-splash-content">
     <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
-    <div class="badge"><span>RHOAI 3.4</span> GA</div>
+    <div class="badge"><span id="splash-version">RHOAI 3.4</span> <span id="splash-status">GA</span></div>
     <h1>AI Inference Gateway<br><span class="grad">MaaS in Action</span></h1>
     <p class="sub">Interactive animated architecture flow<br>for the AI Inference Gateway</p>
     <div class="stats">
@@ -145,14 +142,14 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
 
 <div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
 <button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
-<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span> <span id="version-badge" class="version-badge" title="Click for version changes"></span></div>
+<div class="viz-title">AI Inference Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span> <span id="version-badge" class="version-badge" role="button" tabindex="0" title="Click for version changes"></span></div>
 
 <div class="right-panel">
   <div class="flow-bar">
-    <div class="version-toggle" id="version-toggle">
-      <button data-v="3.4" class="vbtn active">3.4</button>
-      <button data-v="3.5" class="vbtn">3.5</button>
-      <button data-v="3.6" class="vbtn">3.6</button>
+    <div class="version-toggle" id="version-toggle" role="group" aria-label="RHOAI version">
+      <button data-v="3.4" class="vbtn active" aria-pressed="true">3.4</button>
+      <button data-v="3.5" class="vbtn" aria-pressed="false">3.5</button>
+      <button data-v="3.6" class="vbtn" aria-pressed="false">3.6</button>
     </div>
     <select id="flow-select">
       <option value="ext">External Model (Anthropic)</option>
@@ -176,6 +173,10 @@ body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-we
   </div>
 </div>
 
+<dialog id="version-dialog" style="background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:14px;max-width:520px;padding:24px 28px;font-size:13px;line-height:1.6;white-space:pre-line;font-family:system-ui">
+  <div id="version-dialog-text"></div>
+  <form method="dialog" style="margin-top:16px;text-align:right"><button style="padding:6px 18px;border:1px solid #f0883e;border-radius:6px;background:transparent;color:#f0883e;cursor:pointer;font-size:13px">Close</button></form>
+</dialog>
 <div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
 <div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
   <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
@@ -242,22 +243,22 @@ const N = {
   p_ext:     { x: 530, y: 358, w: 170, h: 36, label: 'model-extractor', color: '#58a6ff', type: 'plugin', inner: true, fs: 12 },
   p_mpr_pre: { x: 530, y: 400, w: 170, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 10 },
   // Post-auth request plugins (deployed chain order, v0.2.1)
-  p_bfth:    { x: 770, y: 322, w: 320, h: 36, label: 'model-extractor', sublabel: '(body-field-to-header)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, v34: true },
-  p_hguard:  { x: 770, y: 322, w: 320, h: 36, label: 'maas-headers-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, v35: true },
-  p_sue:     { x: 770, y: 360, w: 320, h: 36, label: 'stream-usage-enforcer', color: '#58a6ff', type: 'plugin', inner: true, fs: 14, v35: true },
+  p_bfth:    { x: 770, y: 322, w: 320, h: 36, label: 'model-extractor', sublabel: '(body-field-to-header)', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_hguard:  { x: 770, y: 322, w: 320, h: 36, label: 'maas-headers-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
+  p_sue:     { x: 770, y: 360, w: 320, h: 36, label: 'stream-usage-enforcer', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_mpr:     { x: 770, y: 398, w: 320, h: 36, label: 'model-provider-resolver', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_at_req:  { x: 770, y: 436, w: 320, h: 36, label: 'api-translation', sublabel: '(request)', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   p_aki:     { x: 770, y: 474, w: 320, h: 36, label: 'apikey-injection', color: '#58a6ff', type: 'plugin', inner: true, fs: 14 },
   // Response plugins
   p_at_resp: { x: 770, y: 545, w: 320, h: 36, label: 'api-translation', sublabel: '(response)', color: '#3fb950', type: 'plugin', inner: true, fs: 14 },
   // Opt-in plugins: compiled into the binary, NOT in the default profile
-  p_rguard:  { x: 770, y: 615, w: 320, h: 36, label: 'nemo-request-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, optin: true },
-  p_resp_guard: { x: 770, y: 653, w: 320, h: 36, label: 'nemo-response-guard', color: '#3fb950', type: 'plugin', inner: true, fs: 13, optin: true },
-  p_bmth:    { x: 770, y: 691, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13, optin: true },
+  p_rguard:  { x: 770, y: 615, w: 320, h: 36, label: 'nemo-request-guard', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
+  p_resp_guard: { x: 770, y: 653, w: 320, h: 36, label: 'nemo-response-guard', color: '#3fb950', type: 'plugin', inner: true, fs: 13 },
+  p_bmth:    { x: 770, y: 691, w: 320, h: 36, label: 'base-model-to-header', color: '#58a6ff', type: 'plugin', inner: true, fs: 13 },
 
 
   // ===== 3.6: praxis-extproc dataplane (S1 slot, amber) =====
-  praxis: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'praxis-extproc', sublabel: '(ext_proc, post-auth)', color: '#f0883e', tp: true },
+  praxis: { x: 740, y: 260, w: 380, h: 500, type: 'container', label: 'praxis-extproc', sublabel: '(ext_proc, post-auth)', color: '#f0883e' },
   praxis_pre: { x: 510, y: 300, w: 210, h: 175, type: 'container', label: 'praxis-extproc', sublabel: '(ext_proc, pre-auth)', color: '#f0883e', fs: 13 },
   pr_mth:     { x: 530, y: 358, w: 170, h: 36, label: 'json_body', sublabel: '(extract /model)', color: '#f0883e', type: 'plugin', inner: true, fs: 11 },
   pr_llmisvc: { x: 530, y: 400, w: 170, h: 36, label: 'llmisvc_model_provider_resolver', color: '#f0883e', type: 'plugin', inner: true, fs: 9 },
@@ -267,8 +268,8 @@ const N = {
   pr_sui: { x: 770, y: 406, w: 320, h: 36, label: 'stream_usage_inject', sublabel: '(include_usage)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
   pr_at:  { x: 770, y: 444, w: 320, h: 36, label: 'api-translation', sublabel: '(OpenAI → Anthropic, if enabled)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
   pr_ci:  { x: 770, y: 482, w: 320, h: 36, label: 'credential_inject', color: '#f0883e', type: 'plugin', inner: true, fs: 13 },
-  pr_rid: { x: 770, y: 520, w: 320, h: 36, label: 'request_id', sublabel: '(shared chain)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
-  pr_gr:  { x: 770, y: 558, w: 320, h: 36, label: 'ai_guardrails', sublabel: '(NeMo — shared chain)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_rid: { x: 770, y: 545, w: 320, h: 36, label: 'request_id', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
+  pr_gr:  { x: 770, y: 583, w: 320, h: 36, label: 'ai_guardrails', sublabel: '(NeMo)', color: '#f0883e', type: 'plugin', inner: true, fs: 12 },
 
   // ===== 3.6: control plane =====
 
@@ -282,7 +283,7 @@ const N = {
 
   // MaaS API — centered with Kuadrant height, between Kuadrant and IPP
   maas: { x: 230, y: 640, w: 220, h: 55, label: 'MaaS API', sublabel: 'key + subscription validation', color: '#79c0ff', fs: 15 },
-  ulogs: { x: 230, y: 715, w: 220, h: 55, label: 'OTel Usage Logs', sublabel: 'access log → OTLP collector', color: '#79c0ff', fs: 14, v35: true },
+  ulogs: { x: 230, y: 715, w: 220, h: 55, label: 'OTel Usage Logs', sublabel: 'access log → OTLP collector', color: '#79c0ff', fs: 14 },
 
   // llm-d Scheduler / EPP — centered under all components
   epp: { x: 460, y: 770, w: 260, h: 70, type: 'container', label: 'llm-d Scheduler / EPP (ext_proc)', color: '#79c0ff' },
@@ -613,7 +614,7 @@ function drawBounds() {
     ctx.save();
     // Post-auth chain section
     ctx.beginPath();
-    ctx.roundRect(tx(758), ty(312), ts(345), ts(250), ts(8));
+    ctx.roundRect(tx(758), ty(312), ts(345), ts(190), ts(8));
     ctx.fillStyle = isDark ? '#f0883e0a' : '#f0883e08';
     ctx.fill();
     ctx.strokeStyle = isDark ? '#f0883e40' : '#f0883e35';
@@ -625,6 +626,21 @@ function drawBounds() {
     ctx.fillStyle = isDark ? '#f0883e99' : '#f0883e99';
     ctx.textAlign = 'left';
     ctx.fillText('Post-auth chain — ExternalModel processor →', tx(770), ty(324));
+
+    // Shared-chain filters (internal models / shared post-auth processor)
+    ctx.beginPath();
+    ctx.roundRect(tx(758), ty(522), ts(345), ts(115), ts(8));
+    ctx.fillStyle = isDark ? '#f0883e08' : '#f0883e06';
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#f0883e30' : '#f0883e25';
+    ctx.lineWidth = ts(1.5);
+    ctx.setLineDash([ts(4), ts(3)]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#f0883e88' : '#f0883e88';
+    ctx.textAlign = 'left';
+    ctx.fillText('Shared-chain filters (internal models) →', tx(770), ty(534));
 
     ctx.restore();
   }
@@ -1295,7 +1311,6 @@ function inspStepExt35(stepNum) {
       inspStepLabel = '⑩ Identity: username, groups, subscription';
       inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
       inspHeaders.push({ v: 'X-MaaS-Subscription: ext-models-sub', s: 'add', id: 'h-maas-sub' });
-      inspHeaders.push({ v: 'x-llm-d-inference-objective: ', s: 'add', id: 'h-obj' });
       break;
     case 11:
       inspStepLabel = '⑪ Limitador checks token quota';
@@ -1309,7 +1324,6 @@ function inspStepExt35(stepNum) {
     case 14:
       inspStepLabel = '⑭ maas-headers-guard: strip x-maas-*';
       inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
-      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
       inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
       break;
     case 15:
@@ -1514,11 +1528,11 @@ function inspStepIncPraxis(stepNum) {
       inspStepLabel = '⑰ stream_usage_inject: include_usage on streams';
       inspBody.push({ v: '"stream_options": {"include_usage": true}', s: 'add', id: 'b-so' });
       break;
-    case 20:
-      inspStepLabel = '⑳ Gateway → EPP (ext_proc)';
+    case 19:
+      inspStepLabel = '⑲ Gateway → EPP (ext_proc)';
       break;
-    case 21:
-      inspStepLabel = '㉑ EPP selects P/D workers';
+    case 20:
+      inspStepLabel = '⑳ EPP selects P/D workers';
       break;
     case 30:
       inspStepLabel = '㉚ Decode → Gateway (response)';
@@ -1676,12 +1690,10 @@ function inspStepInc35(stepNum) {
       inspStepLabel = '⑩ Identity: username, groups, subscription';
       inspHeaders.push({ v: 'X-MaaS-Username: cluster-admin', s: 'add', id: 'h-maas-user' });
       inspHeaders.push({ v: 'X-MaaS-Subscription: int-models-sub', s: 'add', id: 'h-maas-sub' });
-      inspHeaders.push({ v: 'x-llm-d-inference-objective: maas-objective-1', s: 'add', id: 'h-obj' });
       break;
     case 14:
       inspStepLabel = '⑭ maas-headers-guard: strip x-maas-*';
       inspHeaders.find(l => l.id === 'h-maas-user').s = 'del';
-      inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
       inspHeaders.find(l => l.id === 'h-maas-sub').s = 'del';
       break;
     case 15:
@@ -1791,6 +1803,10 @@ const inspFns = {
 
 function inspStep(stepNum) {
   resetStyles();
+  // Default label derived from the step text — ensures every step shows a
+  // step-specific label even when the per-flow inspector has no case for it
+  const s = flow[stepNum - 1];
+  if (s) inspStepLabel = s.t.replace(/^\d+\.\s*/, '');
   const fn = (inspFns[version] || {})[activeFlow];
   if (fn) { fn(stepNum); }
   renderInsp();
@@ -1929,8 +1945,6 @@ const flowExt35 = [
   { t: '26. Usage log emitted: model, tokens, identity → OTLP', mode: 'lightup', target: 'ulogs', badge: 26 },
   { t: '27. Response to client (OpenAI format)', mode: 'arrow', f: 'gw', to: 'user', c: '#3fb950', num: 27, fromLeft: true, toRight: true, yOff: 10 },
 ];
-const flowExt = flowExt34;
-
 const flowInc34 = [
   { t: '1. Client sends POST /v1/chat/completions', mode: 'arrow', f: 'user', to: 'gw', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -10 },
   { t: '2. Gateway → Kuadrant Wasm Shim', mode: 'arrow', f: 'gw', to: 'wasm', c: '#58a6ff', num: 2, glow: 'wasm', fromBottom: true, fromXOff: -100, toTop: true, toXOff: -20 },
@@ -2037,9 +2051,9 @@ const flowRL = [
 // ================================================================
 let version = '3.4';
 const versionMeta = {
-  '3.4': { label: 'RHOAI 3.4', status: 'GA', tp: false },
-  '3.5': { label: 'RHOAI 3.5', status: 'GA', tp: false },
-  '3.6': { label: 'RHOAI 3.6', status: 'GA', tp: false },
+  '3.4': { label: 'RHOAI 3.4', status: 'GA' },
+  '3.5': { label: 'RHOAI 3.5', status: 'GA' },
+  '3.6': { label: 'RHOAI 3.6', status: 'GA' },
 };
 const flowSets = {
   '3.4': { ext: flowExt34, inc: flowInc34, auth: flowAuth, rl: flowRL },
@@ -2060,7 +2074,7 @@ function updateTitle() {
   const vb = document.getElementById('version-badge');
   const m = versionMeta[version];
   vb.textContent = m.label + ' ' + m.status;
-  vb.className = 'version-badge' + (m.tp ? ' tp' : '');
+  vb.className = 'version-badge';
 }
 
 function populateFlowSelect() {
@@ -2072,12 +2086,13 @@ function populateFlowSelect() {
     o.value = k; o.textContent = v;
     sel.appendChild(o);
   }
+  sel.value = activeFlow; // keep the dropdown in sync with the running flow
 }
 
 function setVersion(v) {
   if (!flowSets[v] || v === version) return;
   version = v;
-  document.querySelectorAll('#version-toggle .vbtn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  document.querySelectorAll('#version-toggle .vbtn').forEach(b => { const on = b.dataset.v === v; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
   const fm = flowMapFor(v);
   if (!fm[activeFlow]) activeFlow = Object.keys(fm)[0];
   flow = fm[activeFlow];
@@ -2090,9 +2105,15 @@ document.getElementById('version-toggle').addEventListener('click', function(e) 
   const b = e.target.closest('.vbtn');
   if (b) setVersion(b.dataset.v);
 });
-document.getElementById('version-badge').addEventListener('click', function() {
-  alert(versionChangeSummary(version));
+document.getElementById('version-badge').addEventListener('click', showVersionSummary);
+document.getElementById('version-badge').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showVersionSummary(); }
 });
+function showVersionSummary() {
+  const d = document.getElementById('version-dialog');
+  document.getElementById('version-dialog-text').textContent = versionChangeSummary(version);
+  d.showModal();
+}
 function versionChangeSummary(v) {
   if (v === '3.4') return 'RHOAI 3.4 (GA)\n\nSingle post-auth ext_proc stage (4 plugins), per-HTTPRoute AuthPolicies, no usage-logs pipeline.\n\nCluster resources (owner: maas-controller):\n• payload-processing (single shared set — Deployment + Service + EnvoyFilter + plugins ConfigMap; per-tenant stacks only from 3.5)';
   if (v === '3.5') return 'RHOAI 3.5 (GA)\n\nTwo ext_proc stages (pre/post auth), full plugin chain incl. maas-headers-guard and stream-usage-enforcer, response api-translation ON, single gateway AuthPolicy, OTel usage-logs.\n\nNote: initial 3.5.0 shipped without maas-headers-guard/pre-stage model-provider-resolver; this view shows the v0.2.1 (3.5.z) shape.\n\nCluster resources (owner: maas-controller):\n• payload-pre-processing-{tenant} + payload-processing-{tenant} (Deployments, same IPP binary)\n• payload-processing-plugins-{tenant} (ConfigMap, continuous SSA)';
@@ -2379,8 +2400,9 @@ draw();
 
 // Sync mobile splash badge to the active version
 (function(){
-  const b = document.querySelector('#mobile-splash .badge span');
-  if (b) { const m = versionMeta[version]; b.textContent = m.label; b.parentElement.lastChild.textContent = ' ' + m.status; }
+  const bv = document.getElementById('splash-version');
+  const bs = document.getElementById('splash-status');
+  if (bv && bs) { const m = versionMeta[version]; bv.textContent = m.label; bs.textContent = m.status; }
 })();
 
 // Auto-start loop mode on page load
@@ -2405,7 +2427,7 @@ setTimeout(() => { toggleLoop(); }, 500);
     {x:.15,y:.12,label:'Client',color:'#58a6ff'},
     {x:.5,y:.08,label:'Gateway',color:'#58a6ff'},
     {x:.85,y:.12,label:'Auth',color:'#f0883e'},
-    {x:.15,y:.35,label:'IPP',color:'#d2a8ff'},
+    {x:.15,y:.35,label:'Payload Proc.',color:'#d2a8ff'},
     {x:.5,y:.32,label:'Anthropic',color:'#3fb950'},
     {x:.85,y:.35,label:'OpenAI',color:'#3fb950'},
     {x:.2,y:.7,label:'EPP',color:'#79c0ff'},
