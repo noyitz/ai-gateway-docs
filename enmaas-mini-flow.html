@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnMaaS Mini — Single Server Flow Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
+body.light{background:#fff;color:#24292f}
+
+/* Right Panel */
+.right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
+body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
+
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+body.light .flow-bar{border-color:#d0d7de}
+.flow-bar select{width:100%;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:14px;font-family:inherit;cursor:pointer}
+body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
+.flow-bar button{padding:6px 10px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
+body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.flow-bar button:hover{border-color:#58a6ff}
+.flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:75px}
+.flow-bar .rst{border-color:#f0883e;color:#f0883e}
+.flow-controls{display:flex;gap:8px;align-items:center}
+.flow-controls button{flex:1;min-width:0}
+
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+body.light .steps-section{border-color:#d0d7de}
+.steps-title{font-weight:700;margin-bottom:6px;padding-bottom:8px;border-bottom:1px solid #30363d;font-size:14px;flex-shrink:0}
+.steps-section #steps-ctr{min-height:0;overflow-y:auto;padding-top:2px}
+.step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:13px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
+body.light .step{color:#b0b8c1}
+.step:hover{background:#58a6ff22;cursor:pointer;color:#58a6ff;transform:translateX(4px);border-left:2px solid #58a6ff;padding-left:6px}
+body.light .step:hover{background:#ddf4ff88;cursor:pointer;color:#0969da;transform:translateX(4px);border-left:2px solid #0969da;padding-left:6px}
+.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step.pending{color:#484f58}
+body.light .step.pending{color:#b0b8c1}
+.step.pending .step-mk::before{content:'\25CB'}
+.step.active{color:#58a6ff}
+.step.active .step-mk::before{content:'\25CF'}
+.step.done{color:#3fb950}
+.step.done .step-mk::before{content:'\2713'}
+.step .step-mk::before{content:'\25CB'}
+
+.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12px}
+.insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
+body.light .insp-title{border-color:#d0d7de}
+.insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:13px;font-family:-apple-system,sans-serif}
+.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre-wrap;word-break:break-word;line-height:1.6;transition:all .4s}
+.insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
+body.light .insp-line.add{background:#dafbe1;color:#116329}
+.insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
+body.light .insp-line.del{background:#ffebe9;color:#82071e}
+.insp-line.keep{color:#8b949e;border-left:3px solid transparent}
+.insp-line.err{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:600}
+body.light .insp-line.err{background:#ffebe9;color:#82071e}
+.insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
+body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
+@keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
+.insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
+body.light .insp-plugin{background:#8250df15;color:#8250df}
+
+/* Theme toggle — top-right of main panel */
+.theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Red Hat logo — top-left branding */
+.rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
+.rh-brand img{height:30px}
+.rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body.light .rh-brand span{color:#1a1a1a}
+
+/* Gradient title */
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+
+/* Legend */
+.legend{position:fixed;right:396px;bottom:16px;left:auto;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:14px;transition:all .3s}
+body.light .legend{background:#f6f8fa;border-color:#d0d7de}
+.legend-title{font-weight:600;margin-bottom:5px;font-size:14px}
+.legend-item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:14px}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+.legend-line{width:24px;height:3px;border-radius:2px}
+
+/* Scrollbar */
+.steps-section::-webkit-scrollbar,.insp-section::-webkit-scrollbar{width:6px}
+.steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
+.steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
+/* Mobile splash */
+.mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+.mobile-splash.show{display:flex}
+.mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.mobile-splash-content{position:relative;z-index:1}
+.mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
+.mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
+.mobile-splash .badge span{color:#3fb950;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#58a6ff18,#d2a8ff18);border:2px solid #58a6ff66;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .laptop-msg strong{color:#fff}
+.mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
+@keyframes pulse-border{0%,100%{border-color:#58a6ff66;box-shadow:0 0 20px #58a6ff22}50%{border-color:#58a6ffcc;box-shadow:0 0 30px #58a6ff44}}
+.mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
+.mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
+.mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
+.mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
+.mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
+.mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
+.mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
+.mobile-splash .rh-logo img{height:24px}
+.mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
+@media(min-width:800px){.mobile-splash{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mobile-splash show" id="mobile-splash">
+  <canvas id="mobile-canvas"></canvas>
+  <div class="mobile-splash-content">
+    <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>EnMaaS</span> Praxis Data Plane</div>
+    <h1>EnMaaS AI Gateway<br><span class="grad">MaaS in Action</span></h1>
+    <p class="sub">Interactive flow for the mini appliance —<br>same Praxis chain on one RHEL 9.6 host, hardened Postgres</p>
+    <div class="stats">
+      <div class="stat blue">6 Flows</div>
+      <div class="stat green">3 Backends</div>
+      <div class="stat orange">OpenAI · Anthropic · vLLM</div>
+      <div class="stat purple">PostgreSQL (Upstream) · Quadlets · HTML Dashboard</div>
+    </div>
+    <div class="laptop-msg">
+      <div class="laptop-icon">&#128187;</div>
+      <strong>Open this page on your laptop or desktop</strong><br>to experience the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+    </div>
+  </div>
+</div>
+
+<div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<div style="position:fixed;top:52px;left:16px;z-index:200;padding:6px 10px;background:#d2a8ff22;border:1px solid #d2a8ff44;border-radius:8px;font-size:11px;color:#d2a8ff;font-family:system-ui">Mini: one RHEL 9.6 host · <a href="enmaas-flow.html" style="color:#58a6ff;text-decoration:none">↩ EnMaaS (ROSA)</a> · DP: image SKU + Quadlets · upstream PG</div>
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+<div class="viz-title">EnMaaS Mini — Single Server &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+
+<div class="right-panel">
+  <div class="flow-bar">
+    <select id="flow-select">
+      <option value="luna">Alice &rarr; OpenAI (:8443 → 18082)</option>
+      <option value="opus">Bob &rarr; Anthropic (:8443 → 18083)</option>
+      <option value="glm">Carol &rarr; vLLM local (:8443 → 18082)</option>
+      <option value="deepseek">Dana &rarr; Custom provider (:8443)</option>
+      <option value="auth">Auth Failure (401)</option>
+      <option value="quota">Quota Exhausted (429)</option>
+    </select>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <div class="flow-controls">
+      <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
+      <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+      <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
+      <button class="rst" onclick="doReset()">Reset</button>
+    </div>
+  </div>
+  <div class="steps-section" id="steps-section">
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
+    <div id="steps-ctr"></div>
+  </div>
+  <div class="insp-section" id="insp-section">
+    <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
+    <div id="insp-content"></div>
+  </div>
+</div>
+
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
+<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
+  <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
+    <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
+    <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
+    <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
+    <div id="overlay-details" style="font-size:12px;font-family:'SF Mono',Menlo,monospace"></div>
+    <button onclick="closeOverlay()" style="margin-top:14px;padding:7px 20px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:13px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-line" style="background:#58a6ff"></div>Request arrows</div>
+  <div class="legend-item"><div class="legend-line" style="background:#3fb950"></div>Response arrows</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Rejected (401 / 429)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>ET additions to MaaS + Praxis</div>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#8b949e">Single host = one RHEL VM · click any component</div>
+  <div style="margin-top:5px;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
+let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopMode = false;
+let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
+let snapshots = []; // State snapshot after each step completes
+
+// Logical canvas dimensions
+const LW = 1250, LH = 1050;
+let ox = 0, oy = 0, sc = 1;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  draw();
+}
+
+// ================================================================
+// NODES
+// ================================================================
+const N = {
+  user: { x: -20, y: 150, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
+
+  // Supported clients — left gutter card, feeds the gateway
+  clients: { x: -42.5, y: 228, w: 145, h: 252, label: 'Supported clients', type: 'clients', color: '#58a6ff',
+             clients: ['Claude Code', 'Codex CLI', 'OpenCode', 'Pi', 'Goose', 'Crush', 'curl / HTTP'] },
+
+  cluster: { x: 120, y: 70, w: 870, h: 920, type: 'boundary' }, // RHEL 9.6 host, rootless Podman Quadlets (praxis-svc),
+  praxis: { x: 150, y: 102, w: 555, h: 875, type: 'container', label: 'Praxis — Rust AI Proxy (rootless Podman, systemd Quadlet)', color: '#d2a8ff' },
+
+  lsn: { x: 174, y: 132, w: 507, h: 52, label: 'Praxis Listener', sublabel: ':8443 HTTPS public → 18082 OpenAI · 18083 Anthropic · 18085 dashboard', color: '#58a6ff', fs: 16 },
+
+  reqF: { x: 174, y: 210, w: 507, h: 600, type: 'container', label: 'Request path ↓', color: '#58a6ff' },
+  // In-process request filters, executed top-to-bottom per request
+  f_auth:       { x: 188, y: 238, w: 480, h: 34, label: 'api_key_auth', sublabel: 'client key → pricetag-maas:8080 validate (no cache)', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_reject:     { x: 188, y: 278, w: 480, h: 34, label: 'model_access', sublabel: 'allowlist: upstream model IDs → deny unregistered aliases', color: '#d2a8ff', inner: true, fs: 12 },
+  f_catalog:    { x: 188, y: 318, w: 480, h: 34, label: 'model_catalog', sublabel: 'GET /v1/models · generated catalog (overlay + aliases)', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_guard:      { x: 188, y: 358, w: 480, h: 34, label: 'identity_header_guard', sublabel: 'strip client-forged x-tenant-* headers', color: '#d2a8ff', inner: true, fs: 12 },
+  f_mth:        { x: 188, y: 398, w: 480, h: 34, label: 'model_to_header', sublabel: 'body.model → trusted X-Model', color: '#58a6ff', inner: true, fs: 12 },
+  f_mtp:        { x: 188, y: 438, w: 480, h: 34, label: 'intelligent_route', sublabel: 'overlay → cluster + target model', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_vertex:     { x: 188, y: 478, w: 480, h: 34, label: 'vertex', sublabel: 'Anthropic Messages ⇄ Vertex compat · conditional', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_router:     { x: 188, y: 518, w: 480, h: 34, label: 'path_rewrite', sublabel: 'provider path rewrites (custom /v1, /providers/*)', color: '#58a6ff', inner: true, fs: 12 },
+  f_gcp:        { x: 188, y: 558, w: 480, h: 34, label: 'gcp_adc', sublabel: 'optional · mint Google OAuth for Vertex (if Vertex enabled)', color: '#d2a8ff', et: true, inner: true, fs: 12 },
+  f_meter_pre:  { x: 188, y: 598, w: 480, h: 34, label: 'external_metering (preflight)', sublabel: 'one call: model policy + USD quota (GET entitlements)', color: '#d2a8ff', inner: true, fs: 12 },
+  f_norm:       { x: 188, y: 638, w: 480, h: 34, label: 'stream_usage_inject', sublabel: 'OpenAI Chat streaming usage request', color: '#58a6ff', inner: true, fs: 12 },
+  f_ttfb:       { x: 188, y: 678, w: 480, h: 34, label: 'time_to_first_token', sublabel: 'record provider first-token latency', color: '#58a6ff', inner: true, fs: 12 },
+  f_cred:       { x: 188, y: 718, w: 480, h: 34, label: 'headers + credential_injection', sublabel: 'strip client cred → inject provider secret from Podman secret', color: '#58a6ff', inner: true, fs: 12 },
+  f_lb:         { x: 188, y: 758, w: 480, h: 34, label: 'load_balancer', sublabel: 'TLS SNI + idle connection pool', color: '#58a6ff', inner: true, fs: 12 },
+
+  respF: { x: 174, y: 810, w: 507, h: 155, type: 'container', label: '← Response hooks (return path)', color: '#3fb950' },
+  f_tcount:     { x: 188, y: 838, w: 480, h: 34, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 12 },
+  f_tusage:     { x: 188, y: 880, w: 480, h: 34, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 12 },
+  f_meter_post: { x: 188, y: 922, w: 480, h: 34, label: 'external_metering (response hook)', sublabel: 'same filter · POST usage event', color: '#d2a8ff', inner: true, fs: 12 },
+
+  // Control plane — right column inside the cluster.
+  // PriceTag metering, its database and its dashboard are ET-added
+  // components on top of the product, so they share the purple accent.
+  maas:  { x: 745, y: 232, w: 205, h: 54, label: 'MaaS API (Go)', sublabel: 'pricetag-maas:8080 · standalone profile · no cache', color: '#f0883e', fs: 14 },
+  meter: { x: 745, y: 420, w: 205, h: 54, label: 'Metering Service (Go)', sublabel: 'pricetag-metering:8080 · PriceTag · M2M auth', color: '#d2a8ff', et: true, fs: 13 },
+  pg:    { x: 745, y: 560, w: 205, h: 50, label: 'PostgreSQL (Upstream)', sublabel: 'postgres:17.8 (docker.io/library/postgres@sha256:996e9dc5… · upstream)', color: '#d2a8ff', et: true, fs: 13 },
+  dash:  { x: 745, y: 690, w: 205, h: 54, label: 'Metering Dashboard (HTML)', sublabel: '/welcome · /dashboard · PriceTag HTML UI', color: '#d2a8ff', et: true, fs: 13 },
+
+  // External backends — right, outside the cluster. Cards list the
+  // model families EnMaaS currently exposes, not exact model ids.
+  openai: { x: 1010, y: 125, w: 220, h: 145, label: 'OpenAI', sublabel: 'api.openai.com · TLS 443', color: '#3fb950', fs: 14,
+            models: ['GPT-4o · GPT-5', 'Codex models'] },
+  anthropic: { x: 1010, y: 290, w: 220, h: 200, label: 'Anthropic', sublabel: 'api.anthropic.com · TLS 443', color: '#3fb950', fs: 14,
+            models: ['Claude Opus', 'Claude Sonnet', 'Claude Haiku', 'GPT-bridged'] },
+  vllm:   { x: 1010, y: 515, w: 220, h: 145, label: 'vLLM (local)', sublabel: 'praxis-vllm:8000 · OpenAI-compatible', color: '#3fb950', fs: 14,
+            models: [ { name: 'Qwen3-8B', badge: 'Q', color: '#e3b341' }, { name: 'Custom provider', badge: 'C', color: '#2dd4bf' } ] },
+};
+
+const tips = {
+  lsn: { t: 'Praxis Listener (mini)', d: 'The same Rust Praxis binary (Pingora) runs rootless as the praxis-svc systemd user. It terminates TLS on :8443 with the generated private CA, then routes to private listeners 18082 (OpenAI), 18083 (Anthropic Messages) and 18085 (dashboard). Host config is generated by scripts/pricetag/gateway.py on the RHEL bootc image. Public host is \'https://$GATEWAY_HOST:8443\' (or :443 if fronted).', dt: [[':8084','Unified — Anthropic Messages + /v1/models'],[':8081','OpenAI — chat/completions, responses'],[':9901','Admin / metrics (Prometheus)'],['Public host','api.enmaas.devshift.net'],['Config','praxis.yaml, live-watched ConfigMap']], links: [['Pingora','https://github.com/cloudflare/pingora']] },
+  f_auth: { t: 'api_key_auth (mini)', d: 'Extracts the client EnMaaS finite key (x-api-key for Anthropic, Authorization: Bearer for OpenAI) and validates it against pricetag-maas:8080/internal/v1/api-keys/validate. Cache is disabled (cache_ttl 0) so revocation is reflected on the next request. On success, x-tenant-* identity headers are injected for downstream filters and metering.', dt: [['Phase','Request, first'],['Validation','http://maas-api:8080/internal/v1/api-keys/validate'],['Cache','300s TTL'],['Failure','401 Unauthorized']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
+  f_catalog: { t: 'model_catalog', d: 'Answers GET /v1/models from the same routing overlay that drives intelligent_route. Candidates declare catalog membership, so OpenAI/Anthropic discovery cannot drift from routing; hosted GLM can appear in both envelopes.', dt: [['Phase','Request'],['Scope','GET /v1/models'],['Catalog','Vertex Claude + Gemini + GLM'],['Format','anthropic + openai']], links: [] },
+  f_reject: { t: 'reject_upgrade', d: 'Rejects HTTP connection upgrades such as WebSockets before they can bypass body processing, token accounting, quota checks, and usage events.', dt: [['Phase','Request'],['Rejects','101 / WebSocket upgrades'],['Reason','protect metering path'],['Response','HTTP rejection']], links: [] },
+  f_guard: { t: 'identity_header_guard', d: 'Strips any x-tenant-* identity headers a client forged before auth runs. Identity only ever exists as set by the gateway itself — metering and model policy can trust it.', dt: [['Phase','Request'],['Prefix','x-tenant-*'],['Purpose','anti-spoofing']], links: [] },
+  f_mth: { t: 'model_to_header', d: 'Promotes the "model" field from the JSON body into the X-Model request header so intelligent_route can use a trusted body-derived signal without trusting client-supplied X-Model.', dt: [['Phase','Request'],['Output','X-Model header']], links: [] },
+  f_mtp: { t: 'intelligent_route', d: 'ET intelligent_route selects a model candidate from a hot-reloaded routing overlay. The candidate supplies the cluster, provider marker, target_model rewrite, paths, and catalog metadata. There is no static per-model router table.', dt: [['Source','routing-overlay.json'],['Reload','no Praxis restart'],['Vertex','target_model + provider marker'],['Catalog','same overlay drives /v1/models']], links: [] },
+  f_vertex: { t: 'vertex (EnMaaS filter)', d: 'EnMaaS-specific dialect filter. For vertex-routed traffic it translates Anthropic Messages (and OpenAI) requests into Vertex rawPredict calls and translates the responses back — beta-header allowlist, chunk-boundary-safe SSE model restoration, and Google→Anthropic error translation. No-op for OpenAI and GLM traffic.', dt: [['Scope','vertex cluster only'],['project','${VERTEX_PROJECT}'],['location','global'],['beta_allowlist','interleaved-thinking-2025-05-14']], links: [['Vertex AI','https://cloud.google.com/vertex-ai']] },
+  f_router: { t: 'path_rewrite', d: 'The generic path rewrite sends OpenAI Chat Completions Gemini requests to the Vertex OpenAI-compatible endpoint. intelligent_route supplies the provider marker used by this conditional rewrite.', dt: [['Input','/v1/chat/completions'],['Output','Vertex OpenAPI endpoint'],['Condition','provider marker = vertex']], links: [] },
+  f_gcp: { t: 'gcp_adc (EnMaaS filter)', d: 'EnMaaS-specific credential filter. For the vertex cluster it mints a short-lived Google OAuth access token from a service-account key mounted into the pod, so Vertex calls carry a Bearer token instead of a provider API key. Scoped to the vertex cluster only.', dt: [['Scope','clusters: [vertex]'],['source','key_file'],['credentials_file','/etc/vertex-sa/sa-key.json'],['secret','vertex-sa-key']], links: [] },
+  f_norm: { t: 'stream_usage_inject', d: 'OpenAI Chat Completions only. Requests usage in the final streaming event so token_count can meter the stream. The unified Anthropic/GLM chain does not use this filter.', dt: [['Phase','Request'],['Scope','OpenAI Chat streaming'],['Position','After metering']], links: [] },
+  f_ttfb: { t: 'time_to_first_token', d: 'Records the latency from request acceptance until the provider emits its first token. This is an observability metric and does not authorize, meter, or alter the provider request.', dt: [['Phase','Request/response timing'],['Scope','All inference chains'],['Output','TTFT metric']], links: [] },
+  f_meter_pre: { t: 'external_metering — single preflight', d: 'Makes one blocking GET to PriceTag before forwarding. The response carries both entitlement/quota state and the model-policy decision. hasAccess=false rejects with 429; model_allowed=false rejects with 403. The live EnMaaS config sets model_policy_fail_open=false, so policy authorization fails closed if the policy-capable call is unavailable.', dt: [['Pre-request','GET /api/v1/customers/{user}/entitlements/{feature}/value?model={model}'],['Decision','hasAccess + model_allowed'],['Enforcement','429 quota / 403 model policy'],['M2M auth','/etc/praxis-secrets/metering-token']], links: [['Metering service','https://github.com/redhat-et/pricetag-metering']] },
+  f_cred: { t: 'credential_injection (mini)', d: 'Per-cluster credential swap: strips the client finite key and injects the server-held provider credential from the Podman secret. openai → Authorization: Bearer OPENAI_API_KEY (Secret OPENAI_API_KEY); anthropic → x-api-key ANTHROPIC_API_KEY; custom/vLLM via CUSTOM_*_API_KEY or direct endpoint. A second pass sets per-cluster Host/SNI overrides.', dt: [['openai','Authorization: Bearer OPENAI_API_KEY'],['cb-glm','Authorization: Bearer CB_LITELLM_API_KEY'],['vertex','Google OAuth (from gcp_adc)'],['Secrets','provider-credentials Secret']], links: [] },
+  f_lb: { t: 'load_balancer', d: 'Selects the already-routed upstream cluster and opens the TLS connection with the required SNI. The preceding credential_injection pass sets the provider Host header; this filter handles endpoint selection, TLS, and connection pooling.', dt: [['openai','TLS SNI api.openai.com:443'],['anthropic','TLS SNI api.anthropic.com:443'],['vllm','local http praxis-vllm:8000 / custom TLS SNI'],['idle_timeout_ms','45000']], links: [] },
+  f_tcount: { t: 'token_count', d: 'Parses token usage off the response — including streaming, where usage arrives in the final SSE event. Each dialect has its own parser; the unified route reads Anthropic-format usage from Vertex Claude and GLM.', dt: [['Phase','Response'],['Streaming','reads final usage event'],['Providers','openai / anthropic / vertex']], links: [] },
+  f_tusage: { t: 'token_usage_headers', d: 'Adds rate-limit-style headers (x-ratelimit-limit-*, x-ratelimit-remaining-*, x-ratelimit-reset) to the response so clients can see their remaining quota without a second API call.', dt: [['Phase','Response'],['Headers','x-ratelimit-* family']], links: [] },
+  f_meter_post: { t: 'external_metering — usage event', d: 'After the response completes, POSTs a CloudEvents v1.0 usage event (user, model, prompt/completion/total tokens, cache split, status) to the metering service, which appends it to usage_events. Cost is frozen at insert time from model_pricing. At-least-once, idempotent per event_id.', dt: [['Post-response','POST /api/v1/events (CloudEvents 1.0)'],['type','inference.tokens.used'],['Idempotent','per event_id'],['Failure','logged; response unaffected']], links: [] },
+  maas: { t: 'MaaS API (mini)', d: 'Standalone Go maas-api (MAAS_DEPLOYMENT_PROFILE=enmaas, MAAS_SUBSCRIPTION_MODE=standalone) extracted from opendatahub-io/models-as-a-service. Owns finite API keys, validation, expiry and revocation. Shares the hardened Postgres container (maas DB) and exposes 8080 → host-loopback for SSH management. Cache is disabled in mini so revocation propagates immediately.', dt: [['Called by','Praxis api_key_auth (HTTP)'],['Endpoint','POST :8080/internal/v1/api-keys/validate'],['Returns','username, groups, subscription'],['Cached by Praxis','300s']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
+  meter: { t: 'Metering Service (mini)', d: 'Same PriceTag Go service (stdlib net/http, lib/pq) as EnMaaS, built from the standalone fork (secure-single-server-pricetag-metering). One pre-request PriceTag call returns hasAccess + model_allowed (GET entitlements?model=… with M2M auth). Post-response it ingests CloudEvents POST /api/v1/events and writes frozen-cost usage_events. PriceTag HTML UI is embedded; rollups/QoS are configurable via DASHBOARD_USE_ROLLUPS / QOS_ENABLED.', dt: [['Preflight','GET /…/entitlements/{feature}/value?model=…'],['Decision','hasAccess + model_allowed'],['Ingest','POST /api/v1/events'],['Enforcement','429 quota · 403 model policy']], links: [['pricetag-metering','https://github.com/redhat-et/pricetag-metering']] },
+  pg: { t: 'PostgreSQL (Upstream) — container', d: 'Mini runs one upstream PostgreSQL container (docker.io/library/postgres:17.8 @sha256:996e9dc5… — currently pinned upstream image; hardened RHT build is future DP). It hosts two databases maas and metering. External mode uses two pre-provisioned external DBs on one server (--maas-database-url-file + --metering-database-url-file). No RDS, no read replica in v1; backup/restore is a required v1 deliverable.', dt: [['Engine','PostgreSQL 16 (AWS RDS)'],['Identifier','enmaas-db · Multi-AZ'],['Database','aigateway'],['Roles','aigateway · metering_reader'],['Cost','frozen at insert from model_pricing']], links: [] },
+  dash: { t: 'Metering Dashboard', d: 'A same-origin SPA served by the metering-service binary. /welcome is the public onboarding page; /dashboard is session-authenticated and shows per-user, per-group, per-model and per-tool usage, cost, and a “Saved vs Hosted” KPI. The browser polls authenticated JSON APIs that query the read replica / hourly rollups.', dt: [['/welcome','public onboarding'],['/dashboard','authenticated usage'],['/manager','org / team view'],['Reads','read replica + usage_hourly rollups']], links: [] },
+  openai: { t: 'OpenAI', d: 'Real OpenAI API, reached via the :8081 OpenAI-dialect listener. gpt-* models select the openai candidate from the routing overlay and route to the default openai cluster. The catalog exposes the GPT-6 family, GPT-5.x (incl. the gpt-5.6 variants) and the Codex models; the overlay carries the exact ids. The gateway injects Authorization: Bearer OPENAI_API_KEY and re-originates TLS to api.openai.com.', dt: [['Listener',':8081 (chat/completions)'],['Endpoint','api.openai.com:443'],['Families','GPT-6 · GPT-5.x · Codex'],['Credential','Bearer OPENAI_API_KEY']], links: [['OpenAI API','https://platform.openai.com/docs']] },
+  vertex: { t: 'Google Vertex AI', d: 'EnMaaS serves the Claude families (Opus, Sonnet, Haiku and Fable, matching the Vertex catalog) and Gemini through Google Vertex AI rather than direct Anthropic. The vertex filter translates Anthropic Messages ⇄ Vertex rawPredict, and gcp_adc mints the Google OAuth token. Host is forced to aiplatform.googleapis.com.', dt: [['Endpoint','aiplatform.googleapis.com:443'],['Families','Claude Opus · Sonnet · Haiku · Fable · Gemini'],['Auth','Google OAuth via gcp_adc (SA key)'],['Translation','vertex filter (rawPredict)']], links: [['Vertex AI','https://cloud.google.com/vertex-ai']] },
+  glm: { t: 'IBM Curvebender — GLM + DeepSeek', d: 'Hosted models are served by an IBM Curvebender LiteLLM gateway at litellm.cb.ete.res.ibm.com. Two families are exposed today: GLM 5.3 (rits/zai-org/glm-5-3) and DeepSeek V4.1 Flash (rits/deepseek-ai/DeepSeek-V4.1-Flash-1017). LiteLLM presents an Anthropic-dialect endpoint, so the unified route reaches both with no dialect translation. The gateway injects a Bearer LiteLLM key and forces the Host/SNI; the EnMaaS egress IP is allowlisted upstream. Both are billed at $0 to the client and metered like any other model.', dt: [['Endpoint','litellm.cb.ete.res.ibm.com:443'],['Models','GLM 5.3 · DeepSeek V4.1 Flash'],['Model ids','rits/zai-org/glm-5-3 · rits/deepseek-ai/DeepSeek-V4.1-Flash-1017'],['Dialect','Anthropic (via LiteLLM)'],['Credential','Bearer CB_LITELLM_API_KEY']], links: [['LiteLLM','https://github.com/BerriAI/litellm']] },
+  clients: { t: 'Supported clients', d: 'Any HTTP client that speaks an OpenAI or Anthropic dialect works through EnMaaS — the gateway picks the listener and filter chain from the path, not from the client. These are the clients in active use today. Point them at https://api.enmaas.devshift.net/v1 (OpenAI) or /v1/messages (Anthropic) and paste an EnMaaS API key; no provider key is needed in the client.', dt: [['Anthropic dialect','Claude Code · Pi'],['OpenAI dialect','Codex CLI · OpenCode · Goose · Crush'],['Any HTTP','curl / raw SDK requests'],['Base URL','https://api.enmaas.devshift.net/v1'],['Auth','EnMaaS API key (x-api-key or Bearer)']], links: [] },
+};
+
+// The short tooltip above explains what a filter does; these longer notes
+// explain why it is a separate stage in the EnMaaS pipeline.
+const filterWhy = {
+  f_auth: 'Authentication must happen before policy, routing, metering, or provider access. It establishes the trusted user identity used by every later stage.',
+  f_catalog: 'Clients need one stable model list even though the models live behind different providers. Keeping discovery in Praxis prevents provider-specific catalogs from leaking through.',
+  f_reject: 'A connection upgrade can turn the request into a raw tunnel, bypassing body-aware metering and quota enforcement. Rejecting it keeps every inference on the auditable HTTP path.',
+  f_guard: 'Identity headers are trusted internally, so client versions must be removed before the gateway adds its own identity. This prevents impersonation and quota attribution errors.',
+  f_mth: 'Routing should not need to parse every request body. Promoting the model once creates a simple, consistent routing signal for the rest of the chain.',
+  f_mtp: 'The overlay is the model/provider source of truth. A single candidate change updates routing, target-model translation, weights, and model discovery together.',
+  f_vertex: 'Vertex is not wire-compatible with the public Anthropic Messages API. This filter keeps clients on the Anthropic API while hiding Vertex rawPredict translation and response reconstruction.',
+  f_router: 'A generic rewrite keeps provider URL mechanics separate from model selection. The overlay decides whether a request is Vertex; this filter only rewrites the provider path.',
+  f_gcp: 'Vertex requires Google OAuth, while callers use EnMaaS API keys. This stage bridges those credential systems and keeps Google service-account material out of client traffic.',
+  f_norm: 'Only the OpenAI Chat chain needs this request mutation. It asks the provider to include usage in the final SSE event; it is not a second metering call.',
+  f_ttfb: 'This measures time-to-first-token for observability. It is not an access-control or billing decision.',
+  f_meter_pre: 'This is the only pre-request call to PriceTag. It combines model authorization and quota/entitlement enforcement in one response, rather than using separate policy and quota calls.',
+  f_cred: 'The client credential authenticates to EnMaaS, not to the upstream provider. This stage performs the credential exchange and prevents OpenAI, Vertex, or Curvebender secrets from reaching clients.',
+  f_lb: 'Each upstream has different DNS, Host, TLS-SNI, and connection requirements. Keeping those details here means routing rules do not need to contain transport mechanics.',
+  f_tcount: 'Providers report usage in different response formats and streaming positions. A common token count is required for both quota decisions and accurate billing.',
+  f_tusage: 'Clients need immediate feedback about remaining capacity. Returning quota headers avoids a separate status request and gives tools a standard rate-limit signal.',
+  f_meter_post: 'Usage must be recorded after the final response, including streaming token counts and failures. Sending a standard CloudEvent decouples Praxis from the database and dashboard implementation.'
+};
+
+let overlayWasRunning = false, highlightKey = null;
+function showOverlay(key) {
+  const tip = tips[key], n = N[key];
+  if (!tip) return;
+  overlayWasRunning = running;
+  highlightKey = key;
+  if (running && !paused) { paused = true; running = false; if (stepTimer) clearTimeout(stepTimer); updatePlayBtn(); }
+  const ov = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
+  document.getElementById('overlay-accent').style.background = n.color || '#58a6ff';
+  document.getElementById('overlay-title').textContent = tip.t;
+  document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
+  document.getElementById('overlay-desc').textContent = tip.d;
+  let dh = '';
+  if (filterWhy[key]) dh += `<div style="margin:0 0 12px;padding:10px 12px;border-left:3px solid ${n.color || '#58a6ff'};background:#58a6ff0d;color:#c9d1d9;line-height:1.5;font-family:system-ui"><strong style="display:block;color:${n.color || '#58a6ff'};font-size:12px;margin-bottom:3px">Why this filter exists</strong>${esc(filterWhy[key])}</div>`;
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
+  if (tip.links && tip.links.length) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
+  document.getElementById('overlay-details').innerHTML = dh;
+  // Position card to not overlap the highlighted component
+  const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
+  const canvasRight = innerWidth - 380;
+  let cx, cy;
+  if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
+  cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
+  card.style.left = cx + 'px';
+  card.style.top = cy + 'px';
+  ov.style.display = 'block';
+  // The canvas renderer already draws the selected component's outline using
+  // the same logical coordinates and scale as the node. Do not add a second
+  // HTML frame here: it can drift from the canvas after responsive resizing
+  // and creates a confusing duplicate label.
+  document.getElementById('highlight-box').style.display = 'none';
+  draw();
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+  const hb = document.getElementById('highlight-box');
+  hb.style.display = 'none';
+  highlightKey = null;
+  draw();
+  if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
+}
+
+function C() {
+  return isDark
+    ? { bg:'#0d1117', box:'#161b22', boxA:'#1a2332', bdr:'#30363d', txt:'#c9d1d9', dim:'#8b949e', brt:'#fff' }
+    : { bg:'#fff', box:'#f6f8fa', boxA:'#ddf4ff', bdr:'#d0d7de', txt:'#24292f', dim:'#656d76', brt:'#000' };
+}
+
+// ================================================================
+// DRAWING
+// ================================================================
+function resize() {
+  const panelW = 380;
+  W = innerWidth - panelW;
+  H = innerHeight;
+  // Render the canvas at device resolution so scaled canvas text stays sharp.
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sc = Math.min(W / LW, H / LH) * 0.98;
+  ox = (W - LW * sc) / 2;
+  oy = (H - LH * sc) * 0.04;
+  // Keep the legend aligned with the right edge and width of the provider
+  // cards, which are drawn in the same transformed canvas coordinate system.
+  const legend = document.querySelector('.legend');
+  if (legend) {
+    legend.style.left = `${ox + 1010 * sc}px`;
+    legend.style.right = 'auto';
+    // The legend is wider than a provider card so its labels stay single-line,
+    // while its left edge remains aligned with the provider column.
+    legend.style.width = `${300 * sc}px`;
+    // Align the legend bottom with the ROSA/cluster boundary rather than the
+    // browser viewport, so it moves with the diagram at every canvas scale.
+    legend.style.bottom = `${innerHeight - (oy + 990 * sc)}px`;
+  }
+  draw();
+}
+addEventListener('resize', resize);
+
+function tx(x) { return ox + x * sc; }
+function ty(y) { return oy + y * sc; }
+function ts(s) { return s * sc; }
+
+function drawBox(key) {
+  const n = N[key], c = C();
+  if (!n || n.type === 'boundary' || n.type === 'container') return;
+  const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
+  const isA = activeNodes.has(key), hasBadge = badges[key] != null;
+  ctx.save();
+
+  if (n.type === 'icon') {
+    ctx.font = `${ts(32)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
+    ctx.font = `bold ${ts(16)}px system-ui`;
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + w / 2, y + ts(46));
+    ctx.restore();
+    return;
+  }
+
+  let fadeA = 1;
+  if (fading[key]) {
+    const el = Date.now() - fading[key];
+    fadeA = Math.min(el / 500, 1);
+    if (el > 500) delete fading[key];
+  }
+
+  // Keep component and filter text crisp: selection uses color/frame only,
+  // without glow or opacity effects over the labels.
+  if (isA || hasBadge) ctx.globalAlpha = 1;
+
+  const nodeColor = n.color || '#58a6ff';
+  // ET filters are purple when idle, but their active frame follows the
+  // direction of the request/response path. Keep the step badge purple so the
+  // added-filter distinction remains visible without making the whole path
+  // look like a separate purple lane.
+  // Active infrastructure/provider cards retain their own green accent;
+  // active request filters use blue and active response hooks use green.
+  const activePathColor = key === 'f_meter_post' || n.color === '#3fb950' ? '#3fb950' : '#58a6ff';
+  const etStroke = nodeColor + (isDark ? 'aa' : '99');
+  // Keep ET cards opaque so routed arrows remain visibly underneath them.
+  // The purple frame still identifies the added component.
+  const etFill = c.box;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, ts(8));
+  ctx.fillStyle = (isA || hasBadge) ? c.boxA : (n.et ? etFill : c.box);
+  ctx.fill();
+  ctx.strokeStyle = (isA || hasBadge) ? activePathColor : (n.et ? etStroke : c.bdr);
+  ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
+  ctx.stroke();
+
+  const fs = n.fs || 16;
+  ctx.fillStyle = c.txt;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Client-list card (left gutter)
+  if (n.type === 'clients') {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = `bold ${ts(14)}px system-ui`;
+    ctx.fillStyle = nodeColor;
+    ctx.fillText(n.label, x + ts(10), y + ts(17));
+    let rowY = y + ts(39);
+    (n.clients || []).forEach(name => {
+      ctx.beginPath();
+      ctx.arc(x + ts(13), rowY - ts(3.5), ts(2.2), 0, Math.PI * 2);
+      ctx.fillStyle = nodeColor + 'aa';
+      ctx.fill();
+      ctx.font = `${ts(13)}px system-ui`;
+      ctx.fillStyle = c.txt;
+      ctx.fillText(name, x + ts(21), rowY);
+      rowY += ts(26);
+    });
+    ctx.restore();
+    return;
+  }
+
+  // Provider card: name + endpoint + hosted model families
+  if (n.models) {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    // Provider cards intentionally use a larger, high-contrast type scale than
+    // the infrastructure cards. Keep the endpoint slot empty for scanability.
+    ctx.font = `bold ${ts(fs + 8)}px system-ui`;
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + ts(16), y + ts(31));
+    // The provider endpoint subtitle is deliberately omitted; preserve the
+    // vertical gap before the model list below.
+    let rowY = y + ts(70);
+    n.models.forEach(m => {
+      const isObj = typeof m === 'object';
+      const name = isObj ? m.name : m;
+      let textX = x + ts(16);
+      if (isObj && m.badge) {
+        const bw = ts(16), by = rowY - ts(12);
+        ctx.beginPath();
+        ctx.roundRect(x + ts(16), by, bw, bw, ts(3));
+        ctx.fillStyle = m.color || nodeColor;
+        ctx.fill();
+        ctx.font = `bold ${ts(11)}px system-ui`;
+        ctx.fillStyle = '#0d1117';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(m.badge, x + ts(16) + bw / 2, by + bw / 2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        textX = x + ts(16) + bw + ts(7);
+      }
+      ctx.font = `${ts(18)}px system-ui`;
+      ctx.fillStyle = c.txt;
+      ctx.fillText(name, textX, rowY);
+      rowY += ts(25);
+    });
+  } else if (n.sublabel) {
+    const labelFs = n.inner ? fs + 4 : fs + 2;
+    const subFs = n.inner ? Math.max(fs + 1, 13) : Math.max(fs - 1, 11);
+    const textOffset = n.inner ? 10 : 8;
+    ctx.font = `bold ${ts(labelFs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(textOffset));
+    ctx.font = `${ts(subFs)}px system-ui`;
+    ctx.fillStyle = c.dim;
+    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(textOffset));
+  } else {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2);
+  }
+
+  // Badges
+  if (hasBadge) {
+    const bList = Array.isArray(badges[key]) ? badges[key] : [badges[key]];
+    bList.forEach((bNum, idx) => {
+      const bx = x + ts(8) + idx * ts(22), by = y + ts(5), br = ts(9);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.fill();
+      ctx.font = `bold ${ts(10)}px system-ui`;
+      ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(bNum), bx + br, by + br);
+    });
+  }
+  ctx.restore();
+}
+
+function drawContainer(key, isGlow) {
+  const n = N[key], c = C();
+  if (!n || n.type !== 'container') return;
+  ctx.save();
+  // Frames remain crisp while selected; do not blur their labels.
+  ctx.beginPath();
+  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
+  const a = isGlow ? 'cc' : '55';
+  ctx.strokeStyle = n.color + a;
+  ctx.lineWidth = ts(isGlow ? 3 : 2.5);
+  ctx.setLineDash([ts(7), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(13)}px system-ui`;
+  ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
+  ctx.textAlign = 'left';
+  ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
+  ctx.restore();
+}
+
+function drawBounds() {
+  const c = C();
+  // Cluster boundary
+  const cb = N.cluster;
+  ctx.beginPath();
+  ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2.5);
+  ctx.setLineDash([ts(10), ts(8)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('RHEL 9.6 · bootc + Podman (single host)', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+
+  // Containers
+  drawContainer('praxis', glowing.has('praxis'));
+  drawContainer('reqF', glowing.has('reqF'));
+  drawContainer('respF', glowing.has('respF'));
+
+  // Static control-plane links: metering-service -> postgres -> dashboard
+  ctx.save();
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2);
+  [[N.meter, N.pg], [N.pg, N.dash]].forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(tx(a.x + a.w / 2), ty(a.y + a.h));
+    ctx.lineTo(tx(b.x + b.w / 2), ty(b.y));
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function edgePt(n, targetX, targetY, yOff) {
+  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  const dx = targetX - cx_, dy = targetY - cy_;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: cx_, y: cy_ };
+  const hw = n.w / 2, hh = n.h / 2;
+  let ex, ey;
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    ex = cx_ + (dx > 0 ? hw : -hw);
+    ey = cy_ + dy * (hw / Math.abs(dx));
+  } else {
+    ey = cy_ + (dy > 0 ? hh : -hh);
+    ex = cx_ + dx * (hh / Math.abs(dy));
+  }
+  return { x: ex, y: ey + (yOff || 0) };
+}
+
+function drawArrowLine(x1, y1, x2, y2, color, num, alpha, numT) {
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  ctx.moveTo(tx(x1), ty(y1));
+  ctx.lineTo(tx(x2), ty(y2));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = ts(2.5);
+  ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
+  ctx.beginPath();
+  ctx.moveTo(tx(x2), ty(y2));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang + 0.4), ty(y2) - sz * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  if (num != null) {
+    const nt = numT == null ? 0.5 : numT;
+    const mx = x1 + (x2 - x1) * nt, my = y1 + (y2 - y1) * nt, r = ts(12);
+    ctx.beginPath();
+    ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), tx(mx), ty(my));
+  }
+  ctx.restore();
+}
+
+function drawLines() {
+  lines.forEach(l => {
+    const fn = N[l.from], tn = N[l.to];
+    if (!fn || !tn) return;
+    if (l.waypoints) {
+      const fp = resolveEdge(fn, l, true);
+      const tp = resolveEdge(tn, l, false);
+      const pts = [fp, ...l.waypoints, tp];
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      ctx.strokeStyle = l.color;
+      ctx.lineWidth = ts(2.5);
+      ctx.stroke();
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      const ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
+      ctx.beginPath();
+      ctx.moveTo(tx(last.x), ty(last.y));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang - 0.4), ty(last.y) - sz * Math.sin(ang - 0.4));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang + 0.4), ty(last.y) - sz * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = l.color;
+      ctx.fill();
+      if (l.num != null) {
+        const mid = pts[Math.floor(pts.length / 2)];
+        const r = ts(12);
+        ctx.beginPath();
+        ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
+        ctx.fillStyle = l.color;
+        ctx.fill();
+        ctx.font = `bold ${ts(10)}px system-ui`;
+        ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(l.num), tx(mid.x), ty(mid.y));
+      }
+      ctx.restore();
+    } else {
+      let fp = resolveEdge(fn, l, true);
+      let tp = resolveEdge(tn, l, false);
+      if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
+        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+      }
+      if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
+        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp = edgePt(tn, fc, fy, l.yOff || 0);
+      }
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8, l.numT);
+    }
+  });
+}
+
+function resolveEdge(n, l, isFrom) {
+  const yo = l.yOff || 0;
+  if (isFrom) {
+    if (l.fromLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.fromRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.fromBottom) return { x: n.x + n.w / 2 + (l.fromXOff || l.xOff || 0), y: n.y + n.h + yo };
+    if (l.fromTop) return { x: n.x + n.w / 2 + (l.fromXOff || 0), y: n.y + yo };
+    if (l.waypoints) return edgePt(n, l.waypoints[0].x, l.waypoints[0].y, yo);
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  } else {
+    if (l.toLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.toTop) return { x: n.x + n.w / 2 + (l.toXOff || l.xOff || 0), y: n.y + yo };
+    if (l.toRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.toBottom) return { x: n.x + n.w / 2 + (l.toXOff || 0), y: n.y + n.h + yo };
+    if (l.waypoints) { const wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  }
+}
+
+// Click handler — show component info overlay
+canvas.addEventListener('click', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
+      showOverlay(k);
+      return;
+    }
+  }
+});
+canvas.addEventListener('mousemove', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  let found = false;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
+  }
+  canvas.style.cursor = found ? 'pointer' : 'default';
+});
+
+// ================================================================
+// ANIMATED DOT
+// ================================================================
+class Dot {
+  constructor(fKey, tKey, color, speed, cb, opts) {
+    this.color = color;
+    this.speed = speed || 0.012;
+    this.t = 0;
+    this.cb = cb;
+    this.alive = true;
+    const fn = N[fKey], tn = N[tKey];
+    const yo = (opts && opts.yOff) || 0;
+    let fp, tp;
+
+    const lo = opts || {};
+    fp = resolveEdge(fn, lo, true);
+    tp = resolveEdge(tn, lo, false);
+    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
+      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+      fp = edgePt(fn, tc, tcy, yo);
+    }
+    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+      tp = edgePt(tn, fc, fy, yo);
+    }
+    if (opts && opts.waypoints) {
+      this.pts = [fp, ...opts.waypoints, tp];
+    } else {
+      this.pts = [fp, tp];
+    }
+
+    this.segLens = [];
+    this.totalLen = 0;
+    for (let i = 1; i < this.pts.length; i++) {
+      const dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      this.segLens.push(len);
+      this.totalLen += len;
+    }
+    this.segIdx = 0;
+    this.x = this.pts[0].x;
+    this.y = this.pts[0].y;
+    const pxPerFrame = 4;
+    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
+  }
+  update() {
+    this.t += this.speed;
+    if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
+    const dist = this.t * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
+        this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
+        this.segIdx = i;
+        return;
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    this.x = last.x;
+    this.y = last.y;
+    this.segIdx = this.segLens.length - 1;
+  }
+  posAt(t) {
+    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    return { x: last.x, y: last.y };
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
+    ctx.lineTo(tx(this.x), ty(this.y));
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = ts(2);
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    for (let j = 4; j >= 1; j--) {
+      const bt = this.t - j * 0.06;
+      if (bt <= 0) continue;
+      const p = this.posAt(bt);
+      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+      ctx.beginPath();
+      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const si = Math.min(this.segIdx, this.pts.length - 2);
+    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
+    ctx.save();
+    ctx.translate(tx(this.x), ty(this.y));
+    ctx.rotate(ang);
+    const pw = ts(13), ph = ts(7);
+    ctx.beginPath();
+    ctx.moveTo(pw / 2, 0);
+    ctx.lineTo(pw / 6, -ph / 2);
+    ctx.lineTo(-pw / 2, -ph / 2);
+    ctx.lineTo(-pw / 2, ph / 2);
+    ctx.lineTo(pw / 6, ph / 2);
+    ctx.closePath();
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = ts(16);
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+// ================================================================
+// MAIN DRAW LOOP
+// ================================================================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBounds();
+  drawLines();
+  // Animated traces belong to the routes, not on top of the components.
+  dots.forEach(d => { d.update(); d.draw(); });
+  dots = dots.filter(d => d.alive);
+  Object.keys(N).forEach(k => drawBox(k));
+  if (highlightKey && N[highlightKey]) {
+    const n = N[highlightKey];
+    const pad = 0;
+    ctx.save();
+    ctx.shadowColor = n.color || '#58a6ff';
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = n.color || '#58a6ff';
+    ctx.lineWidth = ts(3);
+    ctx.beginPath();
+    ctx.roundRect(tx(n.x) - pad, ty(n.y) - pad, ts(n.w) + pad * 2, ts(n.h) + pad * 2, ts(10));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function animate() { draw(); animFrame = requestAnimationFrame(animate); }
+
+// ================================================================
+// STEPS PANEL
+// ================================================================
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function initSteps() {
+  const ctr = document.getElementById('steps-ctr');
+  ctr.innerHTML = '';
+  flow.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'step pending';
+    d.id = 'step-' + i;
+    d.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
+    d.onclick = () => jumpToStep(i);
+    ctr.appendChild(d);
+  });
+}
+
+// ================================================================
+// INSPECTOR
+// ================================================================
+function setInspPhase(phase) {
+  const el = document.getElementById('insp-title');
+  if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
+  else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
+}
+
+function initInspector() {
+  setInspPhase('request');
+  if (activeFlow === 'luna') {
+    inspHeaders = [
+      { v: 'POST /v1/chat/completions', s: 'keep', id: 'h-path' },
+      { v: 'Authorization: Bearer sk-enmaas-…', s: 'keep', id: 'h-key' },
+      { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+    ];
+    inspBody = [
+      { v: '"model": "gpt-5.6-luna"', s: 'keep', id: 'b-model' },
+      { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep', id: 'b-msgs' },
+      { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+      { v: '"stream": false', s: 'keep', id: 'b-stream' },
+    ];
+    inspStepLabel = 'Initial Request (:8081 OpenAI)';
+  } else {
+    const model = activeFlow === 'glm' ? 'rits/zai-org/glm-5-3' : 'claude-opus-5-5';
+    inspHeaders = [
+      { v: 'POST /v1/messages', s: 'keep', id: 'h-path' },
+      { v: 'x-api-key: sk-enmaas-…', s: 'keep', id: 'h-key' },
+      { v: 'anthropic-version: 2023-06-01', s: 'keep', id: 'h-ct' },
+    ];
+    inspBody = [
+      { v: `"model": "${model}"`, s: 'keep', id: 'b-model' },
+      { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep', id: 'b-msgs' },
+      { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+      { v: '"stream": false', s: 'keep', id: 'b-stream' },
+    ];
+    inspStepLabel = 'Initial Request (:8084 Unified)';
+  }
+  inspCycle = [];
+  renderInsp();
+}
+
+function renderInsp() {
+  const el = document.getElementById('insp-content');
+  let h = `<div class="insp-plugin">${esc(inspStepLabel)}</div>`;
+  h += '<div class="insp-sec">Headers:</div>';
+  inspHeaders.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  h += '<div class="insp-sec">Body:</div>';
+  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  if (inspCycle.length) {
+    h += '<div class="insp-sec">Filter State:</div>';
+    inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  }
+  el.innerHTML = h;
+}
+
+function resetStyles() {
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+}
+
+function hl(id) { const l = inspHeaders.find(x => x.id === id) || inspBody.find(x => x.id === id) || inspCycle.find(x => x.id === id); if (l) l.s = 'highlight'; }
+
+// --- shared helpers ---------------------------------------------
+function injectIdentity() {
+  inspHeaders.push({ v: 'x-tenant-user: demo-user', s: 'add', id: 'h-tenant-user' });
+  inspHeaders.push({ v: 'x-tenant-group: ["demo-team"]', s: 'add', id: 'h-tenant-group' });
+  inspHeaders.push({ v: 'x-tenant-subscription: enmaas', s: 'add', id: 'h-tenant-sub' });
+}
+function openaiResponse() {
+  setInspPhase('response');
+  inspHeaders = [
+    { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+    { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+  ];
+  inspBody = [
+    { v: '"object": "chat.completion"', s: 'keep', id: 'r-type' },
+    { v: '"choices": [{"message":{"content":"Hello!"}}]', s: 'keep', id: 'r-content' },
+    { v: '"usage": {"prompt_tokens":8,"completion_tokens":2,"total_tokens":10}', s: 'keep', id: 'r-usage' },
+  ];
+  inspCycle = [];
+}
+function anthropicResponse(modelLine) {
+  setInspPhase('response');
+  inspHeaders = [
+    { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+    { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+  ];
+  inspBody = [
+    { v: '"type": "message"', s: 'keep', id: 'r-type' },
+    { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+    { v: modelLine, s: 'keep', id: 'r-model' },
+    { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+  ];
+  inspCycle = [];
+}
+
+// --- Luna → OpenAI (:8081) --------------------------------------
+function inspStepLuna(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8081'; break;
+    case 2: inspStepLabel = '② Entering the OpenAI filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract Bearer key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
+    case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
+    case 6: inspStepLabel = '⑥ reject_upgrade: no HTTP upgrade'; break;
+    case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
+    case 8:
+      inspStepLabel = '⑧ model_to_header: body.model → X-Model';
+      inspHeaders.push({ v: 'X-Model: gpt-5.6-luna', s: 'add', id: 'h-xmodel' });
+      break;
+    case 9:
+      inspStepLabel = '⑨ intelligent_route: gpt-* unmapped → openai';
+      inspCycle = [ { v: 'provider = (none) → default cluster', s: 'add', id: 'c-prov' } ];
+      break;
+    case 10:
+      inspStepLabel = '⑩ intelligent_route: overlay candidate → openai cluster';
+      hl('h-xmodel');
+      inspCycle.push({ v: 'cluster = "openai"', s: 'add', id: 'c-cluster' });
+      break;
+    case 11:
+       inspStepLabel = '⑪ → metering-service: model policy + quota preflight';
+      hl('h-tenant-user');
+      inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
+      break;
+    case 12:
+       inspStepLabel = '⑫ Model allowed + quota available — proceed';
+      inspCycle.push({ v: 'hasAccess=true (used < quota)', s: 'add', id: 'c-remain' });
+      break;
+    case 13:
+      inspStepLabel = '⑬ credential_injection: Bearer OPENAI_API_KEY';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspHeaders.push({ v: 'Authorization: Bearer sk-openai-…', s: 'add', id: 'h-provider' });
+      break;
+    case 14:
+       inspStepLabel = '⑭ headers + credential_injection: provider auth + Host';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST https://api.openai.com/v1/chat/completions', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'Host: api.openai.com', s: 'add', id: 'h-host' });
+      hl('h-provider');
+      break;
+    case 15: inspStepLabel = '⑮ → OpenAI (TLS :443)'; hl('h-path2'); break;
+    case 16: inspStepLabel = '⑯ OpenAI responds 200'; openaiResponse(); break;
+    case 17: inspStepLabel = '⑰ token_count: parse OpenAI usage'; hl('r-usage'); break;
+    case 18:
+      inspStepLabel = '⑱ token_usage_headers: quota visible to client';
+      inspHeaders.push({ v: 'x-ratelimit-remaining-tokens: …', s: 'add', id: 'r-tuh' });
+      break;
+    case 19:
+      inspStepLabel = '⑲ external_metering: POST usage event';
+      inspCycle = [ { v: 'POST /api/v1/events {model: gpt-5.6-luna, total: 10}', s: 'add', id: 'c-event' } ];
+      break;
+    case 20:
+      inspStepLabel = '⑳ usage_events row appended (cost frozen at insert)';
+      inspCycle.push({ v: 'INSERT INTO usage_events → cost_usd from model_pricing', s: 'add', id: 'c-pg' });
+      break;
+    case 21: inspStepLabel = '㉑ Response back through the listener'; hl('r-content'); break;
+    case 22: inspStepLabel = '㉒ Client receives OpenAI-format response'; hl('r-content'); break;
+  }
+}
+
+// --- Opus → Vertex AI (:8084) -----------------------------------
+function inspStepOpus(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the unified filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
+    case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
+    case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
+    case 8:
+      inspStepLabel = '⑧ model_to_header: body.model → X-Model';
+      inspHeaders.push({ v: 'X-Model: claude-opus-5-5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 9:
+      inspStepLabel = '⑨ intelligent_route: claude-* → vertex/claude-*';
+      inspHeaders.push({ v: 'x-praxis-ai-provider: vertex', s: 'add', id: 'h-prov' });
+      inspCycle = [ { v: 'target = vertex/claude-opus-5-5', s: 'add', id: 'c-prov' } ];
+      break;
+    case 10:
+      inspStepLabel = '⑩ vertex: Anthropic → Vertex rawPredict translate';
+      hl('h-path');
+      inspCycle.push({ v: 'rawPredict body built (beta allowlist applied)', s: 'add', id: 'c-vx' });
+      break;
+    case 11:
+       inspStepLabel = '⑪ intelligent_route: provider=vertex → vertex cluster';
+      hl('h-prov');
+      inspCycle.push({ v: 'cluster = "vertex"', s: 'add', id: 'c-cluster' });
+      break;
+    case 12:
+      inspStepLabel = '⑫ gcp_adc: mint Google OAuth token (SA key)';
+      inspCycle.push({ v: 'token minted from /etc/vertex-sa/sa-key.json', s: 'add', id: 'c-gcp' });
+      break;
+    case 13:
+       inspStepLabel = '⑬ → metering-service: model policy + quota preflight';
+      hl('h-tenant-user');
+      inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
+      break;
+    case 14:
+       inspStepLabel = '⑭ Model allowed + quota available — proceed';
+      inspCycle.push({ v: 'hasAccess=true (used < quota)', s: 'add', id: 'c-remain' });
+      break;
+    case 15:
+      inspStepLabel = '⑮ credential_injection: Host → aiplatform.googleapis.com';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspHeaders.push({ v: 'Authorization: Bearer ya29.… (Google OAuth)', s: 'add', id: 'h-provider' });
+      break;
+    case 16:
+       inspStepLabel = '⑯ load_balancer: TLS SNI (Vertex)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST https://aiplatform.googleapis.com/…:rawPredict', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'Host: aiplatform.googleapis.com', s: 'add', id: 'h-host' });
+      hl('h-provider');
+      break;
+    case 17: inspStepLabel = '⑰ → Google Vertex AI (TLS :443)'; hl('h-path2'); break;
+    case 18: inspStepLabel = '⑱ Vertex responds 200 → translated to Anthropic'; anthropicResponse('"model": "claude-opus-5-5"'); break;
+    case 19: inspStepLabel = '⑲ token_count: parse usage (stream-aware)'; hl('r-usage'); break;
+    case 20:
+      inspStepLabel = '⑳ token_usage_headers: quota visible to client';
+      inspHeaders.push({ v: 'x-ratelimit-remaining-tokens: …', s: 'add', id: 'r-tuh' });
+      break;
+    case 21:
+      inspStepLabel = '㉑ external_metering: POST usage event';
+      inspCycle = [ { v: 'POST /api/v1/events {model: claude-opus-5-5, total: 10}', s: 'add', id: 'c-event' } ];
+      break;
+    case 22:
+      inspStepLabel = '㉒ usage_events row appended (cost frozen at insert)';
+      inspCycle.push({ v: 'INSERT INTO usage_events → cost_usd from model_pricing', s: 'add', id: 'c-pg' });
+      break;
+    case 23: inspStepLabel = '㉓ Response back through the listener'; hl('r-content'); break;
+    case 24: inspStepLabel = '㉔ Client receives Anthropic-format response'; hl('r-content'); break;
+  }
+}
+
+// --- GLM → IBM Curvebender (:8084) ------------------------------
+function hostedModel() {
+  return activeFlow === 'deepseek'
+    ? { label: 'DeepSeek', id: 'rits/deepseek-ai/DeepSeek-V4.1-Flash-1017' }
+    : { label: 'GLM', id: 'rits/zai-org/glm-5-3' };
+}
+
+function inspStepGlm(stepNum) {
+  const hm = hostedModel();
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the unified filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
+    case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
+    case 7: inspStepLabel = '⑦ identity_header_guard: forged x-tenant-* stripped'; hl('h-tenant-user'); break;
+    case 8:
+      inspStepLabel = `⑧ model_to_header: ${hm.label} id → X-Model`;
+      inspHeaders.push({ v: `X-Model: ${hm.id}`, s: 'add', id: 'h-xmodel' });
+      break;
+    case 9:
+      inspStepLabel = `⑨ intelligent_route: ${hm.label} unmapped (pass-through)`;
+      inspCycle = [ { v: 'provider = (none) → match by X-Model', s: 'add', id: 'c-prov' } ];
+      break;
+    case 10:
+      inspStepLabel = `⑩ intelligent_route: ${hm.label} candidate → cb-glm cluster`;
+      hl('h-xmodel');
+      inspCycle.push({ v: 'cluster = "cb-glm"', s: 'add', id: 'c-cluster' });
+      break;
+    case 11:
+       inspStepLabel = '⑪ → metering-service: model policy + quota preflight';
+       hl('h-tenant-user');
+       inspCycle.push({ v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' });
+       break;
+    case 12:
+       inspStepLabel = `⑫ ${hm.label} allowed + quota available — proceed`;
+       inspCycle.push({ v: `hasAccess=true · modelAllowed=[${hm.id}]`, s: 'add', id: 'c-remain' });
+       break;
+    case 13:
+       inspStepLabel = '⑬ time_to_first_token: start timing';
+       break;
+    case 14:
+      inspStepLabel = '⑭ credential_injection: Bearer CB key + Host override';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspHeaders.push({ v: 'Authorization: Bearer <CB_LITELLM_API_KEY>', s: 'add', id: 'h-provider' });
+      break;
+    case 15:
+       inspStepLabel = '⑮ load_balancer: TLS SNI (IBM)';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST https://litellm.cb.ete.res.ibm.com/v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'Host: litellm.cb.ete.res.ibm.com', s: 'add', id: 'h-host' });
+      hl('h-provider');
+      break;
+    case 16: inspStepLabel = '⑯ → IBM Curvebender LiteLLM (TLS :443)'; hl('h-path2'); break;
+    case 17: inspStepLabel = '⑰ LiteLLM responds 200 (Anthropic dialect)'; anthropicResponse(`"model": "${hm.id}"`); break;
+    case 18: inspStepLabel = '⑱ token_count: parse Anthropic-format usage'; hl('r-usage'); break;
+    case 19:
+      inspStepLabel = '⑲ token_usage_headers: quota visible to client';
+      inspHeaders.push({ v: 'x-ratelimit-remaining-tokens: …', s: 'add', id: 'r-tuh' });
+      break;
+    case 20:
+      inspStepLabel = '⑳ external_metering: POST usage event';
+      inspCycle = [ { v: `POST /api/v1/events {model: ${hm.id}, total: 10}`, s: 'add', id: 'c-event' } ];
+      break;
+    case 21:
+      inspStepLabel = '㉑ usage_events row appended (cost frozen at insert)';
+      inspCycle.push({ v: 'INSERT INTO usage_events → cost_usd from model_pricing', s: 'add', id: 'c-pg' });
+      break;
+    case 22: inspStepLabel = '㉒ Response back through the listener'; hl('r-content'); break;
+    case 23: inspStepLabel = '㉓ Client receives Anthropic-format response'; hl('r-content'); break;
+  }
+}
+
+// --- Auth failure (401) -----------------------------------------
+function inspStepAuth(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
+    case 5:
+      inspStepLabel = '⑤ MaaS API: key INVALID';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspBody = [ { v: '"valid": false', s: 'add', id: 'b-valid' }, { v: '"error": "invalid_api_key"', s: 'add', id: 'b-err' } ];
+      break;
+    case 6: inspStepLabel = '⑥ api_key_auth REJECTS — nothing else runs'; break;
+    case 7:
+      inspStepLabel = '⑦ 401 Unauthorized → Client';
+      setInspPhase('error');
+      inspHeaders = [
+        { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "invalid_api_key"', s: 'err', id: 'r-err' },
+        { v: '"message": "API key is not valid"', s: 'err', id: 'r-msg' },
+      ];
+      inspCycle = [];
+      break;
+  }
+}
+
+// --- Quota exhausted (429) --------------------------------------
+function inspStepQuota(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract x-api-key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
+    case 5: inspStepLabel = '⑤ Key valid — identity injected'; injectIdentity(); break;
+    case 6: inspStepLabel = '⑥ model_catalog: /v1/models path only'; break;
+    case 7:
+      inspStepLabel = '⑦ model_to_header + intelligent_route';
+      inspHeaders.push({ v: 'X-Model: claude-opus-5-5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 8:
+       inspStepLabel = '⑧ → metering-service: model policy + quota preflight';
+      hl('h-tenant-user');
+      inspCycle = [ { v: 'GET /customers/demo-user/entitlements/…/value', s: 'add', id: 'c-ent' } ];
+      break;
+    case 9:
+      inspStepLabel = '⑨ monthly usage: quota FULL';
+      inspCycle.push({ v: 'spend ≥ monthly USD quota → hasAccess=false', s: 'err', id: 'c-full' });
+      break;
+    case 10:
+      inspStepLabel = '⑩ metering → Praxis: EXCEEDED';
+      setInspPhase('error');
+      inspCycle.push({ v: 'deny — request never reaches any provider', s: 'err', id: 'c-deny' });
+      break;
+    case 11: inspStepLabel = '⑪ external_metering: reject (quota exceeded)'; break;
+    case 12:
+      inspStepLabel = '⑫ 429 Too Many Requests → Client';
+      inspHeaders = [
+        { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "quota_exceeded"', s: 'err', id: 'r-err' },
+        { v: '"message": "Monthly quota exceeded"', s: 'err', id: 'r-msg' },
+        { v: '"resets": "next calendar month"', s: 'err', id: 'r-reset' },
+      ];
+      break;
+  }
+}
+
+function inspStep(stepNum) {
+  resetStyles();
+  if (activeFlow === 'auth') inspStepAuth(stepNum);
+  else if (activeFlow === 'quota') inspStepQuota(stepNum);
+  else if (activeFlow === 'opus') inspStepOpus(stepNum);
+  else if (activeFlow === 'glm' || activeFlow === 'deepseek') inspStepGlm(stepNum);
+  else inspStepLuna(stepNum);
+  renderInsp();
+}
+
+// ================================================================
+// FLOW DEFINITIONS
+// ================================================================
+let activeFlow = 'luna';
+
+const flowLuna = [
+  { t: '1. Client → POST /v1/chat/completions (:8081)', mode: 'arrow', f: 'clients', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. Request enters the OpenAI filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract Bearer key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. reject_upgrade: HTTP upgrade not present', mode: 'lightup', target: 'f_reject', badge: 6 },
+  { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
+  { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
+  { t: '9. intelligent_route: gpt-* unmapped → openai', mode: 'lightup', target: 'f_mtp', badge: 9 },
+  { t: '10. intelligent_route: overlay candidate → openai cluster', mode: 'lightup', target: 'f_router', badge: 10 },
+  { t: '11. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. credential_injection: Bearer OPENAI_API_KEY', mode: 'lightup', target: 'f_cred', badge: 13 },
+  { t: '14. headers + credential_injection: provider auth + Host', mode: 'lightup', target: 'f_cred', badge: 14 },
+  { t: '15. Praxis → OpenAI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'openai', c: '#58a6ff', num: 15, numT: 0.03, fromRight: true, toLeft: true },
+  { t: '16. OpenAI responds 200', mode: 'arrow', f: 'openai', to: 'f_tcount', c: '#3fb950', num: 16, numT: 0.97, fromLeft: true, toRight: true },
+  { t: '17. token_count: parse OpenAI usage', mode: 'lightup', target: 'f_tcount', badge: 17 },
+  { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
+  { t: '19. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '20. Metering → RDS (usage_events insert)', mode: 'arrow', f: 'meter', to: 'pg', c: '#3fb950', num: 20, fromBottom: true, toTop: true },
+  { t: '21. Response back through the listener', mode: 'arrow', f: 'f_tusage', to: 'lsn', c: '#3fb950', num: 21, fromLeft: true, toLeft: true, waypoints: [{ x: 160, y: 771 }, { x: 160, y: 158 }], yOff: 10 },
+  { t: '22. Response to client (OpenAI format)', mode: 'arrow', f: 'lsn', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 8 },
+];
+
+const flowOpus = [
+  { t: '1. Client → POST /v1/messages (:8084)', mode: 'arrow', f: 'clients', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. Request enters the unified filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
+  { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
+  { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
+  { t: '9. intelligent_route: claude-opus → vertex/claude-opus', mode: 'lightup', target: 'f_mtp', badge: 9 },
+  { t: '10. vertex: Anthropic → Vertex rawPredict translate', mode: 'lightup', target: 'f_vertex', badge: 10 },
+  { t: '11. intelligent_route: provider=vertex → vertex cluster', mode: 'lightup', target: 'f_mtp', badge: 11 },
+  { t: '12. gcp_adc: mint Google OAuth token (SA key)', mode: 'lightup', target: 'f_gcp', badge: 12 },
+  { t: '13. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 13, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '14. Balance OK: hasAccess=true', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 14, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '15. credential_injection: Host → aiplatform.googleapis.com', mode: 'lightup', target: 'f_cred', badge: 15 },
+  { t: '16. load_balancer: TLS SNI (Vertex)', mode: 'lightup', target: 'f_lb', badge: 16 },
+  { t: '17. Praxis → Google Vertex AI (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'anthropic', c: '#58a6ff', num: 17, numT: 0.03, fromRight: true, toLeft: true },
+  { t: '18. Vertex responds 200 → translated to Anthropic', mode: 'arrow', f: 'anthropic', to: 'f_tcount', c: '#3fb950', num: 18, numT: 0.97, fromLeft: true, toRight: true },
+  { t: '19. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 19 },
+  { t: '20. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 20 },
+  { t: '21. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 21, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '22. Metering → RDS (usage_events insert)', mode: 'arrow', f: 'meter', to: 'pg', c: '#3fb950', num: 22, fromBottom: true, toTop: true },
+  { t: '23. Response back through the listener', mode: 'arrow', f: 'f_tusage', to: 'lsn', c: '#3fb950', num: 23, fromLeft: true, toLeft: true, waypoints: [{ x: 160, y: 771 }, { x: 160, y: 158 }], yOff: 10 },
+  { t: '24. Response to client (Anthropic format)', mode: 'arrow', f: 'lsn', to: 'user', c: '#3fb950', num: 24, fromLeft: true, toRight: true, yOff: 8 },
+];
+
+const flowGlm = [
+  { t: '1. Client → POST /v1/messages (:8084)', mode: 'arrow', f: 'clients', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. Request enters the unified filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
+  { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
+  { t: '8. model_to_header: GLM id → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
+  { t: '9. intelligent_route: GLM unmapped (pass-through)', mode: 'lightup', target: 'f_mtp', badge: 9 },
+  { t: '10. intelligent_route: GLM candidate → cb-glm cluster', mode: 'lightup', target: 'f_router', badge: 10 },
+  { t: '11. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Model allowed + quota available', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#3fb950', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. time_to_first_token: start timing', mode: 'lightup', target: 'f_ttfb', badge: 13 },
+  { t: '14. credential_injection: Bearer CB key + Host override', mode: 'lightup', target: 'f_cred', badge: 14 },
+  { t: '15. load_balancer: TLS SNI (IBM)', mode: 'lightup', target: 'f_lb', badge: 15 },
+  { t: '16. Praxis → IBM Curvebender LiteLLM (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'vllm', c: '#58a6ff', num: 16, numT: 0.03, fromRight: true, toLeft: true },
+  { t: '17. LiteLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'vllm', to: 'f_tcount', c: '#3fb950', num: 17, numT: 0.97, fromLeft: true, toRight: true },
+  { t: '18. token_count: parse Anthropic-format usage', mode: 'lightup', target: 'f_tcount', badge: 18 },
+  { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
+  { t: '20. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 20, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '21. Metering → RDS (usage_events insert)', mode: 'arrow', f: 'meter', to: 'pg', c: '#3fb950', num: 21, fromBottom: true, toTop: true },
+  { t: '22. Response back through the listener', mode: 'arrow', f: 'f_tusage', to: 'lsn', c: '#3fb950', num: 22, fromLeft: true, toLeft: true, waypoints: [{ x: 160, y: 771 }, { x: 160, y: 158 }], yOff: 10 },
+  { t: '23. Response to client (Anthropic format)', mode: 'arrow', f: 'lsn', to: 'user', c: '#3fb950', num: 23, fromLeft: true, toRight: true, yOff: 8 },
+];
+
+const flowAuth = [
+  { t: '1. Client → POST /v1/messages (:8084)', mode: 'arrow', f: 'clients', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. MaaS API: key INVALID', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#f85149', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. api_key_auth rejects — chain stops', mode: 'lightup', target: 'f_auth', badge: '✗', errColor: '#f85149' },
+  { t: '7. 401 Unauthorized → client', mode: 'arrow', f: 'lsn', to: 'user', c: '#f85149', num: 7, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowQuota = [
+  { t: '1. Client → POST /v1/messages (:8084)', mode: 'arrow', f: 'clients', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract x-api-key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-tenant-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_catalog: /v1/models path only', mode: 'lightup', target: 'f_catalog', badge: 6 },
+  { t: '7. model_to_header + intelligent_route', mode: 'lightup', target: 'f_router', badge: 7 },
+  { t: '8. Praxis → metering-service (model policy + quota)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#58a6ff', num: 8, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '9. Monthly usage: quota FULL', mode: 'lightup', target: 'meter', badge: 9 },
+  { t: '10. Metering → Praxis: hasAccess = false', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f85149', num: 10, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '11. external_metering: reject (quota exceeded)', mode: 'lightup', target: 'f_meter_pre', badge: '✗', errColor: '#f85149' },
+  { t: '12. 429 Too Many Requests → client', mode: 'arrow', f: 'lsn', to: 'user', c: '#f85149', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+// Same wire path as GLM, different hosted model.
+const flowDeepseek = flowGlm.map(s => ({ ...s, t: s.t.replace(/GLM/g, 'DeepSeek') }));
+
+const flowMap = { luna: flowLuna, opus: flowOpus, glm: flowGlm, deepseek: flowDeepseek, auth: flowAuth, quota: flowQuota };
+const flowLabels = { luna: 'Alice → OpenAI (:8443 → 18082)', opus: 'Bob → Anthropic (:8443 → 18083)', glm: 'Carol → vLLM local (:8443)', deepseek: 'Dana → Custom provider (:8443)', auth: 'Auth Failure (401)', quota: 'Quota Exhausted (429)' };
+const flowOrder = ['luna', 'opus', 'glm', 'deepseek', 'auth', 'quota'];
+let flow = flowLuna;
+
+function updateTitle() {
+  document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
+}
+
+// ================================================================
+// RUN / RESET
+// ================================================================
+function updatePlayBtn() {
+  const btn = document.querySelector('.start');
+  if (paused) btn.innerHTML = '&#9654; Resume';
+  else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
+  else btn.innerHTML = '&#9654; Start';
+}
+
+function cycleSpeed() {
+  const speeds = [0.5, 1, 2];
+  const idx = speeds.indexOf(playbackSpeed);
+  playbackSpeed = speeds[(idx + 1) % speeds.length];
+  document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function toggleLoop() {
+  loopMode = !loopMode;
+  const btn = document.getElementById('loop-btn');
+  btn.style.background = loopMode ? (isDark ? '#79c0ff22' : '#79c0ff18') : 'transparent';
+  btn.textContent = loopMode ? '⟳ Loop ON' : '⟳ Loop';
+  if (loopMode && !running && !paused) run();
+}
+
+function stepOpts(s) {
+  return {
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function stepLine(s) {
+  return {
+    from: s.f, to: s.to, color: s.c, num: s.num,
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+let stepOnceMode = false;
+
+function stepOnce() {
+  if (running && !paused) {
+    paused = true; running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  const flow = flowMap[activeFlow];
+  if (runStepIndex === 0) {
+    initInspector();
+  }
+  if (runStepIndex >= flow.length) {
+    doReset();
+    return;
+  }
+  stepOnceMode = true;
+  running = true; paused = false;
+  if (!animFrame) animate();
+  execStep();
+}
+
+function run() {
+  if (paused) {
+    paused = false;
+    running = true;
+    updatePlayBtn();
+    if (!animFrame) animate();
+    stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+    return;
+  }
+  if (running) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  doReset();
+  running = true;
+  paused = false;
+  runStepIndex = 0;
+  currentStepDone = 0;
+  initInspector();
+  updatePlayBtn();
+  stepTimer = setTimeout(execStep, 300);
+  if (!animFrame) animate();
+}
+
+function execStep() {
+  if (!running || paused || runStepIndex >= flow.length) {
+    if (runStepIndex >= flow.length) {
+      running = false; paused = false; updatePlayBtn();
+      if (loopMode) {
+        stepTimer = setTimeout(() => {
+          const idx = flowOrder.indexOf(activeFlow);
+          activeFlow = flowOrder[(idx + 1) % flowOrder.length];
+          flow = flowMap[activeFlow];
+          document.getElementById('flow-select').value = activeFlow;
+          updateTitle();
+          doReset(); run();
+        }, 3000 / playbackSpeed);
+      }
+    }
+    return;
+  }
+  const si = runStepIndex;
+  const s = flow[si];
+  for (let j = 0; j < si; j++) {
+    const prev = document.getElementById('step-' + j);
+    if (prev) prev.className = 'step done';
+  }
+  const el = document.getElementById('step-' + si);
+  el.className = 'step active';
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  inspStep(si + 1);
+
+  if (s.mode === 'arrow') {
+    if (s.f) activeNodes.add(s.f);
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+      el.className = 'step done';
+      currentStepDone = si + 1;
+      saveSnapshot(si);
+      runStepIndex++;
+      if (stepOnceMode) {
+        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+      } else if (running && !paused) {
+        stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+      }
+    }, stepOpts(s)));
+  } else if (s.mode === 'lightup') {
+    fading[s.target] = Date.now();
+    activeNodes.add(s.target);
+    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+    if (badges[s.target] != null) {
+      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      existing.push(s.badge);
+      badges[s.target] = existing;
+    } else {
+      badges[s.target] = s.badge;
+    }
+    el.className = 'step done';
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (stepOnceMode) {
+      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+    } else if (running && !paused) {
+      stepTimer = setTimeout(execStep, 800 / playbackSpeed);
+    }
+  }
+}
+
+function saveSnapshot(stepIdx) {
+  snapshots[stepIdx] = {
+    activeNodes: new Set(activeNodes),
+    badges: JSON.parse(JSON.stringify(badges)),
+    lines: JSON.parse(JSON.stringify(lines)),
+    glowing: new Set(glowing),
+  };
+}
+
+function restoreSnapshot(stepIdx) {
+  if (stepIdx < 0) {
+    activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+    return;
+  }
+  const snap = snapshots[stepIdx];
+  if (!snap) return;
+  activeNodes = new Set(snap.activeNodes);
+  badges = JSON.parse(JSON.stringify(snap.badges));
+  lines = JSON.parse(JSON.stringify(snap.lines));
+  glowing = new Set(snap.glowing);
+}
+
+function simulateUpTo(targetStep) {
+  activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+  for (let i = 0; i <= targetStep; i++) {
+    const s = flow[i];
+    if (s.mode === 'arrow') {
+      if (s.f) activeNodes.add(s.f);
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+    } else if (s.mode === 'lightup') {
+      activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
+    }
+    saveSnapshot(i);
+  }
+}
+
+function jumpToStep(targetStep) {
+  if (running) {
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  }
+  if (!snapshots[targetStep]) simulateUpTo(targetStep);
+  restoreSnapshot(targetStep);
+  currentStepDone = targetStep + 1;
+  runStepIndex = targetStep + 1;
+  document.querySelectorAll('.step').forEach((el, i) => {
+    if (i <= targetStep) el.className = 'step done';
+    else el.className = 'step pending';
+  });
+  const clickedEl = document.getElementById('step-' + targetStep);
+  if (clickedEl) clickedEl.className = 'step active';
+  initInspector();
+  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  dots = [];
+  fading = {};
+  paused = true;
+  updatePlayBtn();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(() => { draw(); draw(); });
+}
+
+function doReset() {
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  running = false;
+  paused = false;
+  runStepIndex = 0;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  dots = [];
+  activeNodes.clear();
+  badges = {};
+  lines = [];
+  glowing.clear();
+  fading = {};
+  currentStepDone = 0;
+  snapshots = [];
+  inspHeaders = [];
+  inspBody = [];
+  inspCycle = [];
+  initSteps();
+  updatePlayBtn();
+  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the request flow</div>';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  draw();
+}
+
+document.getElementById('flow-select').addEventListener('change', function() {
+  activeFlow = this.value;
+  flow = flowMap[activeFlow];
+  updateTitle();
+  doReset();
+});
+
+resize();
+initSteps();
+updateTitle();
+draw();
+
+// Auto-start loop mode on page load
+setTimeout(() => { toggleLoop(); }, 500);
+
+// Mobile splash animation
+(function(){
+  if(window.innerWidth>=800)return;
+  const mc=document.getElementById('mobile-canvas');
+  if(!mc)return;
+  const mx=mc.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  let mW,mH;
+  function mResize(){
+    const r=mc.getBoundingClientRect();
+    mW=r.width;mH=r.height;
+    mc.width=mW*dpr;mc.height=mH*dpr;
+    mx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  mResize();
+  const boxes=[
+    {x:.15,y:.12,label:'Client',color:'#58a6ff'},
+    {x:.5,y:.08,label:'Praxis',color:'#d2a8ff'},
+    {x:.85,y:.12,label:'MaaS API',color:'#f0883e'},
+    {x:.2,y:.35,label:'auth',color:'#58a6ff'},
+    {x:.5,y:.32,label:'route',color:'#d2a8ff'},
+    {x:.8,y:.35,label:'metering',color:'#f0883e'},
+    {x:.15,y:.62,label:'OpenAI',color:'#3fb950'},
+    {x:.45,y:.66,label:'Vertex AI',color:'#3fb950'},
+    {x:.75,y:.62,label:'IBM GLM',color:'#3fb950'},
+    {x:.35,y:.9,label:'RDS usage_events',color:'#8b949e'},
+    {x:.65,y:.9,label:'Dashboard',color:'#79c0ff'},
+  ];
+  let particles=[];
+  function spawn(){
+    const fi=Math.floor(Math.random()*boxes.length);
+    let ti=Math.floor(Math.random()*boxes.length);
+    while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
+    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#f85149'];
+    particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      sz:2+Math.random()*3,a:.3+Math.random()*.4});
+  }
+  for(let i=0;i<12;i++)spawn();
+  function mDraw(){
+    mx.clearRect(0,0,mW,mH);
+    boxes.forEach(b=>{
+      mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
+      mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
+      mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
+      mx.fillText(b.label,b.x*mW,b.y*mH+3);
+      mx.restore();
+    });
+    particles.forEach(p=>{
+      const f=boxes[p.f],t=boxes[p.t];
+      const px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      const py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      const fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+      mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
+      mx.shadowColor=p.c;mx.shadowBlur=8;
+      mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
+      mx.restore();
+      p.p+=p.sp;
+    });
+    particles=particles.filter(p=>p.p<1);
+    if(Math.random()<.2)spawn();
+    requestAnimationFrame(mDraw);
+  }
+  mDraw();
+})();
+</script>
+</body>
+</html>
