@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Praxis AI Gateway -- Flow Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;transition:background .3s,color .3s}
+body.light{background:#fff;color:#24292f}
+
+/* Right Panel */
+.right-panel{position:fixed;top:0;right:0;width:380px;height:100vh;z-index:100;display:flex;flex-direction:column;background:#161b22;border-left:1px solid #30363d;overflow:hidden;transition:background .3s,border-color .3s}
+body.light .right-panel{background:#f6f8fa;border-color:#d0d7de}
+
+.flow-bar{padding:12px 16px;border-bottom:1px solid #30363d;flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+body.light .flow-bar{border-color:#d0d7de}
+.flow-bar select{flex:1;padding:7px 10px;border:1px solid #30363d;border-radius:6px;background:#0d1117;color:#c9d1d9;font-size:13px;font-family:inherit;cursor:pointer}
+body.light .flow-bar select{background:#fff;color:#24292f;border-color:#d0d7de}
+.flow-bar button{padding:7px 14px;border:1px solid #30363d;border-radius:6px;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:13px;font-family:inherit;transition:all .15s}
+body.light .flow-bar button{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+.flow-bar button:hover{border-color:#58a6ff}
+.flow-bar .start{border-color:#3fb950;color:#3fb950;min-width:90px}
+.flow-bar .rst{border-color:#f0883e;color:#f0883e}
+
+.steps-section{padding:10px 16px;border-bottom:1px solid #30363d;flex:2;overflow-y:auto}
+body.light .steps-section{border-color:#d0d7de}
+.steps-title{font-weight:700;margin-bottom:6px;font-size:14px}
+.step{margin:2px 0;color:#484f58;display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.4;cursor:pointer;padding:3px 4px;border-radius:4px;transition:all .2s}
+body.light .step{color:#b0b8c1}
+.step:hover{background:#58a6ff22;cursor:pointer;color:#58a6ff;transform:translateX(4px);border-left:2px solid #58a6ff;padding-left:6px}
+body.light .step:hover{background:#ddf4ff88;cursor:pointer;color:#0969da;transform:translateX(4px);border-left:2px solid #0969da;padding-left:6px}
+.step-mk{flex-shrink:0;width:16px;text-align:center;font-size:13px}
+.step.pending{color:#484f58}
+body.light .step.pending{color:#b0b8c1}
+.step.pending .step-mk::before{content:'\25CB'}
+.step.active{color:#58a6ff}
+.step.active .step-mk::before{content:'\25CF'}
+.step.done{color:#3fb950}
+.step.done .step-mk::before{content:'\2713'}
+.step .step-mk::before{content:'\25CB'}
+
+.insp-section{flex:3;overflow-y:auto;padding:10px 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px}
+.insp-title{font-weight:700;font-size:14px;margin-bottom:6px;font-family:-apple-system,sans-serif;flex-shrink:0;padding:0 0 6px;border-bottom:1px solid #30363d}
+body.light .insp-title{border-color:#d0d7de}
+.insp-sec{margin:6px 0 2px;font-weight:600;color:#58a6ff;font-size:12px;font-family:-apple-system,sans-serif}
+.insp-line{margin:1px 0;padding:2px 6px;border-radius:3px;white-space:pre-wrap;word-break:break-word;line-height:1.6;transition:all .4s}
+.insp-line.add{background:#1a2e1a;color:#3fb950;border-left:3px solid #3fb950}
+body.light .insp-line.add{background:#dafbe1;color:#116329}
+.insp-line.del{background:#2d1517;color:#f85149;text-decoration:line-through;opacity:.7;border-left:3px solid #f85149}
+body.light .insp-line.del{background:#ffebe9;color:#82071e}
+.insp-line.keep{color:#8b949e;border-left:3px solid transparent}
+.insp-line.err{background:#2d1517;color:#f85149;border-left:3px solid #f85149;font-weight:600}
+body.light .insp-line.err{background:#ffebe9;color:#82071e}
+.insp-line.highlight{background:#1a2332;color:#58a6ff;border-left:3px solid #58a6ff;animation:pulse .8s}
+body.light .insp-line.highlight{background:#ddf4ff;color:#0969da}
+@keyframes pulse{0%{opacity:.3}50%{opacity:1}100%{opacity:1}}
+.insp-plugin{margin:8px 0 4px;padding:4px 8px;background:#d2a8ff22;border-radius:4px;color:#d2a8ff;font-weight:600;font-size:12px;font-family:-apple-system,sans-serif}
+body.light .insp-plugin{background:#8250df15;color:#8250df}
+
+/* Theme toggle — top-right of main panel */
+.theme-toggle{position:fixed;top:16px;right:396px;z-index:200;width:36px;height:36px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+body.light .theme-toggle{background:#f6f8fa;color:#24292f;border-color:#d0d7de}
+
+/* Red Hat logo — top-left branding */
+.rh-brand{position:fixed;top:10px;left:16px;z-index:200;display:flex;align-items:center;gap:10px;pointer-events:none}
+.rh-brand img{height:30px}
+.rh-brand span{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.3px;font-family:'Red Hat Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body.light .rh-brand span{color:#1a1a1a}
+
+/* Gradient title */
+.viz-title{position:fixed;top:14px;left:0;right:380px;z-index:200;text-align:center;font-size:22px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px;pointer-events:none}
+
+/* Legend */
+.legend{position:fixed;bottom:16px;left:16px;z-index:100;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:10px;font-size:13px;transition:all .3s}
+body.light .legend{background:#f6f8fa;border-color:#d0d7de}
+.legend-title{font-weight:600;margin-bottom:5px;font-size:14px}
+.legend-item{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.legend-dot{width:11px;height:11px;border-radius:50%}
+
+/* Scrollbar */
+.steps-section::-webkit-scrollbar,.insp-section::-webkit-scrollbar{width:6px}
+.steps-section::-webkit-scrollbar-track,.insp-section::-webkit-scrollbar-track{background:transparent}
+.steps-section::-webkit-scrollbar-thumb,.insp-section::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+body.light .steps-section::-webkit-scrollbar-thumb,body.light .insp-section::-webkit-scrollbar-thumb{background:#d0d7de}
+/* Mobile splash */
+.mobile-splash{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#0d1117;color:#c9d1d9;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+.mobile-splash.show{display:flex}
+.mobile-splash canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+.mobile-splash-content{position:relative;z-index:1}
+.mobile-splash h1{font-size:28px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px}
+.mobile-splash h1 .grad{background:linear-gradient(135deg,#58a6ff,#d2a8ff,#f0883e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.mobile-splash .sub{font-size:15px;color:#8b949e;margin-bottom:32px;line-height:1.6}
+.mobile-splash .badge{display:inline-block;padding:6px 16px;border:1px solid #30363d;border-radius:20px;font-size:12px;color:#8b949e;margin-bottom:24px}
+.mobile-splash .badge span{color:#3fb950;font-weight:600}
+.mobile-splash .laptop-msg{margin-top:32px;padding:20px 24px;background:linear-gradient(135deg,#58a6ff18,#d2a8ff18);border:2px solid #58a6ff66;border-radius:14px;font-size:15px;color:#e2e8f0;line-height:1.6;animation:pulse-border 2s ease-in-out infinite}
+.mobile-splash .laptop-msg strong{color:#fff}
+.mobile-splash .laptop-icon{font-size:32px;margin-bottom:8px}
+@keyframes pulse-border{0%,100%{border-color:#58a6ff66;box-shadow:0 0 20px #58a6ff22}50%{border-color:#58a6ffcc;box-shadow:0 0 30px #58a6ff44}}
+.mobile-splash .stats{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap}
+.mobile-splash .stat{padding:8px 14px;background:#161b22;border:1px solid #21262d;border-radius:8px;font-size:12px;font-weight:600}
+.mobile-splash .stat.blue{color:#58a6ff;border-color:#58a6ff44}
+.mobile-splash .stat.green{color:#3fb950;border-color:#3fb95044}
+.mobile-splash .stat.orange{color:#f0883e;border-color:#f0883e44}
+.mobile-splash .stat.purple{color:#d2a8ff;border-color:#d2a8ff44}
+.mobile-splash .rh-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px}
+.mobile-splash .rh-logo img{height:24px}
+.mobile-splash .rh-logo span{font-size:16px;font-weight:700;color:#fff}
+@media(min-width:800px){.mobile-splash{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mobile-splash show" id="mobile-splash">
+  <canvas id="mobile-canvas"></canvas>
+  <div class="mobile-splash-content">
+    <div class="rh-logo"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+    <div class="badge"><span>Praxis</span> Rust Data Plane</div>
+    <h1>Praxis AI Gateway<br><span class="grad">MaaS in Action</span></h1>
+    <p class="sub">Interactive animated architecture flow<br>for the Praxis proxy and its filter chain</p>
+    <div class="stats">
+      <div class="stat blue">4 Flows</div>
+      <div class="stat green">3 Backends</div>
+      <div class="stat orange">22 Steps</div>
+      <div class="stat purple">13 In-Process Filters</div>
+    </div>
+    <div class="laptop-msg">
+      <div class="laptop-icon">&#128187;</div>
+      <strong>Open this page on your laptop or desktop</strong><br>to experience the full interactive visualizer with animated step-by-step flows, clickable components, and request/response inspector.
+    </div>
+  </div>
+</div>
+
+<div class="rh-brand"><img src="redhat-logo.svg" alt="Red Hat"><span>Red Hat</span></div>
+<button class="theme-toggle" id="thm" onclick="toggleTheme()">&#9790;</button>
+<div class="viz-title">Praxis AI Gateway &mdash; Flow Visualizer <span id="flow-label" style="font-weight:700;-webkit-text-fill-color:#f0883e"></span></div>
+
+<div class="right-panel">
+  <div class="flow-bar">
+    <select id="flow-select">
+      <option value="claude">Claude via Unified (:8084)</option>
+      <option value="qwen">Qwen Flash (self-hosted)</option>
+      <option value="auth">Auth Failure (401)</option>
+      <option value="quota">Quota Exhausted (429)</option>
+    </select>
+    <button class="start" onclick="run()">&#9654; Start</button>
+    <button onclick="stepOnce()" title="Step forward" style="border-color:#58a6ff;color:#58a6ff;min-width:36px">&#9646;&#9654;</button>
+    <button id="speed-btn" onclick="cycleSpeed()" style="min-width:36px">1x</button>
+    <button id="loop-btn" onclick="toggleLoop()" style="border-color:#79c0ff;color:#79c0ff">&#8635; Loop</button>
+    <button class="rst" onclick="doReset()">Reset</button>
+  </div>
+  <div class="steps-section" id="steps-section">
+    <div class="steps-title">Flow Steps <span style="font-weight:400;font-size:11px;color:#8b949e">· click to jump</span></div>
+    <div id="steps-ctr"></div>
+  </div>
+  <div class="insp-section" id="insp-section">
+    <div class="insp-title" id="insp-title" style="color:#58a6ff">Request</div>
+    <div id="insp-content"></div>
+  </div>
+</div>
+
+<div id="highlight-box" style="display:none;position:fixed;z-index:350;border-radius:10px;pointer-events:none"></div>
+<div id="overlay" onclick="if(event.target===this)closeOverlay()" style="display:none;position:fixed;top:0;left:0;right:380px;bottom:0;z-index:300;background:rgba(0,0,0,0.6)">
+  <div id="overlay-card" style="position:absolute;background:#161b22ee;border:1px solid #30363d;border-radius:14px;max-width:420px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transition:opacity .2s">
+    <button onclick="closeOverlay()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='#c9d1d9';this.style.background='#30363d'" onmouseout="this.style.color='#8b949e';this.style.background='none'">✕</button>
+    <div id="overlay-accent" style="width:4px;height:24px;border-radius:2px;position:absolute;left:0;top:22px"></div>
+    <h2 id="overlay-title" style="margin:0 0 6px;font-size:18px;color:#c9d1d9;font-family:system-ui"></h2>
+    <p id="overlay-desc" style="margin:0 0 14px;font-size:13px;color:#8b949e;line-height:1.5;font-family:system-ui"></p>
+    <div id="overlay-details" style="font-size:12px;font-family:'SF Mono',Menlo,monospace"></div>
+    <button onclick="closeOverlay()" style="margin-top:14px;padding:7px 20px;border:1px solid #3fb950;border-radius:8px;background:transparent;color:#3fb950;font-size:13px;cursor:pointer;font-family:system-ui;transition:all .15s" onmouseover="this.style.background='#3fb95022'" onmouseout="this.style.background='transparent'">&#9654; Resume Flow</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>Request</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Response</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Rejected (401 / 429)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d2a8ff"></div>Praxis Filters / Self-hosted</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>Control Plane (MaaS / Metering)</div>
+  <div style="margin-top:10px;padding-top:8px;border-top:1px solid #30363d;font-size:11px;color:#484f58">Built with <a href="https://noyitz.github.io/flowstory/" target="_blank" style="color:#484f58;text-decoration:none" onmouseover="this.style.color='#58a6ff'" onmouseout="this.style.color='#484f58'">FlowStory</a></div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, isDark = true, animFrame = null, dots = [], activeNodes = new Set(), currentStepDone = 0;
+let badges = {}, lines = [], running = false, glowing = new Set(), fading = {};
+let paused = false, runStepIndex = 0, stepTimer = null, playbackSpeed = 1, loopMode = false;
+let inspHeaders = [], inspBody = [], inspCycle = [], inspStepLabel = '';
+let snapshots = []; // State snapshot after each step completes
+
+// Logical canvas dimensions
+const LW = 1250, LH = 1050;
+let ox = 0, oy = 0, sc = 1;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('thm').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  draw();
+}
+
+// ================================================================
+// NODES
+// ================================================================
+const N = {
+  user: { x: -20, y: 150, w: 100, h: 50, label: 'Client / Agent', type: 'icon' },
+
+  cluster: { x: 120, y: 80, w: 880, h: 960, type: 'boundary' },
+  praxis: { x: 150, y: 110, w: 560, h: 770, type: 'container', label: 'Praxis — Rust AI Proxy (pingora)', color: '#d2a8ff' },
+
+  lsn: { x: 175, y: 145, w: 510, h: 56, label: 'Praxis Listener', sublabel: ':8084 Unified · :8080 Anthropic · :8081 OpenAI', color: '#58a6ff', fs: 17 },
+
+  reqF: { x: 175, y: 230, w: 510, h: 450, type: 'container', label: 'Request Filters →', color: '#58a6ff' },
+  // In-process request filters, executed top-to-bottom per request
+  f_auth:       { x: 190, y: 262, w: 480, h: 36, label: 'api_key_auth', sublabel: 'client key → MaaS API validate', color: '#58a6ff', inner: true, fs: 13 },
+  f_catalog:    { x: 190, y: 304, w: 480, h: 36, label: 'model_catalog', sublabel: 'answers GET /v1/models (unified route)', color: '#58a6ff', inner: true, fs: 13 },
+  f_access:     { x: 190, y: 346, w: 480, h: 36, label: 'model_access', sublabel: 'denylist + group-scoped overrides', color: '#58a6ff', inner: true, fs: 13 },
+  f_guard:      { x: 190, y: 388, w: 480, h: 36, label: 'identity_header_guard', sublabel: 'strip client-forged x-auth-* headers', color: '#58a6ff', inner: true, fs: 13 },
+  f_mth:        { x: 190, y: 430, w: 480, h: 36, label: 'model_to_header', sublabel: 'body.model → X-Model (unified route)', color: '#58a6ff', inner: true, fs: 13 },
+  f_router:     { x: 190, y: 472, w: 480, h: 36, label: 'router', sublabel: 'X-Model match → backend cluster', color: '#58a6ff', inner: true, fs: 13 },
+  f_norm:       { x: 190, y: 514, w: 480, h: 36, label: 'content_normalize', sublabel: 'rewrite blocks vLLM rejects', color: '#58a6ff', inner: true, fs: 13 },
+  f_meter_pre:  { x: 190, y: 556, w: 480, h: 36, label: 'external_metering', sublabel: 'pre-request quota check (fail-open)', color: '#f0883e', inner: true, fs: 13 },
+  f_cred:       { x: 190, y: 598, w: 480, h: 36, label: 'credential_injection', sublabel: 'client key → provider key (per cluster)', color: '#58a6ff', inner: true, fs: 13 },
+  f_lb:         { x: 190, y: 640, w: 480, h: 36, label: 'headers + load_balancer', sublabel: 'Host / SNI / TLS connection pool', color: '#58a6ff', inner: true, fs: 13 },
+
+  respF: { x: 175, y: 700, w: 510, h: 160, type: 'container', label: '← Response Filters', color: '#3fb950' },
+  f_tcount:     { x: 190, y: 730, w: 480, h: 36, label: 'token_count', sublabel: 'parse usage (stream-aware)', color: '#3fb950', inner: true, fs: 13 },
+  f_tusage:     { x: 190, y: 774, w: 480, h: 36, label: 'token_usage_headers', sublabel: 'x-ratelimit-* headers on the response', color: '#3fb950', inner: true, fs: 13 },
+  f_meter_post: { x: 190, y: 818, w: 480, h: 36, label: 'external_metering', sublabel: 'POST usage event', color: '#f0883e', inner: true, fs: 13 },
+
+  // Control plane — right column inside the cluster
+  maas:  { x: 760, y: 250, w: 200, h: 55, label: 'MaaS API', sublabel: '/internal/v1/api-keys/validate', color: '#f0883e', fs: 15 },
+  meter: { x: 760, y: 410, w: 200, h: 55, label: 'Metering Service', sublabel: 'quota + usage events', color: '#f0883e', fs: 15 },
+  pg:    { x: 760, y: 500, w: 200, h: 45, label: 'PostgreSQL', sublabel: 'usage_events', color: '#8b949e', fs: 14 },
+
+  // Self-hosted backends — bottom of cluster
+  vllm27: { x: 170, y: 910, w: 230, h: 60, label: 'vLLM', sublabel: 'Qwen 27B · in-cluster', color: '#d2a8ff', fs: 15 },
+  qprox:  { x: 450, y: 910, w: 250, h: 60, label: 'qwen-flash proxy', sublabel: 'nginx HTTPS egress proxy', color: '#d2a8ff', fs: 14 },
+
+  // External providers — right, outside cluster
+  anthropic: { x: 1030, y: 150, w: 180, h: 55, label: 'Anthropic', sublabel: 'claude-*', color: '#3fb950', fs: 15 },
+  openai:    { x: 1030, y: 225, w: 180, h: 55, label: 'OpenAI', sublabel: 'gpt-*', color: '#3fb950', fs: 15 },
+  qwen:      { x: 1030, y: 780, w: 180, h: 60, label: 'Qwen Flash vLLM', sublabel: 'remote OpenShift', color: '#3fb950', fs: 14 },
+};
+
+const tips = {
+  lsn: { t: 'Praxis Listener', d: 'A single Rust binary (built on Pingora, Cloudflare’s proxy framework) listens per dialect. The unified listener serves one URL for Claude Code: Anthropic-dialect clients switch models with /model and never change base URL.', dt: [[':8084','Unified — Anthropic dialect, model-based routing'],[':8080','Anthropic passthrough'],[':8081','OpenAI passthrough'],[':9901','Admin'],['Config','praxis.yaml, live-watched ConfigMap']], links: [['Pingora','https://github.com/cloudflare/pingora']] },
+  f_auth: { t: 'api_key_auth', d: 'Extracts the client MaaS API key (x-api-key or Authorization: Bearer) and validates it against the MaaS API. Results are cached (TTL 300s) so hot paths skip the callback. On success, identity headers (x-auth-user, x-auth-group, x-auth-subscription…) are injected for downstream filters and metering.', dt: [['Phase','Request, first'],['Validation','http://maas-api/internal/v1/api-keys/validate'],['Cache','300s TTL'],['Failure','401 Unauthorized']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
+  f_catalog: { t: 'model_catalog', d: 'Answers GET /v1/models from static config so the client’s model picker shows self-hosted models (a real provider /v1/models would not list them). Discovery only — access control stays in model_access.', dt: [['Phase','Request'],['Scope','unified route'],['Path','/v1/models'],['Format','anthropic']], links: [] },
+  f_access: { t: 'model_access', d: 'Policy gate on the requested model: a global denylist blocks specific model families, with per-group allowlist overrides so entitled groups can reach everything. Reads the group identity injected by api_key_auth.', dt: [['Mode','denylist + overrides'],['Identity source','x-auth-group (never client-supplied)'],['Violation','403 Forbidden'],['Also enforces','max_body_bytes 32MB']], links: [] },
+  f_guard: { t: 'identity_header_guard', d: 'Strips any x-auth-* headers a client forged before auth runs. Identity only ever exists as set by the gateway itself — metering and model_access can trust it.', dt: [['Phase','Request'],['Prefix','x-auth-*'],['Purpose','anti-spoofing']], links: [] },
+  f_mth: { t: 'model_to_header', d: 'Promotes the "model" field from the JSON body into the X-Model request header so the router can branch on it without re-reading the body.', dt: [['Phase','Request'],['Scope','unified route'],['Output','X-Model header']], links: [] },
+  f_router: { t: 'router', d: 'First-match routing: exact X-Model values select self-hosted clusters; everything else falls through to the default cluster (Anthropic). Routing is per-request — a Claude Code session can /model between backends on one URL.', dt: [['Match','path_prefix + header (X-Model)'],['Self-hosted rules','Qwen 27B → vllm, Qwen Flash → qwen-flash'],['Default','anthropic cluster']], links: [] },
+  f_norm: { t: 'content_normalize', d: 'Rewrites content-block types that self-hosted backends choke on — server_tool_use / server_tool_result blocks vLLM rejects, tool_reference blocks inside tool_result that vLLM’s chat template rejects. Harmless no-op for provider-routed traffic.', dt: [['Phase','Request'],['Scope','unified route'],['Backends','vLLM Anthropic endpoint, Qwen chat template']], links: [['vLLM','https://github.com/vllm-project/vllm']] },
+  f_meter_pre: { t: 'external_metering — quota check', d: 'Before forwarding, asks the metering service for the user’s remaining monthly token balance for this model. If used ≥ quota, the request is rejected with 429 without ever reaching a provider. fail_open: if the metering service is unreachable, the request proceeds.', dt: [['Pre-request','GET /api/v1/customers/{user}/entitlements/inference-tokens/value'],['Enforcement','HTTP 429 budget_exhausted'],['fail_open','true'],['Window','calendar month (resets on the 1st)']], links: [] },
+  f_cred: { t: 'credential_injection', d: 'Per-cluster credential swap: strips the client key and injects the real provider credential from the pod environment for external clusters. Self-hosted clusters have no entry, so nothing is injected — the gateway keeps the provider key away from clients and self-hosted boxes never see it.', dt: [['anthropic cluster','x-api-key: provider key'],['openai cluster','Authorization: Bearer provider key'],['Self-hosted','no entry → passthrough'],['Secrets live in','K8s Secret mounted into Praxis']], links: [] },
+  f_lb: { t: 'headers + load_balancer', d: 'Sets Host/anthropic-version for providers that validate SNI, then terminates and re-originates the connection: TLS with the right SNI per cluster, and an idle connection pool that evicts connections before the provider’s keepalive timeout so stale sockets never hang a request.', dt: [['anthropic','TLS SNI api.anthropic.com:443'],['openai','TLS SNI api.openai.com:443'],['self-hosted','plaintext to cluster endpoints'],['idle_timeout_ms','45000 (stale-conn guard)']], links: [] },
+  f_tcount: { t: 'token_count', d: 'Parses token usage off the response — including streaming, where usage arrives in the final SSE event. Anthropic and OpenAI dialects each have their own parser; the unified route reads Anthropic-format usage from both Claude and vLLM.', dt: [['Phase','Response'],['Streaming','FULL_DUPLEX — reads final usage event'],['Providers','anthropic / openai']], links: [] },
+  f_tusage: { t: 'token_usage_headers', d: 'Adds rate-limit-style headers (x-ratelimit-limit-*, x-ratelimit-remaining-*, x-ratelimit-reset) to the response so clients can see their remaining quota without a second API call.', dt: [['Phase','Response'],['Headers','x-ratelimit-* family'],['Source','rtokens usage parsing']], links: [] },
+  f_meter_post: { t: 'external_metering — usage event', d: 'After the response completes, POSTs the usage event (user, model, prompt/completion/total tokens, cache split, status) to the metering service, which appends it to usage_events. Cost is computed at join time from model pricing rows — self-hosted models price at $0.', dt: [['Post-response','POST usage event'],['Payload','user, model, tokens, cache split, status'],['Idempotent','per event_id'],['Failure','logged; response unaffected']], links: [] },
+  maas: { t: 'MaaS API', d: 'Owns API keys, groups, and subscriptions. Called by api_key_auth on cache miss to validate a key and return identity + subscription metadata.', dt: [['Called by','Praxis api_key_auth (HTTP)'],['Database','PostgreSQL'],['Returns','username, email, groups, subscription'],['Cached by Praxis','300s']], links: [['MaaS','https://github.com/opendatahub-io/models-as-a-service']] },
+  meter: { t: 'Metering Service', d: 'The quota and chargeback brain. Answers the pre-request entitlement check (monthly SUM of total_tokens vs quota) and ingests post-response usage events. Powers the web dashboard: per-user usage, cost, model breakdowns.', dt: [['Entitlement','HasAccess = used < quota'],['Quota','MONTHLY_TOKEN_QUOTA (10B default)'],['Table','usage_events'],['Dashboard','web UI + admin console']], links: [] },
+  pg: { t: 'PostgreSQL', d: 'Stores usage_events (one row per request: tokens split into prompt/completion, cache hit/creation, reasoning tokens, status) plus api_keys and model_pricing. Cost is computed at query time by joining usage to pricing.', dt: [['usage_events','prompt, completion, cached, cache_creation, reasoning'],['Growth','append-only, per request'],['Cost','join-time against model_pricing']], links: [] },
+  vllm27: { t: 'vLLM — Qwen 27B (in-cluster)', d: 'Self-hosted Qwen3.8-27B-FP8 served by vLLM inside the cluster, reached by the unified route’s vllm cluster. Serves the Anthropic dialect natively, so no translation is needed anywhere in the chain. Currently down (502) — the qwen-flash backend carries traffic.', dt: [['Served id','Qwen3.8-27B-FP8 (must match exactly)'],['Dialect','Anthropic /v1/messages'],['Cluster','vllm'],['Status','down — 502']], links: [['vLLM','https://github.com/vllm-project/vllm']] },
+  qprox: { t: 'qwen-flash proxy', d: 'A tiny nginx Deployment acting as the egress hop to the remote Qwen Flash vLLM. Praxis reaches it via a stable in-cluster Service; the proxy fixes the Host and SNI for the remote HTTPS route. When the remote endpoint moved clusters, only this proxy’s config had to change.', dt: [['Type','nginx forward proxy'],['Praxis sees','Service qwen-flash:8000'],['Upstream','remote OpenShift vLLM route (HTTPS + SNI)'],['Why','stable name for a moving endpoint']], links: [['nginx','https://nginx.org/']] },
+  qwen: { t: 'Qwen Flash vLLM (remote)', d: 'Inferact/Qwen3.8-Flash-Next-NVFP4 — a 262K-context NVFP4 model served by vLLM on a remote OpenShift cluster, no auth at the endpoint (the proxy is the only path to it). The client model id must match the served id verbatim.', dt: [['Served id','Inferact/Qwen3.8-Flash-Next-NVFP4'],['Dialect','Anthropic /v1/messages'],['Pricing','$0 (self-hosted)'],['Router key','X-Model exact match']], links: [['vLLM','https://github.com/vllm-project/vllm']] },
+  anthropic: { t: 'Anthropic', d: 'Real Anthropic API. The gateway terminates the client connection and re-originates its own TLS connection with the provider credential — clients never hold the provider key. Routes claude-opus, sonnet, haiku (and, for entitled groups, the gated family).', dt: [['Endpoint','api.anthropic.com:443'],['Credential','injected by credential_injection'],['Dialect','Anthropic native — no translation'],['Pool','idle evict at 45s']], links: [['Anthropic API','https://docs.anthropic.com']] },
+  openai: { t: 'OpenAI', d: 'Real OpenAI API, reachable via the :8081 OpenAI-dialect listener (its own chain adds stream_usage_inject so streaming responses carry usage). Not part of the unified flow.', dt: [['Listener',':8081'],['Endpoint','api.openai.com:443'],['Extra filter','stream_usage_inject'],['Credential','Bearer, injected per-cluster']], links: [['OpenAI API','https://platform.openai.com/docs']] },
+};
+
+let overlayWasRunning = false, highlightKey = null;
+function showOverlay(key) {
+  const tip = tips[key], n = N[key];
+  if (!tip) return;
+  overlayWasRunning = running;
+  highlightKey = key;
+  if (running && !paused) { paused = true; running = false; if (stepTimer) clearTimeout(stepTimer); updatePlayBtn(); }
+  const ov = document.getElementById('overlay');
+  const card = document.getElementById('overlay-card');
+  document.getElementById('overlay-accent').style.background = n.color || '#58a6ff';
+  document.getElementById('overlay-title').textContent = tip.t;
+  document.getElementById('overlay-title').style.color = n.color || '#c9d1d9';
+  document.getElementById('overlay-desc').textContent = tip.d;
+  let dh = '';
+  if (tip.dt) tip.dt.forEach(([l,v]) => { dh += `<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #21262d"><span style="color:#8b949e;min-width:110px;flex-shrink:0">${esc(l)}</span><span style="color:#c9d1d9">${esc(v)}</span></div>`; });
+  if (tip.links && tip.links.length) { dh += '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'; tip.links.forEach(([l,u]) => { dh += `<a href="${u}" target="_blank" rel="noopener" style="color:#58a6ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #30363d;border-radius:6px;font-family:system-ui;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff'" onmouseout="this.style.borderColor='#30363d'">${esc(l)} ↗</a>`; }); dh += '</div>'; }
+  document.getElementById('overlay-details').innerHTML = dh;
+  // Position card to not overlap the highlighted component
+  const nx = tx(n.x), ny = ty(n.y), nw = ts(n.w), nh = ts(n.h);
+  const canvasRight = innerWidth - 380;
+  let cx, cy;
+  if (nx + nw + 440 < canvasRight) { cx = nx + nw + 20; } else if (nx - 440 > 0) { cx = nx - 440; } else { cx = Math.max(10, (canvasRight - 420) / 2); }
+  cy = Math.max(10, Math.min(ny - 40, innerHeight - 500));
+  card.style.left = cx + 'px';
+  card.style.top = cy + 'px';
+  ov.style.display = 'block';
+  const hb = document.getElementById('highlight-box');
+  hb.style.left = nx + 'px';
+  hb.style.top = ny + 'px';
+  hb.width = undefined;
+  hb.style.width = nw + 'px';
+  hb.style.height = nh + 'px';
+  hb.style.border = `3px solid ${n.color || '#58a6ff'}`;
+  hb.style.boxShadow = `0 0 30px ${n.color || '#58a6ff'}88, inset 0 0 20px ${n.color || '#58a6ff'}22`;
+  hb.style.background = isDark ? '#161b22' : '#f6f8fa';
+  hb.style.display = 'flex'; hb.style.flexDirection = 'column'; hb.style.alignItems = 'center'; hb.style.justifyContent = 'center';
+  hb.style.fontFamily = 'system-ui'; hb.style.color = isDark ? '#c9d1d9' : '#24292f';
+  hb.innerHTML = `<div style="font-weight:700;font-size:${nw > 150 ? 16 : 13}px">${esc(n.label)}</div>${n.sublabel ? `<div style="font-size:${nw > 150 ? 12 : 10}px;color:#8b949e">${esc(n.sublabel)}</div>` : ''}`;
+  hb.style.transform = 'none';
+  draw();
+}
+function closeOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+  const hb = document.getElementById('highlight-box');
+  hb.style.display = 'none';
+  highlightKey = null;
+  draw();
+  if (overlayWasRunning) { paused = false; running = true; updatePlayBtn(); if (!animFrame) animate(); stepTimer = setTimeout(execStep, 300 / playbackSpeed); }
+}
+
+function C() {
+  return isDark
+    ? { bg:'#0d1117', box:'#161b22', boxA:'#1a2332', bdr:'#30363d', txt:'#c9d1d9', dim:'#8b949e', brt:'#fff' }
+    : { bg:'#fff', box:'#f6f8fa', boxA:'#ddf4ff', bdr:'#d0d7de', txt:'#24292f', dim:'#656d76', brt:'#000' };
+}
+
+// ================================================================
+// DRAWING
+// ================================================================
+function resize() {
+  const panelW = 380;
+  W = canvas.width = innerWidth - panelW;
+  H = canvas.height = innerHeight;
+  sc = Math.min(W / LW, H / LH) * 0.98;
+  ox = (W - LW * sc) / 2;
+  oy = (H - LH * sc) * 0.04;
+  draw();
+}
+addEventListener('resize', resize);
+
+function tx(x) { return ox + x * sc; }
+function ty(y) { return oy + y * sc; }
+function ts(s) { return s * sc; }
+
+function drawBox(key) {
+  const n = N[key], c = C();
+  if (!n || n.type === 'boundary' || n.type === 'container') return;
+  const x = tx(n.x), y = ty(n.y), w = ts(n.w), h = ts(n.h);
+  const isA = activeNodes.has(key), hasBadge = badges[key] != null;
+  ctx.save();
+
+  if (n.type === 'icon') {
+    ctx.font = `${ts(32)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('\u{1F464}', x + w / 2, y + ts(26));
+    ctx.font = `bold ${ts(16)}px system-ui`;
+    ctx.fillStyle = c.txt;
+    ctx.fillText(n.label, x + w / 2, y + ts(46));
+    ctx.restore();
+    return;
+  }
+
+  let fadeA = 1;
+  if (fading[key]) {
+    const el = Date.now() - fading[key];
+    fadeA = Math.min(el / 500, 1);
+    if (el > 500) delete fading[key];
+  }
+
+  if (isA || hasBadge) {
+    ctx.shadowColor = n.color;
+    ctx.shadowBlur = ts(18) * fadeA;
+    ctx.globalAlpha = 0.3 + 0.7 * fadeA;
+  }
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, ts(8));
+  ctx.fillStyle = (isA || hasBadge) ? c.boxA : c.box;
+  ctx.fill();
+  ctx.strokeStyle = (isA || hasBadge) ? n.color : c.bdr;
+  ctx.lineWidth = ts((isA || hasBadge) ? 2.5 : 1.5);
+  ctx.stroke();
+
+  const fs = n.fs || 16;
+  ctx.fillStyle = c.txt;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  if (n.sublabel) {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2 - ts(8));
+    ctx.font = `${ts(Math.max(fs - 3, 10))}px system-ui`;
+    ctx.fillStyle = c.dim;
+    ctx.fillText(n.sublabel, x + w / 2, y + h / 2 + ts(8));
+  } else {
+    ctx.font = `bold ${ts(fs)}px system-ui`;
+    ctx.fillText(n.label, x + w / 2, y + h / 2);
+  }
+
+  // Badges
+  if (hasBadge) {
+    const bList = Array.isArray(badges[key]) ? badges[key] : [badges[key]];
+    bList.forEach((bNum, idx) => {
+      const bx = x + ts(8) + idx * ts(22), by = y + ts(5), br = ts(9);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(bx + br, by + br, br, 0, Math.PI * 2);
+      ctx.fillStyle = n.color;
+      ctx.fill();
+      ctx.font = `bold ${ts(10)}px system-ui`;
+      ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(bNum), bx + br, by + br);
+    });
+  }
+  ctx.restore();
+}
+
+function drawContainer(key, isGlow) {
+  const n = N[key], c = C();
+  if (!n || n.type !== 'container') return;
+  ctx.save();
+  if (isGlow) { ctx.shadowColor = n.color; ctx.shadowBlur = ts(22); }
+  ctx.beginPath();
+  ctx.roundRect(tx(n.x), ty(n.y), ts(n.w), ts(n.h), ts(10));
+  const a = isGlow ? 'cc' : '55';
+  ctx.strokeStyle = n.color + a;
+  ctx.lineWidth = ts(isGlow ? 3 : 2.5);
+  ctx.setLineDash([ts(7), ts(5)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `bold ${ts(13)}px system-ui`;
+  ctx.fillStyle = n.color + (isDark ? 'aa' : '99');
+  ctx.textAlign = 'left';
+  ctx.fillText(n.label, tx(n.x + 12), ty(n.y + 18));
+  ctx.restore();
+}
+
+function drawBounds() {
+  const c = C();
+  // Cluster boundary
+  const cb = N.cluster;
+  ctx.beginPath();
+  ctx.roundRect(tx(cb.x), ty(cb.y), ts(cb.w), ts(cb.h), ts(14));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2.5);
+  ctx.setLineDash([ts(10), ts(8)]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${ts(13)}px system-ui`;
+  ctx.fillStyle = isDark ? 'rgba(63,185,80,0.6)' : 'rgba(26,127,55,0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText('OCP Cluster', tx(cb.x + cb.w - 15), ty(cb.y + 18));
+
+  // Containers
+  drawContainer('praxis', glowing.has('praxis'));
+  drawContainer('reqF', glowing.has('reqF'));
+  drawContainer('respF', glowing.has('respF'));
+
+  // Static control-plane link: metering-service -> postgres
+  const m = N.meter, p = N.pg;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(tx(m.x + m.w / 2), ty(m.y + m.h));
+  ctx.lineTo(tx(p.x + p.w / 2), ty(p.y));
+  ctx.strokeStyle = c.bdr;
+  ctx.lineWidth = ts(2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function edgePt(n, targetX, targetY, yOff) {
+  const cx_ = n.x + n.w / 2, cy_ = n.y + n.h / 2;
+  const dx = targetX - cx_, dy = targetY - cy_;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return { x: cx_, y: cy_ };
+  const hw = n.w / 2, hh = n.h / 2;
+  let ex, ey;
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    ex = cx_ + (dx > 0 ? hw : -hw);
+    ey = cy_ + dy * (hw / Math.abs(dx));
+  } else {
+    ey = cy_ + (dy > 0 ? hh : -hh);
+    ex = cx_ + dx * (hh / Math.abs(dy));
+  }
+  return { x: ex, y: ey + (yOff || 0) };
+}
+
+function drawArrowLine(x1, y1, x2, y2, color, num, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  ctx.moveTo(tx(x1), ty(y1));
+  ctx.lineTo(tx(x2), ty(y2));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = ts(2.5);
+  ctx.stroke();
+  const ang = Math.atan2(y2 - y1, x2 - x1), sz = ts(10);
+  ctx.beginPath();
+  ctx.moveTo(tx(x2), ty(y2));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang - 0.4), ty(y2) - sz * Math.sin(ang - 0.4));
+  ctx.lineTo(tx(x2) - sz * Math.cos(ang + 0.4), ty(y2) - sz * Math.sin(ang + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  if (num != null) {
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, r = ts(12);
+    ctx.beginPath();
+    ctx.arc(tx(mx), ty(my), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.font = `bold ${ts(10)}px system-ui`;
+    ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), tx(mx), ty(my));
+  }
+  ctx.restore();
+}
+
+function drawLines() {
+  lines.forEach(l => {
+    const fn = N[l.from], tn = N[l.to];
+    if (!fn || !tn) return;
+    if (l.waypoints) {
+      const fp = resolveEdge(fn, l, true);
+      const tp = resolveEdge(tn, l, false);
+      const pts = [fp, ...l.waypoints, tp];
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(tx(pts[0].x), ty(pts[0].y));
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(tx(pts[i].x), ty(pts[i].y));
+      ctx.strokeStyle = l.color;
+      ctx.lineWidth = ts(2.5);
+      ctx.stroke();
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      const ang = Math.atan2(last.y - prev.y, last.x - prev.x), sz = ts(10);
+      ctx.beginPath();
+      ctx.moveTo(tx(last.x), ty(last.y));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang - 0.4), ty(last.y) - sz * Math.sin(ang - 0.4));
+      ctx.lineTo(tx(last.x) - sz * Math.cos(ang + 0.4), ty(last.y) - sz * Math.sin(ang + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = l.color;
+      ctx.fill();
+      if (l.num != null) {
+        const mid = pts[Math.floor(pts.length / 2)];
+        const r = ts(12);
+        ctx.beginPath();
+        ctx.arc(tx(mid.x), ty(mid.y), r, 0, Math.PI * 2);
+        ctx.fillStyle = l.color;
+        ctx.fill();
+        ctx.font = `bold ${ts(10)}px system-ui`;
+        ctx.fillStyle = isDark ? '#0d1117' : '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(l.num), tx(mid.x), ty(mid.y));
+      }
+      ctx.restore();
+    } else {
+      let fp = resolveEdge(fn, l, true);
+      let tp = resolveEdge(tn, l, false);
+      if (!l.fromLeft && !l.fromRight && !l.fromBottom && !l.fromTop) {
+        const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+        fp = edgePt(fn, tc, tcy, l.yOff || 0);
+      }
+      if (!l.toLeft && !l.toRight && !l.toBottom && !l.toTop) {
+        const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+        tp = edgePt(tn, fc, fy, l.yOff || 0);
+      }
+      drawArrowLine(fp.x, fp.y, tp.x, tp.y, l.color, l.num, 0.8);
+    }
+  });
+}
+
+function resolveEdge(n, l, isFrom) {
+  const yo = l.yOff || 0;
+  if (isFrom) {
+    if (l.fromLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.fromRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.fromBottom) return { x: n.x + n.w / 2 + (l.fromXOff || l.xOff || 0), y: n.y + n.h + yo };
+    if (l.fromTop) return { x: n.x + n.w / 2 + (l.fromXOff || 0), y: n.y + yo };
+    if (l.waypoints) return edgePt(n, l.waypoints[0].x, l.waypoints[0].y, yo);
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  } else {
+    if (l.toLeft) return { x: n.x, y: n.y + n.h / 2 + yo };
+    if (l.toTop) return { x: n.x + n.w / 2 + (l.toXOff || l.xOff || 0), y: n.y + yo };
+    if (l.toRight) return { x: n.x + n.w, y: n.y + n.h / 2 + yo };
+    if (l.toBottom) return { x: n.x + n.w / 2 + (l.toXOff || 0), y: n.y + n.h + yo };
+    if (l.waypoints) { const wp = l.waypoints; return edgePt(n, wp[wp.length - 1].x, wp[wp.length - 1].y, yo); }
+    return { x: n.x + n.w / 2, y: n.y + n.h / 2 + yo };
+  }
+}
+
+// Click handler — show component info overlay
+canvas.addEventListener('click', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) {
+      showOverlay(k);
+      return;
+    }
+  }
+});
+canvas.addEventListener('mousemove', e => {
+  const mx = (e.clientX - ox) / sc, my = (e.clientY - oy) / sc;
+  let found = false;
+  for (const k of Object.keys(tips)) {
+    const n = N[k];
+    if (mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) { found = true; break; }
+  }
+  canvas.style.cursor = found ? 'pointer' : 'default';
+});
+
+// ================================================================
+// ANIMATED DOT
+// ================================================================
+class Dot {
+  constructor(fKey, tKey, color, speed, cb, opts) {
+    this.color = color;
+    this.speed = speed || 0.012;
+    this.t = 0;
+    this.cb = cb;
+    this.alive = true;
+    const fn = N[fKey], tn = N[tKey];
+    const yo = (opts && opts.yOff) || 0;
+    let fp, tp;
+
+    const lo = opts || {};
+    fp = resolveEdge(fn, lo, true);
+    tp = resolveEdge(tn, lo, false);
+    if (!lo.fromLeft && !lo.fromRight && !lo.fromBottom && !lo.fromTop && !lo.waypoints) {
+      const tc = tn.x + tn.w / 2, tcy = tn.y + tn.h / 2;
+      fp = edgePt(fn, tc, tcy, yo);
+    }
+    if (!lo.toLeft && !lo.toRight && !lo.toBottom && !lo.toTop && !lo.waypoints) {
+      const fc = fn.x + fn.w / 2, fy = fn.y + fn.h / 2;
+      tp = edgePt(tn, fc, fy, yo);
+    }
+    if (opts && opts.waypoints) {
+      this.pts = [fp, ...opts.waypoints, tp];
+    } else {
+      this.pts = [fp, tp];
+    }
+
+    this.segLens = [];
+    this.totalLen = 0;
+    for (let i = 1; i < this.pts.length; i++) {
+      const dx = this.pts[i].x - this.pts[i - 1].x, dy = this.pts[i].y - this.pts[i - 1].y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      this.segLens.push(len);
+      this.totalLen += len;
+    }
+    this.segIdx = 0;
+    this.x = this.pts[0].x;
+    this.y = this.pts[0].y;
+    const pxPerFrame = 4;
+    this.speed = this.totalLen > 0 ? (pxPerFrame / this.totalLen) * (speed / 0.02) : speed;
+  }
+  update() {
+    this.t += this.speed;
+    if (this.t >= 1) { this.t = 1; this.alive = false; if (this.cb) this.cb(); }
+    const dist = this.t * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        this.x = this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT;
+        this.y = this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT;
+        this.segIdx = i;
+        return;
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    this.x = last.x;
+    this.y = last.y;
+    this.segIdx = this.segLens.length - 1;
+  }
+  posAt(t) {
+    const dist = Math.max(0, Math.min(1, t)) * this.totalLen;
+    let accum = 0;
+    for (let i = 0; i < this.segLens.length; i++) {
+      if (accum + this.segLens[i] >= dist) {
+        const segT = (dist - accum) / this.segLens[i];
+        return { x: this.pts[i].x + (this.pts[i + 1].x - this.pts[i].x) * segT,
+                 y: this.pts[i].y + (this.pts[i + 1].y - this.pts[i].y) * segT };
+      }
+      accum += this.segLens[i];
+    }
+    const last = this.pts[this.pts.length - 1];
+    return { x: last.x, y: last.y };
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(tx(this.pts[0].x), ty(this.pts[0].y));
+    for (let i = 0; i < this.segIdx; i++) ctx.lineTo(tx(this.pts[i + 1].x), ty(this.pts[i + 1].y));
+    ctx.lineTo(tx(this.x), ty(this.y));
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = ts(2);
+    ctx.globalAlpha = 0.3;
+    ctx.stroke();
+    for (let j = 4; j >= 1; j--) {
+      const bt = this.t - j * 0.06;
+      if (bt <= 0) continue;
+      const p = this.posAt(bt);
+      ctx.globalAlpha = 0.15 + (1 - j / 4) * 0.4;
+      ctx.beginPath();
+      ctx.arc(tx(p.x), ty(p.y), ts(2.5), 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    const si = Math.min(this.segIdx, this.pts.length - 2);
+    const ang = Math.atan2(this.pts[si + 1].y - this.pts[si].y, this.pts[si + 1].x - this.pts[si].x);
+    ctx.save();
+    ctx.translate(tx(this.x), ty(this.y));
+    ctx.rotate(ang);
+    const pw = ts(13), ph = ts(7);
+    ctx.beginPath();
+    ctx.moveTo(pw / 2, 0);
+    ctx.lineTo(pw / 6, -ph / 2);
+    ctx.lineTo(-pw / 2, -ph / 2);
+    ctx.lineTo(-pw / 2, ph / 2);
+    ctx.lineTo(pw / 6, ph / 2);
+    ctx.closePath();
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = ts(16);
+    ctx.fill();
+    ctx.restore();
+    ctx.restore();
+  }
+}
+
+// ================================================================
+// MAIN DRAW LOOP
+// ================================================================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBounds();
+  drawLines();
+  Object.keys(N).forEach(k => drawBox(k));
+  dots.forEach(d => { d.update(); d.draw(); });
+  dots = dots.filter(d => d.alive);
+  if (highlightKey && N[highlightKey]) {
+    const n = N[highlightKey];
+    const pad = 8;
+    ctx.save();
+    ctx.shadowColor = n.color || '#58a6ff';
+    ctx.shadowBlur = ts(30);
+    ctx.strokeStyle = n.color || '#58a6ff';
+    ctx.lineWidth = ts(3);
+    ctx.beginPath();
+    ctx.roundRect(tx(n.x) - pad, ty(n.y) - pad, ts(n.w) + pad * 2, ts(n.h) + pad * 2, ts(10));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function animate() { draw(); animFrame = requestAnimationFrame(animate); }
+
+// ================================================================
+// STEPS PANEL
+// ================================================================
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function initSteps() {
+  const ctr = document.getElementById('steps-ctr');
+  ctr.innerHTML = '';
+  flow.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'step pending';
+    d.id = 'step-' + i;
+    d.innerHTML = `<span class="step-mk"></span><span>${esc(s.t)}</span>`;
+    d.onclick = () => jumpToStep(i);
+    ctr.appendChild(d);
+  });
+}
+
+// ================================================================
+// INSPECTOR
+// ================================================================
+function setInspPhase(phase) {
+  const el = document.getElementById('insp-title');
+  if (phase === 'request') { el.textContent = 'Request'; el.style.color = '#58a6ff'; }
+  else if (phase === 'response') { el.textContent = 'Response'; el.style.color = '#3fb950'; }
+  else if (phase === 'error') { el.textContent = 'Error Response'; el.style.color = '#f85149'; }
+}
+
+function initInspector() {
+  setInspPhase('request');
+  const isQwen = activeFlow === 'qwen';
+  const model = isQwen ? 'Inferact/Qwen3.8-Flash-Next-NVFP4' : 'claude-sonnet-5';
+  inspHeaders = [
+    { v: 'POST /v1/messages', s: 'keep', id: 'h-path' },
+    { v: 'x-api-key: sk-maas-demo-…', s: 'keep', id: 'h-key' },
+    { v: 'Content-Type: application/json', s: 'keep', id: 'h-ct' },
+  ];
+  inspBody = [
+    { v: `"model": "${model}"`, s: 'keep', id: 'b-model' },
+    { v: '"messages": [{"role":"user","content":"Hello"}]', s: 'keep', id: 'b-msgs' },
+    { v: '"max_tokens": 100', s: 'keep', id: 'b-max' },
+    { v: '"stream": false', s: 'keep', id: 'b-stream' },
+  ];
+  inspCycle = [];
+  inspStepLabel = 'Initial Request (:8084 Unified)';
+  renderInsp();
+}
+
+function renderInsp() {
+  const el = document.getElementById('insp-content');
+  let h = `<div class="insp-plugin">${esc(inspStepLabel)}</div>`;
+  h += '<div class="insp-sec">Headers:</div>';
+  inspHeaders.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  h += '<div class="insp-sec">Body:</div>';
+  inspBody.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  if (inspCycle.length) {
+    h += '<div class="insp-sec">Filter State:</div>';
+    inspCycle.forEach(l => { h += `<div class="insp-line ${l.s}">${esc(l.v)}</div>`; });
+  }
+  el.innerHTML = h;
+}
+
+function resetStyles() {
+  inspHeaders.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspBody.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+  inspCycle.forEach(l => { if (l.s !== 'del' && l.s !== 'err') l.s = 'keep'; });
+}
+
+function hl(id) { const l = inspHeaders.find(x => x.id === id) || inspBody.find(x => x.id === id) || inspCycle.find(x => x.id === id); if (l) l.s = 'highlight'; }
+
+// --- Claude via unified (:8084) ----------------------------------
+function inspStepClaude(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract client key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key (cache miss)'; hl('h-key'); break;
+    case 5:
+      inspStepLabel = '⑤ Key valid — identity injected';
+      inspHeaders.push({ v: 'x-auth-user: demo-user', s: 'add', id: 'h-tenant-user' });
+      inspHeaders.push({ v: 'x-auth-group: ["demo-team"]', s: 'add', id: 'h-tenant-group' });
+      inspHeaders.push({ v: 'x-auth-subscription: pro', s: 'add', id: 'h-tenant-sub' });
+      break;
+    case 6: inspStepLabel = '⑥ model_access: denylist pass'; hl('b-model'); break;
+    case 7: inspStepLabel = '⑦ identity_header_guard: forged x-auth-* stripped'; hl('h-tenant-user'); break;
+    case 8:
+      inspStepLabel = '⑧ model_to_header: body.model → X-Model';
+      inspHeaders.push({ v: 'X-Model: claude-sonnet-5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 9:
+      inspStepLabel = '⑨ router: no self-hosted match → default';
+      hl('h-xmodel');
+      inspCycle = [ { v: 'cluster = "anthropic" (default rule)', s: 'add', id: 'c-cluster' } ];
+      break;
+    case 10: inspStepLabel = '⑩ content_normalize: no-op for Anthropic-routed'; break;
+    case 11:
+      inspStepLabel = '⑪ → metering-service: entitlement check';
+      hl('h-tenant-user');
+      inspCycle.push({ v: 'GET /customers/demo-user/entitlements/inference-tokens/value', s: 'add', id: 'c-ent' });
+      break;
+    case 12:
+      inspStepLabel = '⑫ Balance OK — proceed';
+      inspCycle.push({ v: 'used 600M < quota 10B → allow', s: 'add', id: 'c-remain' });
+      break;
+    case 13:
+      inspStepLabel = '⑬ credential_injection: key swap';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspHeaders.push({ v: 'x-api-key: sk-ant-api03-xxxx… (from Secret)', s: 'add', id: 'h-provider' });
+      break;
+    case 14:
+      inspStepLabel = '⑭ headers + load_balancer: TLS SNI';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST https://api.anthropic.com/v1/messages', s: 'add', id: 'h-path2' });
+      inspHeaders.push({ v: 'Host: api.anthropic.com', s: 'add', id: 'h-host' });
+      inspHeaders.push({ v: 'anthropic-version: 2023-06-01', s: 'add', id: 'h-aver' });
+      hl('h-provider');
+      break;
+    case 15: inspStepLabel = '⑮ → Anthropic (TLS :443)'; hl('h-path2'); break;
+    case 16:
+      inspStepLabel = '⑯ Anthropic responds 200';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"stop_reason": "end_turn"', s: 'keep', id: 'r-stop' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 17: inspStepLabel = '⑰ token_count: parse usage (provider: anthropic)'; hl('r-usage'); break;
+    case 18:
+      inspStepLabel = '⑱ token_usage_headers: quota visible to client';
+      inspHeaders.push({ v: 'x-ratelimit-remaining-tokens: 9,999,999,990', s: 'add', id: 'r-tuh' });
+      break;
+    case 19:
+      inspStepLabel = '⑲ external_metering: POST usage event';
+      inspCycle = [ { v: 'POST /api/v1/events {user, model, prompt:8, completion:2, total:10}', s: 'add', id: 'c-event' } ];
+      break;
+    case 20:
+      inspStepLabel = '⑳ usage_events row appended (cost at join time)';
+      inspCycle.push({ v: 'INSERT INTO usage_events → cost priced from model_pricing', s: 'add', id: 'c-pg' });
+      break;
+    case 21: inspStepLabel = '㉑ Response back through the listener'; hl('r-content'); break;
+    case 22: inspStepLabel = '㉒ Client receives Anthropic-format response'; hl('r-content'); break;
+  }
+}
+
+// --- Qwen Flash (self-hosted) ------------------------------------
+function inspStepQwen(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract client key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
+    case 5:
+      inspStepLabel = '⑤ Key valid — identity injected';
+      inspHeaders.push({ v: 'x-auth-user: demo-user', s: 'add', id: 'h-tenant-user' });
+      inspHeaders.push({ v: 'x-auth-group: ["demo-team"]', s: 'add', id: 'h-tenant-group' });
+      break;
+    case 6: inspStepLabel = '⑥ model_access: self-hosted model allowed'; hl('b-model'); break;
+    case 7: inspStepLabel = '⑦ identity_header_guard: forged headers stripped'; hl('h-tenant-user'); break;
+    case 8:
+      inspStepLabel = '⑧ model_to_header: body.model → X-Model';
+      inspHeaders.push({ v: 'X-Model: Inferact/Qwen3.8-Flash-Next-NVFP4', s: 'add', id: 'h-xmodel' });
+      break;
+    case 9:
+      inspStepLabel = '⑨ router: exact X-Model match → qwen-flash';
+      hl('h-xmodel');
+      inspCycle = [ { v: 'cluster = "qwen-flash"', s: 'add', id: 'c-cluster' } ];
+      break;
+    case 10:
+      inspStepLabel = '⑩ content_normalize: rewrite vLLM-unsupported blocks';
+      inspBody.push({ v: 'tool_reference blocks rewritten for chat template', s: 'add', id: 'b-norm' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ → metering-service: entitlement check';
+      hl('h-tenant-user');
+      inspCycle.push({ v: 'GET /customers/demo-user/entitlements/inference-tokens/value', s: 'add', id: 'c-ent' });
+      break;
+    case 12:
+      inspStepLabel = '⑫ Balance OK — proceed';
+      inspCycle.push({ v: 'used 600M < quota 10B → allow', s: 'add', id: 'c-remain' });
+      break;
+    case 13:
+      inspStepLabel = '⑬ credential_injection: no entry for qwen-flash';
+      inspCycle.push({ v: 'self-hosted: no provider key to inject', s: 'add', id: 'c-nocred' });
+      break;
+    case 14:
+      inspStepLabel = '⑭ load_balancer: plaintext → Service';
+      inspHeaders.find(l => l.id === 'h-path').s = 'del';
+      inspHeaders.push({ v: 'POST http://qwen-flash:8000/v1/messages', s: 'add', id: 'h-path2' });
+      hl('h-path2');
+      break;
+    case 15: inspStepLabel = '⑮ → qwen-flash proxy (in-cluster Service)'; hl('h-path2'); break;
+    case 16:
+      inspStepLabel = '⑯ proxy forwards HTTPS + SNI → remote vLLM';
+      inspCycle.push({ v: 'nginx: fixed Host + SNI for the remote route', s: 'add', id: 'c-sni' });
+      break;
+    case 17:
+      inspStepLabel = '⑰ vLLM responds 200 (Anthropic dialect)';
+      setInspPhase('response');
+      inspHeaders = [
+        { v: 'HTTP/1.1 200 OK', s: 'keep', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"type": "message"', s: 'keep', id: 'r-type' },
+        { v: '"content": [{"type":"text","text":"Hello!"}]', s: 'keep', id: 'r-content' },
+        { v: '"model": "Inferact/Qwen3.8-Flash-Next-NVFP4"', s: 'keep', id: 'r-model' },
+        { v: '"usage": {"input_tokens":8,"output_tokens":2}', s: 'keep', id: 'r-usage' },
+      ];
+      inspCycle = [];
+      break;
+    case 18: inspStepLabel = '⑱ token_count: same Anthropic-format usage parser'; hl('r-usage'); break;
+    case 19: inspStepLabel = '⑲ token_usage_headers: quota visible to client'; break;
+    case 20:
+      inspStepLabel = '⑳ metering event — priced at $0 (self-hosted)';
+      inspCycle = [ { v: 'POST /api/v1/events {model: Qwen3.8-Flash-Next, total: 10}', s: 'add', id: 'c-event' },
+                    { v: 'model_pricing row = $0 → cost $0.00', s: 'add', id: 'c-zero' } ];
+      break;
+    case 21: inspStepLabel = '㉑ Response back through the listener'; hl('r-content'); break;
+    case 22: inspStepLabel = '㉒ Client receives response — same dialect, $0'; hl('r-content'); break;
+  }
+}
+
+// --- Auth failure (401) -------------------------------------------
+function inspStepAuth(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract client key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
+    case 5:
+      inspStepLabel = '⑤ MaaS API: key INVALID';
+      inspHeaders.find(l => l.id === 'h-key').s = 'del';
+      inspBody = [ { v: '"valid": false', s: 'add', id: 'b-valid' }, { v: '"error": "invalid_api_key"', s: 'add', id: 'b-err' } ];
+      break;
+    case 6: inspStepLabel = '⑥ api_key_auth REJECTS — nothing else runs'; break;
+    case 7:
+      inspStepLabel = '⑦ 401 Unauthorized → Client';
+      setInspPhase('error');
+      inspHeaders = [
+        { v: 'HTTP/1.1 401 Unauthorized', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "invalid_api_key"', s: 'err', id: 'r-err' },
+        { v: '"message": "API key is not valid"', s: 'err', id: 'r-msg' },
+      ];
+      inspCycle = [];
+      break;
+  }
+}
+
+// --- Quota exhausted (429) ----------------------------------------
+function inspStepQuota(stepNum) {
+  switch (stepNum) {
+    case 1: inspStepLabel = '① Incoming Request → :8084'; break;
+    case 2: inspStepLabel = '② Entering the filter chain'; hl('h-key'); break;
+    case 3: inspStepLabel = '③ api_key_auth: extract client key'; hl('h-key'); break;
+    case 4: inspStepLabel = '④ → MaaS API: validate key'; hl('h-key'); break;
+    case 5:
+      inspStepLabel = '⑤ Key valid — identity injected';
+      inspHeaders.push({ v: 'x-auth-user: demo-user', s: 'add', id: 'h-tenant-user' });
+      inspHeaders.push({ v: 'x-auth-group: ["demo-team"]', s: 'add', id: 'h-tenant-group' });
+      break;
+    case 6: inspStepLabel = '⑥ model_access + guard pass'; break;
+    case 7:
+      inspStepLabel = '⑦ model_to_header + router';
+      inspHeaders.push({ v: 'X-Model: claude-sonnet-5', s: 'add', id: 'h-xmodel' });
+      break;
+    case 8:
+      inspStepLabel = '⑧ → metering-service: entitlement check';
+      hl('h-tenant-user');
+      inspCycle = [ { v: 'GET /customers/demo-user/entitlements/inference-tokens/value', s: 'add', id: 'c-ent' } ];
+      break;
+    case 9:
+      inspStepLabel = '⑨ monthly usage: quota FULL';
+      inspCycle.push({ v: 'used 10,000,040,000 ≥ quota 10,000,000,000 → HasAccess=false', s: 'err', id: 'c-full' });
+      break;
+    case 10:
+      inspStepLabel = '⑩ metering → Praxis: EXCEEDED';
+      setInspPhase('error');
+      inspCycle.push({ v: 'deny — request never reaches any provider', s: 'err', id: 'c-deny' });
+      break;
+    case 11:
+      inspStepLabel = '⑪ external_metering: reject_budget_exhausted()';
+      break;
+    case 12:
+      inspStepLabel = '⑫ 429 Too Many Requests → Client';
+      inspHeaders = [
+        { v: 'HTTP/1.1 429 Too Many Requests', s: 'err', id: 'r-status' },
+        { v: 'Content-Type: application/json', s: 'keep', id: 'r-ct' },
+      ];
+      inspBody = [
+        { v: '"error": "budget_exhausted"', s: 'err', id: 'r-err' },
+        { v: '"message": "Monthly token quota exceeded"', s: 'err', id: 'r-msg' },
+        { v: '"resets": "next calendar month"', s: 'err', id: 'r-reset' },
+      ];
+      break;
+  }
+}
+
+function inspStep(stepNum) {
+  resetStyles();
+  if (activeFlow === 'auth') inspStepAuth(stepNum);
+  else if (activeFlow === 'quota') inspStepQuota(stepNum);
+  else if (activeFlow === 'qwen') inspStepQwen(stepNum);
+  else inspStepClaude(stepNum);
+  renderInsp();
+}
+
+// ================================================================
+// FLOW DEFINITIONS
+// ================================================================
+let activeFlow = 'claude';
+const flowClaude = [
+  { t: '1. Client sends POST /v1/messages to :8084', mode: 'arrow', f: 'user', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract client key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-auth-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_access: denylist pass', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
+  { t: '8. model_to_header: body.model → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
+  { t: '9. router: claude-* → default anthropic cluster', mode: 'lightup', target: 'f_router', badge: 9 },
+  { t: '10. content_normalize: no-op for provider traffic', mode: 'lightup', target: 'f_norm', badge: 10 },
+  { t: '11. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Balance OK: 600M used of 10B monthly', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f0883e', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. credential_injection: swap client key → provider key', mode: 'lightup', target: 'f_cred', badge: 13 },
+  { t: '14. headers + load_balancer: Host / SNI / TLS pool', mode: 'lightup', target: 'f_lb', badge: 14 },
+  { t: '15. Praxis → Anthropic (TLS 443)', mode: 'arrow', f: 'f_lb', to: 'anthropic', c: '#58a6ff', num: 15, fromRight: true, toLeft: true, waypoints: [{ x: 1012, y: 658 }] },
+  { t: '16. Anthropic responds 200', mode: 'arrow', f: 'anthropic', to: 'f_tcount', c: '#3fb950', num: 16, fromLeft: true, toRight: true, waypoints: [{ x: 1012, y: 748 }] },
+  { t: '17. token_count: parse usage (stream-aware)', mode: 'lightup', target: 'f_tcount', badge: 17 },
+  { t: '18. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 18 },
+  { t: '19. external_metering: POST usage event', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 19, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '20. Metering → PostgreSQL (usage_events insert)', mode: 'arrow', f: 'meter', to: 'pg', c: '#3fb950', num: 20, fromBottom: true, toTop: true },
+  { t: '21. Response back through the listener', mode: 'arrow', f: 'f_tusage', to: 'lsn', c: '#3fb950', num: 21, fromLeft: true, toLeft: true, waypoints: [{ x: 162, y: 792 }, { x: 162, y: 173 }], yOff: 10 },
+  { t: '22. Response to client (Anthropic format)', mode: 'arrow', f: 'lsn', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 8 },
+];
+
+const flowQwen = [
+  { t: '1. Client sends POST /v1/messages to :8084', mode: 'arrow', f: 'user', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract client key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-auth-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_access: self-hosted model allowed', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '7. identity_header_guard: strip forged headers', mode: 'lightup', target: 'f_guard', badge: 7 },
+  { t: '8. model_to_header: Qwen id → X-Model', mode: 'lightup', target: 'f_mth', badge: 8 },
+  { t: '9. router: exact match → qwen-flash cluster', mode: 'lightup', target: 'f_router', badge: 9 },
+  { t: '10. content_normalize: rewrite blocks vLLM rejects', mode: 'lightup', target: 'f_norm', badge: 10 },
+  { t: '11. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 11, fromRight: true, toLeft: true, yOff: -10 },
+  { t: '12. Balance OK — self-hosted still checks quota', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f0883e', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+  { t: '13. credential_injection: no entry → passthrough', mode: 'lightup', target: 'f_cred', badge: 13 },
+  { t: '14. load_balancer: plaintext to Service', mode: 'lightup', target: 'f_lb', badge: 14 },
+  { t: '15. Praxis → qwen-flash proxy (nginx)', mode: 'arrow', f: 'f_lb', to: 'qprox', c: '#58a6ff', num: 15, fromRight: true, toTop: true, waypoints: [{ x: 740, y: 658 }, { x: 740, y: 885 }] },
+  { t: '16. Proxy forwards HTTPS + SNI → remote vLLM', mode: 'arrow', f: 'qprox', to: 'qwen', c: '#58a6ff', num: 16, fromBottom: true, toLeft: true, waypoints: [{ x: 575, y: 995 }, { x: 1012, y: 995 }] },
+  { t: '17. vLLM responds 200 (Anthropic dialect)', mode: 'arrow', f: 'qwen', to: 'f_tcount', c: '#3fb950', num: 17, fromLeft: true, toRight: true },
+  { t: '18. token_count: same usage parser', mode: 'lightup', target: 'f_tcount', badge: 18 },
+  { t: '19. token_usage_headers: x-ratelimit-* on response', mode: 'lightup', target: 'f_tusage', badge: 19 },
+  { t: '20. Metering event — priced at $0 (self-hosted)', mode: 'arrow', f: 'f_meter_post', to: 'meter', c: '#3fb950', num: 20, fromRight: true, toLeft: true, yOff: 10 },
+  { t: '21. Response back through the listener', mode: 'arrow', f: 'f_tusage', to: 'lsn', c: '#3fb950', num: 21, fromLeft: true, toLeft: true, waypoints: [{ x: 162, y: 792 }, { x: 162, y: 173 }], yOff: 10 },
+  { t: '22. Response to client — same dialect, $0', mode: 'arrow', f: 'lsn', to: 'user', c: '#3fb950', num: 22, fromLeft: true, toRight: true, yOff: 8 },
+];
+
+const flowAuth = [
+  { t: '1. Client sends POST /v1/messages to :8084', mode: 'arrow', f: 'user', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract client key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. MaaS API: key INVALID', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#f85149', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. api_key_auth rejects — chain stops', mode: 'lightup', target: 'f_auth', badge: '✗', errColor: '#f85149' },
+  { t: '7. 401 Unauthorized → client', mode: 'arrow', f: 'lsn', to: 'user', c: '#f85149', num: 7, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowQuota = [
+  { t: '1. Client sends POST /v1/messages to :8084', mode: 'arrow', f: 'user', to: 'lsn', c: '#58a6ff', num: 1, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '2. Request enters the filter chain', mode: 'arrow', f: 'lsn', to: 'f_auth', c: '#58a6ff', num: 2, glow: 'reqF', fromBottom: true, toTop: true },
+  { t: '3. api_key_auth: extract client key', mode: 'lightup', target: 'f_auth', badge: 3 },
+  { t: '4. Praxis → MaaS API (validate key)', mode: 'arrow', f: 'f_auth', to: 'maas', c: '#58a6ff', num: 4, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '5. Key valid — inject x-auth-* identity', mode: 'arrow', f: 'maas', to: 'f_auth', c: '#58a6ff', num: 5, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '6. model_access + identity_header_guard pass', mode: 'lightup', target: 'f_access', badge: 6 },
+  { t: '7. model_to_header + router', mode: 'lightup', target: 'f_router', badge: 7 },
+  { t: '8. Praxis → metering-service (quota check)', mode: 'arrow', f: 'f_meter_pre', to: 'meter', c: '#f0883e', num: 8, fromRight: true, toLeft: true, yOff: -8 },
+  { t: '9. Monthly usage: quota FULL (10B tokens)', mode: 'lightup', target: 'meter', badge: 9 },
+  { t: '10. Metering → Praxis: HasAccess = false', mode: 'arrow', f: 'meter', to: 'f_meter_pre', c: '#f85149', num: 10, fromLeft: true, toRight: true, yOff: 8 },
+  { t: '11. external_metering: reject_budget_exhausted()', mode: 'lightup', target: 'f_meter_pre', badge: '✗', errColor: '#f85149' },
+  { t: '12. 429 Too Many Requests → client', mode: 'arrow', f: 'lsn', to: 'user', c: '#f85149', num: 12, fromLeft: true, toRight: true, yOff: 10 },
+];
+
+const flowMap = { claude: flowClaude, qwen: flowQwen, auth: flowAuth, quota: flowQuota };
+const flowLabels = { claude: 'Claude via Unified (:8084)', qwen: 'Qwen Flash (self-hosted)', auth: 'Auth Failure (401)', quota: 'Quota Exhausted (429)' };
+const flowOrder = ['claude', 'qwen', 'auth', 'quota'];
+let flow = flowClaude;
+
+function updateTitle() {
+  document.getElementById('flow-label').textContent = '· ' + flowLabels[activeFlow];
+}
+
+// ================================================================
+// RUN / RESET
+// ================================================================
+function updatePlayBtn() {
+  const btn = document.querySelector('.start');
+  if (paused) btn.innerHTML = '&#9654; Resume';
+  else if (running) btn.innerHTML = '&#9646;&#9646; Pause';
+  else btn.innerHTML = '&#9654; Start';
+}
+
+function cycleSpeed() {
+  const speeds = [0.5, 1, 2];
+  const idx = speeds.indexOf(playbackSpeed);
+  playbackSpeed = speeds[(idx + 1) % speeds.length];
+  document.getElementById('speed-btn').textContent = playbackSpeed + 'x';
+}
+
+function toggleLoop() {
+  loopMode = !loopMode;
+  const btn = document.getElementById('loop-btn');
+  btn.style.background = loopMode ? (isDark ? '#79c0ff22' : '#79c0ff18') : 'transparent';
+  btn.textContent = loopMode ? '⟳ Loop ON' : '⟳ Loop';
+  if (loopMode && !running && !paused) run();
+}
+
+function stepOpts(s) {
+  return {
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+function stepLine(s) {
+  return {
+    from: s.f, to: s.to, color: s.c, num: s.num,
+    fromLeft: s.fromLeft, toLeft: s.toLeft, fromRight: s.fromRight, toRight: s.toRight,
+    fromBottom: s.fromBottom, fromTop: s.fromTop, toTop: s.toTop, toBottom: s.toBottom,
+    yOff: s.yOff, xOff: s.xOff, fromXOff: s.fromXOff, toXOff: s.toXOff, waypoints: s.waypoints
+  };
+}
+
+let stepOnceMode = false;
+
+function stepOnce() {
+  if (running && !paused) {
+    paused = true; running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  const flow = flowMap[activeFlow];
+  if (runStepIndex === 0) {
+    initInspector();
+  }
+  if (runStepIndex >= flow.length) {
+    doReset();
+    return;
+  }
+  stepOnceMode = true;
+  running = true; paused = false;
+  if (!animFrame) animate();
+  execStep();
+}
+
+function run() {
+  if (paused) {
+    paused = false;
+    running = true;
+    updatePlayBtn();
+    if (!animFrame) animate();
+    stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+    return;
+  }
+  if (running) {
+    paused = true;
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+    updatePlayBtn();
+    return;
+  }
+  doReset();
+  running = true;
+  paused = false;
+  runStepIndex = 0;
+  currentStepDone = 0;
+  initInspector();
+  updatePlayBtn();
+  stepTimer = setTimeout(execStep, 300);
+  if (!animFrame) animate();
+}
+
+function execStep() {
+  if (!running || paused || runStepIndex >= flow.length) {
+    if (runStepIndex >= flow.length) {
+      running = false; paused = false; updatePlayBtn();
+      if (loopMode) {
+        stepTimer = setTimeout(() => {
+          const idx = flowOrder.indexOf(activeFlow);
+          activeFlow = flowOrder[(idx + 1) % flowOrder.length];
+          flow = flowMap[activeFlow];
+          document.getElementById('flow-select').value = activeFlow;
+          updateTitle();
+          doReset(); run();
+        }, 3000 / playbackSpeed);
+      }
+    }
+    return;
+  }
+  const si = runStepIndex;
+  const s = flow[si];
+  for (let j = 0; j < si; j++) {
+    const prev = document.getElementById('step-' + j);
+    if (prev) prev.className = 'step done';
+  }
+  const el = document.getElementById('step-' + si);
+  el.className = 'step active';
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  inspStep(si + 1);
+
+  if (s.mode === 'arrow') {
+    if (s.f) activeNodes.add(s.f);
+    dots.push(new Dot(s.f, s.to, s.c, 0.02 * playbackSpeed, () => {
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+      el.className = 'step done';
+      currentStepDone = si + 1;
+      saveSnapshot(si);
+      runStepIndex++;
+      if (stepOnceMode) {
+        stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+      } else if (running && !paused) {
+        stepTimer = setTimeout(execStep, 300 / playbackSpeed);
+      }
+    }, stepOpts(s)));
+  } else if (s.mode === 'lightup') {
+    fading[s.target] = Date.now();
+    activeNodes.add(s.target);
+    if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+    if (badges[s.target] != null) {
+      const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+      existing.push(s.badge);
+      badges[s.target] = existing;
+    } else {
+      badges[s.target] = s.badge;
+    }
+    el.className = 'step done';
+    currentStepDone = si + 1;
+    saveSnapshot(si);
+    runStepIndex++;
+    if (stepOnceMode) {
+      stepOnceMode = false; paused = true; running = false; updatePlayBtn();
+    } else if (running && !paused) {
+      stepTimer = setTimeout(execStep, 800 / playbackSpeed);
+    }
+  }
+}
+
+function saveSnapshot(stepIdx) {
+  snapshots[stepIdx] = {
+    activeNodes: new Set(activeNodes),
+    badges: JSON.parse(JSON.stringify(badges)),
+    lines: JSON.parse(JSON.stringify(lines)),
+    glowing: new Set(glowing),
+  };
+}
+
+function restoreSnapshot(stepIdx) {
+  if (stepIdx < 0) {
+    activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+    return;
+  }
+  const snap = snapshots[stepIdx];
+  if (!snap) return;
+  activeNodes = new Set(snap.activeNodes);
+  badges = JSON.parse(JSON.stringify(snap.badges));
+  lines = JSON.parse(JSON.stringify(snap.lines));
+  glowing = new Set(snap.glowing);
+}
+
+function simulateUpTo(targetStep) {
+  activeNodes.clear(); badges = {}; lines = []; glowing.clear();
+  for (let i = 0; i <= targetStep; i++) {
+    const s = flow[i];
+    if (s.mode === 'arrow') {
+      if (s.f) activeNodes.add(s.f);
+      lines.push(stepLine(s));
+      if (s.glow) glowing.add(s.glow);
+      activeNodes.add(s.to);
+    } else if (s.mode === 'lightup') {
+      activeNodes.add(s.target);
+      if (s.errColor) N[s.target]._origColor = N[s.target]._origColor || N[s.target].color, N[s.target].color = s.errColor;
+      if (badges[s.target] != null) {
+        const existing = Array.isArray(badges[s.target]) ? badges[s.target] : [badges[s.target]];
+        existing.push(s.badge);
+        badges[s.target] = existing;
+      } else {
+        badges[s.target] = s.badge;
+      }
+    }
+    saveSnapshot(i);
+  }
+}
+
+function jumpToStep(targetStep) {
+  if (running) {
+    running = false;
+    if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  }
+  if (!snapshots[targetStep]) simulateUpTo(targetStep);
+  restoreSnapshot(targetStep);
+  currentStepDone = targetStep + 1;
+  runStepIndex = targetStep + 1;
+  document.querySelectorAll('.step').forEach((el, i) => {
+    if (i <= targetStep) el.className = 'step done';
+    else el.className = 'step pending';
+  });
+  const clickedEl = document.getElementById('step-' + targetStep);
+  if (clickedEl) clickedEl.className = 'step active';
+  initInspector();
+  for (let i = 1; i <= targetStep + 1; i++) inspStep(i);
+  dots = [];
+  fading = {};
+  paused = true;
+  updatePlayBtn();
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  requestAnimationFrame(() => { draw(); draw(); });
+}
+
+function doReset() {
+  Object.keys(N).forEach(k => { if (N[k]._origColor) { N[k].color = N[k]._origColor; delete N[k]._origColor; } });
+  running = false;
+  paused = false;
+  runStepIndex = 0;
+  if (stepTimer) { clearTimeout(stepTimer); stepTimer = null; }
+  dots = [];
+  activeNodes.clear();
+  badges = {};
+  lines = [];
+  glowing.clear();
+  fading = {};
+  currentStepDone = 0;
+  snapshots = [];
+  inspHeaders = [];
+  inspBody = [];
+  inspCycle = [];
+  initSteps();
+  updatePlayBtn();
+  document.getElementById('insp-content').innerHTML = '<div style="color:#8b949e;font-family:-apple-system,sans-serif;font-size:13px">Press Start to see the request flow</div>';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  draw();
+}
+
+document.getElementById('flow-select').addEventListener('change', function() {
+  activeFlow = this.value;
+  flow = flowMap[activeFlow];
+  updateTitle();
+  doReset();
+});
+
+resize();
+initSteps();
+updateTitle();
+draw();
+
+// Auto-start loop mode on page load
+setTimeout(() => { toggleLoop(); }, 500);
+
+// Mobile splash animation
+(function(){
+  if(window.innerWidth>=800)return;
+  const mc=document.getElementById('mobile-canvas');
+  if(!mc)return;
+  const mx=mc.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  let mW,mH;
+  function mResize(){
+    const r=mc.getBoundingClientRect();
+    mW=r.width;mH=r.height;
+    mc.width=mW*dpr;mc.height=mH*dpr;
+    mx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  mResize();
+  const boxes=[
+    {x:.15,y:.12,label:'Client',color:'#58a6ff'},
+    {x:.5,y:.08,label:'Praxis',color:'#d2a8ff'},
+    {x:.85,y:.12,label:'MaaS API',color:'#f0883e'},
+    {x:.2,y:.35,label:'auth',color:'#58a6ff'},
+    {x:.5,y:.32,label:'router',color:'#58a6ff'},
+    {x:.8,y:.35,label:'metering',color:'#f0883e'},
+    {x:.15,y:.62,label:'Anthropic',color:'#3fb950'},
+    {x:.45,y:.66,label:'vLLM',color:'#d2a8ff'},
+    {x:.75,y:.62,label:'Qwen Flash',color:'#3fb950'},
+    {x:.35,y:.9,label:'usage_events',color:'#8b949e'},
+    {x:.65,y:.9,label:'token_count',color:'#3fb950'},
+  ];
+  let particles=[];
+  function spawn(){
+    const fi=Math.floor(Math.random()*boxes.length);
+    let ti=Math.floor(Math.random()*boxes.length);
+    while(ti===fi)ti=Math.floor(Math.random()*boxes.length);
+    const colors=['#58a6ff','#d2a8ff','#f0883e','#3fb950','#79c0ff','#f85149'];
+    particles.push({f:fi,t:ti,p:0,sp:.006+Math.random()*.01,
+      c:colors[Math.floor(Math.random()*colors.length)],
+      sz:2+Math.random()*3,a:.3+Math.random()*.4});
+  }
+  for(let i=0;i<12;i++)spawn();
+  function mDraw(){
+    mx.clearRect(0,0,mW,mH);
+    boxes.forEach(b=>{
+      mx.save();mx.globalAlpha=.12;mx.fillStyle=b.color;
+      mx.beginPath();mx.arc(b.x*mW,b.y*mH,22,0,Math.PI*2);mx.fill();
+      mx.globalAlpha=.35;mx.font='bold 9px system-ui';mx.textAlign='center';mx.fillStyle=b.color;
+      mx.fillText(b.label,b.x*mW,b.y*mH+3);
+      mx.restore();
+    });
+    particles.forEach(p=>{
+      const f=boxes[p.f],t=boxes[p.t];
+      const px=f.x*mW+(t.x*mW-f.x*mW)*p.p;
+      const py=f.y*mH+(t.y*mH-f.y*mH)*p.p;
+      const fade=p.p<.1?p.p/.1:p.p>.9?(1-p.p)/.1:1;
+      mx.save();mx.globalAlpha=p.a*fade;mx.fillStyle=p.c;
+      mx.shadowColor=p.c;mx.shadowBlur=8;
+      mx.beginPath();mx.arc(px,py,p.sz,0,Math.PI*2);mx.fill();
+      mx.restore();
+      p.p+=p.sp;
+    });
+    particles=particles.filter(p=>p.p<1);
+    if(Math.random()<.2)spawn();
+    requestAnimationFrame(mDraw);
+  }
+  mDraw();
+})();
+</script>
+</body>
+</html>

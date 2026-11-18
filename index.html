@@ -82,15 +82,50 @@ footer a:hover{color:var(--accent)}
     <div class="card-icon" style="background:#d2a8ff22;border:1px solid #d2a8ff44">▭</div>
     <div>
       <div class="card-title">EnMaaS Mini — Single RHEL Host</div>
-      <div class="card-subtitle">Same Praxis chain on one host · image SKU · hardened Postgres</div>
+      <div class="card-subtitle">Same Praxis chain on one host · image SKU · upstream PostgreSQL</div>
     </div>
   </div>
-  <div class="card-desc">Mirror of the EnMaaS flow on a single RHEL 9.6 bootc host: :8443 HTTPS terminus, rootless Podman Quadlets (praxis-svc), pricetag-maas/metering on a hardened PostgreSQL 17/18 container, Podman-secret credential swap, Patternfly dashboard, and the enmaas-cli binary. Compare directly with the ROSA EnMaaS flow.</div>
+  <div class="card-desc">Mirror of the EnMaaS flow on a single RHEL 9.6 bootc host: :8443 HTTPS terminus, rootless Podman Quadlets (praxis-svc), pricetag-maas/metering on an upstream PostgreSQL 17.8 container, Podman-secret credential swap, and the embedded PriceTag HTML dashboard. Compare directly with the ROSA EnMaaS flow.</div>
   <div class="card-stats">
-    <span class="stat stat-purple">5 Flows</span>
+    <span class="stat stat-purple">6 Flows</span>
     <span class="stat stat-green">3 Backends</span>
     <span class="stat stat-blue">Alice · Bob · Carol · Dana</span>
-    <span class="stat stat-orange">Hardened PG</span>
+    <span class="stat stat-orange">Upstream PG</span>
+  </div>
+</a>
+
+<a href="praxis-flow.html" class="card" style="border-color:#d2a8ff44">
+  <div class="card-header">
+    <div class="card-icon" style="background:#d2a8ff22;border:1px solid #d2a8ff44">&#9889;</div>
+    <div>
+      <div class="card-title">Praxis AI Gateway &mdash; Rust Data Plane</div>
+      <div class="card-subtitle">MaaS in Action &middot; Filter-Chain Architecture</div>
+    </div>
+  </div>
+  <div class="card-desc">The next-generation data plane: a single Rust proxy (built on Pingora) replacing the Envoy + IPP plugin chain with in-process filters &mdash; API-key auth against MaaS, model access policy, model-based routing across Claude and self-hosted vLLM backends, per-cluster credential injection, and external metering with monthly token quotas.</div>
+  <div class="card-stats">
+    <span class="stat stat-blue">4 Flows</span>
+    <span class="stat stat-green">3 Backends</span>
+    <span class="stat stat-orange">22 Steps</span>
+    <span class="stat stat-purple">13 Filters</span>
+  </div>
+</a>
+
+<a href="enmaas-flow.html" class="card" style="border-color:#3fb95044">
+  <div class="card-header">
+    <div class="card-icon" style="background:#3fb95022;border:1px solid #3fb95044">&#127760;</div>
+    <div>
+      <div class="card-title">EnMaaS AI Gateway &mdash; Production Flow</div>
+      <div class="card-subtitle">MaaS in Action &middot; Praxis · Vertex · IBM Curvebender</div>
+    </div>
+  </div>
+  <div class="card-desc">The live EnMaaS production gateway on ROSA: the Praxis Rust data plane with its 16-filter chain (api-key auth against MaaS, Vertex dialect translation + gcp_adc, metering quota checks, per-cluster credential injection), external metering to PostgreSQL on AWS RDS, and the usage dashboard. Walk three real routes &mdash; Luna&rarr;OpenAI, Opus&rarr;Vertex AI, and GLM&rarr;IBM Curvebender &mdash; plus 401 and 429 failures.</div>
+  <div class="card-stats">
+    <span class="stat stat-blue">5 Flows</span>
+    <span class="stat stat-green">3 Backends</span>
+    <span class="stat stat-orange">16 Filters</span>
+    <span class="stat stat-gold">RDS Metering</span>
+    <span class="stat stat-purple">Vertex + GLM</span>
   </div>
 </a>
 
@@ -173,8 +208,9 @@ footer a:hover{color:var(--accent)}
   <div class="card-desc">Claude Code and Codex route through the MaaS gateway in native passthrough mode — no API translation needed. Shows MaaS vs direct comparison, optional metering stack, and per-user usage tracking. OPTIONAL components highlighted.</div>
   <div class="card-stats">
     <span class="stat stat-purple">Passthrough</span>
-    <span class="stat stat-gold">4 Flows</span>
+    <span class="stat stat-gold">5 Flows</span>
     <span class="stat stat-blue">2 Clients</span>
+    <span class="stat stat-green">Headroom</span>
     <span class="stat stat-green">2 Providers</span>
   </div>
 </a>
@@ -193,6 +229,23 @@ footer a:hover{color:var(--accent)}
     <span class="stat stat-green">1 Gateway</span>
     <span class="stat stat-gold">2 InferencePools</span>
     <span class="stat stat-purple">5 Providers</span>
+  </div>
+</a>
+
+<a href="ai-grid/" class="card" style="border-color:#79c0ff44">
+  <div class="card-header">
+    <div class="card-icon" style="background:#79c0ff22;border:1px solid #79c0ff44">&#128421;</div>
+    <div>
+      <div class="card-title">AI Grid &mdash; LLM-d Hub &amp; Spoke</div>
+      <div class="card-subtitle">Hub EPP scores spokes &middot; IPP injects credentials &middot; Spoke EPP picks pods</div>
+    </div>
+  </div>
+  <div class="card-desc">Hub-and-spoke architecture where the hub gateway runs EPP to score spoke clusters by live load, picks the best destination, and IPP injects per-spoke credentials. Each spoke runs its own EPP for pod selection, jwt_authn for wristband validation, and per-tier rate limiting. External provider fallback when no internal capacity.</div>
+  <div class="card-stats">
+    <span class="stat stat-blue">3 Flows</span>
+    <span class="stat stat-green">1 Hub</span>
+    <span class="stat stat-gold">2 Spokes</span>
+    <span class="stat stat-purple">External Fallback</span>
   </div>
 </a>
 
